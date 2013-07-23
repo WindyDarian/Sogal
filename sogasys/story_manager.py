@@ -253,7 +253,7 @@ def loadScriptData(fileName):
         
          
       
-        temp_original = io_reader.readline()
+        temp_original = unicode(io_reader.readline().decode('utf-8'))
         if not temp_original:    #文件末
             push_current() 
             break;
@@ -261,7 +261,7 @@ def loadScriptData(fileName):
             #textTemp = temp_original.strip('\n')
             notesplit = re.compile(ur'(?<!\\)#|^#',re.UNICODE) 
             #Convert the line to utf-8 and remove the note afterwards
-            line_raw = notesplit.split(unicode(temp_original.encode('utf-8')),1)[0]
+            line_raw = notesplit.split(temp_original,1)[0]
             line = line_raw.strip()
             
             if not line:     #若是空行，则进行push操作

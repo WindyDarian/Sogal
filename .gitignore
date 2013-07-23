@@ -190,8 +190,8 @@ $RECYCLE.BIN/
 *.py[co]
 
 # Packages
-*.egg
-*.egg-info
+#*.egg
+#*.egg-info
 dist/
 build/
 eggs/

@@ -124,7 +124,7 @@ class StoryManager(NodePath,DirectObject):
             '''
             ,实现通配，__代替空行已经在一开始实现
             '''
-            return t.replace(r'\:', ':').replace(r'\：','：')
+            return t.replace(ur'\:', ur':').replace(ur'\：',ur'：').replace(ur'\#',ur'#')
         
         name = ''
         text = ''
@@ -223,7 +223,11 @@ def loadScriptData(fileName):
                 fileHandle = open(fileName,'r',"utf-8")
             except IOError:
                 fileHandle = open(fileName+'.sogal','r',"utf-8")
+    
     io_reader = StringIO(fileHandle.read())
+    
+    fileHandle.close()
+    
     io_reader.seek(0)
     loaded_list = []
     global _current_command   #虽然global很讨厌……
@@ -246,28 +250,34 @@ def loadScriptData(fileName):
             
     
     while True:
-        temp_original = unicode(io_reader.readline().encode('utf-8'))
+        
+         
+      
+        temp_original = io_reader.readline()
         if not temp_original:    #文件末
             push_current() 
             break;
         else:
             #textTemp = temp_original.strip('\n')
-            temp2 = temp_original.strip()
+            notesplit = re.compile(ur'(?<!\\)#|^#',re.UNICODE) 
+            #Convert the line to utf-8 and remove the note afterwards
+            line_raw = notesplit.split(unicode(temp_original.encode('utf-8')),1)[0]
+            line = line_raw.strip()
             
-            if not temp2:     #若是空行，则进行push操作
+            if not line:     #若是空行，则进行push操作
                 push_current() 
                 
-            elif temp2.startswith('@'):
+            elif line.startswith('@'):
                 if _current_command or _current_text:   
                     #如果在一个命令列前面已经有了内容，则前面已经是完整的一段，所以推入列表
                     push_current() 
-                _current_command = temp2.lstrip('@')
+                _current_command = line.lstrip('@')
                 
             else:    #于是就剩下是文本的情况
                 if _current_text:
                     _current_text += '\n'
                 else: _current_text = ''
-                adding = temp_original.strip('\n')
+                adding = line_raw.rstrip()
                 if adding.startswith('__'):
                     _current_text += ' ' #用一个空格代替空行嗯
                 else: _current_text += adding

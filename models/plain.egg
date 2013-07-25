@@ -1,0 +1,28 @@
+<Comment> {
+  "A plain rect mode 一个非常朴素的平的方形的说"
+}
+<Group> {
+  <VertexPool> vpool {
+    <Vertex> 0 {
+      -1 1 0
+      <UV> { 0 1 }
+    }
+    <Vertex> 1 {
+      -1 -1 0
+      <UV> { 0 0 }
+    }
+    <Vertex> 2 {
+      1 -1 0
+      <UV> { 1 0 }
+    }
+    <Vertex> 3 {
+      1 1 0
+      <UV> { 1 1 }
+    }
+  }
+  <Polygon> {
+    <RGBA> { 1 1 1 1 }
+    <VertexRef> { 0 1 2 3 <Ref> { vpool } }
+  }
+  
+}

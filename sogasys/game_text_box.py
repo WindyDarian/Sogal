@@ -25,9 +25,7 @@ Created on Jul 5, 2013
 @author: Windy Darian (大地无敌)
 '''
 import math
-from StringIO import StringIO
 
-from direct.gui.DirectGui import DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import *
@@ -186,9 +184,9 @@ class GameTextBox(GameTextBoxBase):
         
         GameTextBoxBase.__init__(self, parent = parent)
         
-        if runtime_data.gameTextBox_properties:
-            self.properties = runtime_data.gameTextBox_properties
-        else: runtime_data.gameTextBox_properties = self.properties
+        if runtime_data.RuntimeData.gameTextBox_properties:
+            self.properties = runtime_data.RuntimeData.gameTextBox_properties
+        else: runtime_data.RuntimeData.gameTextBox_properties = self.properties
 
     
         self._currentStyle = style
@@ -240,7 +238,6 @@ class GameTextBox(GameTextBoxBase):
         if self._typerLerpInterval:
             if not self._typerLerpInterval.isStopped():
                 self._typerLerpInterval.finish()
-            self._typerLerpInterval = None
         
         if self._textArrow:
             self._textArrow.detachNode()
@@ -273,7 +270,6 @@ class GameTextBox(GameTextBoxBase):
         if self._typerLerpInterval:
             if not self._typerLerpInterval.isStopped():
                 self._typerLerpInterval.finish()
-            self._typerLerpInterval = None
         self.currentText = ''
         self.existingText = ''
         self.currentSpeaker = None
@@ -398,10 +394,10 @@ class GameTextBox(GameTextBoxBase):
         '''套用风格 Apply style setting.
         override this to apply your own style
         '''
-        
-        if runtime_data.gameTextBox_properties:
-            self.properties = runtime_data.gameTextBox_properties
-        else: runtime_data.gameTextBox_properties = self.properties
+#        窝才想起来这是引用不是浅拷贝……所以构造函数中运行这个就能同步runtime_data了lol
+#         if runtime_data.RuntimeData.gameTextBox_properties:  
+#             self.properties = runtime_data.RuntimeData.gameTextBox_properties
+#         else: runtime_data.RuntimeData.gameTextBox_properties = self.properties
         
         self.destroyElements()
         
@@ -447,6 +443,7 @@ class GameTextBox(GameTextBoxBase):
                                           height/2.0 + self.properties['normal_text_pos'][1])
             
             self._normal_textLabel.setShadow((0.1,0.1,0.1,0.5))
+            self._normal_speakerLabel.setShadow((0.1,0.1,0.1,0.5))
             self._normal_textLabel.textNode.setTabWidth(1.0)
             self._normal_textLabel.textNode.setWordwrap(self.properties['normal_text_wrap'])
             
@@ -501,7 +498,7 @@ class GameTextBox(GameTextBoxBase):
             self.clearText()
 
     def setTextBoxProperty(self, propname, value):
-        runtime_data.gameTextBox_properties[propname] = value
+        runtime_data.RuntimeData.gameTextBox_properties[propname] = value
 
     def applyTextBoxProperties(self):
         self.applyStyle()

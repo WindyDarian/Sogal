@@ -41,53 +41,70 @@ from direct.task import Task
 from game_text_box import GTBI
 from game_text_box import GameTextBox
 from game_entities import StoryCommand
+from story_view import StoryView
 
 import runtime_data
 
 
-class StoryManager(NodePath,DirectObject):
+class StoryManager(DirectObject):
     """Story controller of Sogal
-    Controls the whole story scene
+    Controls the whole story scene.
+    Mainly for logic control
+    And graphics is on other  
     Attributes:
     _frame: main DirectFrame of the StoryManager 
-    _notextFlag: means the current command has no text and would auto advance for one step 
-    #TODO: Add autoadvance function when _notextFlag is true
+    _textFont: the font for testing information
     """
-    textFont = None
     
-    _notextFlag = False
-    __spaceCutter = re.compile(ur'\s+',re.UNICODE)
+
     
     def __init__(self):
-        NodePath.__init__(self,"StoryManager")
-        self.textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
-        self.textFont.setPixelsPerUnit(60)
-        self.textFont.setPageSize(512,512)
+        self._textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
+        self._textFont.setPixelsPerUnit(60)
+        self._textFont.setPageSize(512,512)
+        self.__spaceCutter = re.compile(ur'\s+',re.UNICODE)
+        self.__destroyed = False
+        self.__prevBackground = None #上一个背景图片，用于渐变效果
+        self.__background = None #当前背景图片
+        self.__frontCover = None #前景
+        #self.__buffer = 
+        
         
         
     def destroy(self):
+        self.__destroyed = True
         if self._frame:
             self._frame.destroy()
             self._frame = None
-
+            
         self._gameTextBox = None
         
         self.removeNode()
         self.ignoreAll()
+        taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
         
+    def __del__(self):
+        if not self.__destroyed:
+            self.destroy()
+            
     def loopTask(self,task):
-        self.forward(False)
-        
-        return task.cont
+        '''
+        The task loop of StoryManager, trying to advance every task frame
+        '''
+        if not self.__destroyed:
+            self.forward(False)
+            return task.cont
+        else: return task.done
 
     def start(self,):
         
         self._frame = DirectFrame(parent = aspect2d)  # @UndefinedVariable pydev在傲娇而已不用管
         self._frame.setTransparency(TransparencyAttrib.MAlpha)
-        NodePath.attachNewNode(self,self._frame.node())
         self.accept('mouse1', self.clicked)
-        self._gameTextBox = GameTextBox(parent = self._frame,currentData = runtime_data.current_text)
-        self.loopTask = taskMgr.add(self.loopTask,'storyManagerLoop')  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
+        self._gameTextBox = GameTextBox(parent = self._frame,currentData = runtime_data.RuntimeData.current_text)
+        self.loopTask = taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
+        self.__destroyed = False
+        self._storyView = StoryView()
         
     def clicked(self):
         if self._gameTextBox:
@@ -110,8 +127,8 @@ class StoryManager(NodePath,DirectObject):
         '''
         #TODO: 还要添加循环的支持，用到runtime_data.command_stack来暂存需要回跳的命令组和回跳节点
         #TODO：添加对条件和选择的支持
-        if runtime_data.commands_in_queue:
-            self.processCommand(runtime_data.commands_in_queue.pop(0))
+        if runtime_data.RuntimeData.commands_in_queue:
+            self.processCommand(runtime_data.RuntimeData.commands_in_queue.pop(0))
             
 
 
@@ -158,7 +175,7 @@ class StoryManager(NodePath,DirectObject):
                     if temp[1] == 'apply':
                         self._gameTextBox.applyTextBoxProperties()
                     elif len(temp)>=3:
-                        self._gameTextBox.setTextBoxProperty(temp[1],eval(temp[2],runtime_data.script_space))
+                        self._gameTextBox.setTextBoxProperty(temp[1],eval(temp[2],runtime_data.RuntimeData.script_space))
                     else:
                         print('Not enough: ' + comm)
                 
@@ -201,7 +218,7 @@ class StoryManager(NodePath,DirectObject):
     def addScriptData(self,fileName):
         '''Load target .sogal script file and add it to the non-processed queue.
         '''
-        runtime_data.commands_in_queue.extend(loadScriptData(fileName))
+        runtime_data.RuntimeData.commands_in_queue.extend(loadScriptData(fileName))
     
 
 def loadScriptData(fileName):

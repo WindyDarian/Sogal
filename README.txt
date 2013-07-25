@@ -132,10 +132,7 @@ textbox apply 应用文本框属性的修改，会清空文本
 打字机效果外加线性框架！
 sreset 重置场景。停止音乐、移除所有立绘。用于初始化和场景切换
               隐藏UI、绘制黑色顶层画面
-sreset -Time -FileName 重置场景。以一定速度渐入某个到中间顶层图片，同时淡出音乐并移除立绘
-                                               隐藏UI                                         
-sstart -Time -SceneName 开始新场景 SceneName是场景名自取。在开始场景之前先用bgchange改变背景
-                                                然后就可以在Time的时间内淡去顶层图片
+sreset -Time -FileName 重置场景。以一定速度渐入到某个背景图片，移除所有图片
 audio -FileName    播放音频一次
 audio3d -FileName -Location 
 audiostop    停止当前所有audio播放的音效
@@ -151,11 +148,13 @@ wait -Time	等待直到队列中的下一行能够被执行 注意快速播放�
 mstop    立即停止当前音乐
 mstop -Time    淡出当前音乐，Time为淡出时间
 
-pic -PicKeyword -fileName -Location  在指定位置显示立绘 Location 0 0表示正中
+p -PicKeyword -fileName -Location  在指定位置显示立绘 Location 0 0表示正中
                                      1 1表示右上 注意除了Location都不能有空格
                                      -相同的Keyword会直接替换
-pic -PicKeyword -fileName 显示立绘，如果已存在，其会在当前位置用新图片替代
+p -PicKeyword -fileName 显示立绘，如果已存在，其会在当前位置用新图片替代
                          -否则绘制在正中
+
+                   
 ploc -PicKeyword -Location 改变立绘位置
 qp -fileName -Location   快速立绘！在进入下一个文本段时就会自动消失！
 pdel -PicKeyword  移除立绘

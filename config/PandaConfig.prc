@@ -8,7 +8,7 @@ audio-library-name null
 want-directtools #t
 want-tk #t
 
-window-title 温蒂达利安
+window-title Sogal
 
 win-size 1280 720
 

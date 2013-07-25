@@ -152,19 +152,29 @@ class StoryView(DirectObject):
         
         #FOR TEST
         plain = loader.loadModel("models/plain.egg")
-        plain.setTexture(loader.loadTexture(r'images/testc_dress1_normal.png'), 1)
+        plain.setTexture(loader.loadTexture(r'images/testc_dress2_normal.png'), 1)
         plain.reparentTo(self.fgNodePath)
         plain.setPos(0,0,0)
+        plain.setTransparency(1)
         
-        bplain = loader.loadModel("models/plain.egg")
+        plain = loader.loadModel("models/plain.egg")
+        plain.setTexture(loader.loadTexture(r'images/testc_dress1_normal.png'), 1)
+        plain.reparentTo(self.fgNodePath)
+        plain.setPos(5,20,0)
+        plain.setTransparency(1)
+        
+        bplain= loader.loadModel("models/plain.egg")
         bplain.setTexture(loader.loadTexture(r'images/testcg.png'), 1)
         bplain.reparentTo(self.bgNodePath)
-        bplain.setPos(0,0,0)
+        bplain.setPos(0,0,-1)
         bplain.setScale(16/9.0,1,1)
         bplain.setTransparency(1)
-#         plain.setScale(1)
-#         plain.setTransparency(1)
-        #self.setGameBackgroundImage('textures/pppp.jpg')
+        
+        d3 = loader.loadModel("models/environment")
+        #bplain.setTexture(loader.loadTexture(r'images/testcg.png'), 1)
+        d3.reparentTo(self.vNodePath)
+        d3.setPos(-8,42,-1)
+        d3.setScale(0.25)
     
     def _adjustAspectRatio(self,arg):
         if self.camera:

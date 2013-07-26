@@ -41,7 +41,7 @@ from direct.task import Task
 from game_text_box import GTBI
 from game_text_box import GameTextBox
 from game_entities import StoryCommand
-from story_view import StoryView
+from story_view import StoryView,StoryViewItemEntry,SVIC
 
 import runtime_data
 
@@ -52,8 +52,8 @@ class StoryManager(DirectObject):
     Mainly for logic control
     And graphics is on other  
     Attributes:
-    _frame: main DirectFrame of the StoryManager 
-    _textFont: the font for testing information
+    gameTextBox: the current GameTextBox, useful for user scripting
+    storyView: the current StoryView, useful for user scripting
     """
     
 
@@ -77,7 +77,7 @@ class StoryManager(DirectObject):
             self._frame.destroy()
             self._frame = None
             
-        self._gameTextBox = None
+        self.gameTextBox = None
         
         self.removeNode()
         self.ignoreAll()
@@ -101,14 +101,15 @@ class StoryManager(DirectObject):
         self._frame = DirectFrame(parent = aspect2d)  # @UndefinedVariable pydev在傲娇而已不用管
         self._frame.setTransparency(TransparencyAttrib.MAlpha)
         self.accept('mouse1', self.clicked)
-        self._gameTextBox = GameTextBox(parent = self._frame,currentData = runtime_data.RuntimeData.current_text)
+        self.gameTextBox = GameTextBox(parent = self._frame,currentData = runtime_data.RuntimeData.current_text)
+        self.storyView = StoryView()
         self.loopTask = taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
-        self.__destroyed = False
-        self._storyView = StoryView()
+        
+        
         
     def clicked(self):
-        if self._gameTextBox:
-            self._gameTextBox.input(GTBI.DEFAULT)
+        if self.gameTextBox:
+            self.gameTextBox.input(GTBI.DEFAULT)
 
     def forward(self,is_user = False):
         '''run nextCommand() or finish current operations quickly
@@ -116,7 +117,7 @@ class StoryManager(DirectObject):
         '''
         textbox_ready = False
         
-        if not self._gameTextBox.getIsWaiting():
+        if not self.gameTextBox.getIsWaiting():
             textbox_ready = True
             
         if textbox_ready:     #And other readies
@@ -162,22 +163,100 @@ class StoryManager(DirectObject):
         
                 #改变文本框格式命令
                 elif comm.startswith('textboxstyle '):
-                    if self._gameTextBox:
-                        self._gameTextBox.setTextBoxStyle(spaceCutter.split(comm, 1)[1])
+                    if self.gameTextBox:
+                        self.gameTextBox.setTextBoxStyle(spaceCutter.split(comm, 1)[1])
                 
                 #文本框分段命令
                 elif comm == 'p':
-                    if self._gameTextBox:
-                        self._gameTextBox.paragraphSparator()
-                        
+                    if self.gameTextBox:
+                        self.gameTextBox.paragraphSparator()
+                
+                #文本框属性设置命令
                 elif comm.startswith('textbox '):
                     temp = spaceCutter.split(comm,2)
                     if temp[1] == 'apply':
-                        self._gameTextBox.applyTextBoxProperties()
+                        self.gameTextBox.applyTextBoxProperties()
                     elif len(temp)>=3:
-                        self._gameTextBox.setTextBoxProperty(temp[1],eval(temp[2],runtime_data.RuntimeData.script_space))
+                        self.gameTextBox.setTextBoxProperty(temp[1],eval(temp[2],runtime_data.RuntimeData.script_space))
                     else:
                         print('Not enough: ' + comm)
+                        
+                #背景设置命令
+                elif comm.startswith('bg '):
+                    temp = spaceCutter.split(comm,2)
+                    if len(temp) >= 3:
+                        fadein = eval(temp(2))
+                    else: fadein = 0
+                    svie = StoryViewItemEntry('__bg__',temp[1],SVIC.BG,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = fadein)
+                    self.storyView.newItem(svie)
+                
+                #图片显示命令
+                elif comm.startswith('p '):
+                    temp = spaceCutter.split(comm,6)
+                    if len(temp) >= 7:
+                        fadein = eval(temp[6])
+                    else:
+                        fadein = 0
+                    if len(temp) >= 6:
+                        scale = eval(temp[5])
+                    else:
+                        scale = 1
+                    if len(temp) >= 5:
+                        location = (eval(temp[3]),0,eval(temp[4]))
+                    else:
+                        if self.storyView.itemEntries.has_key(temp[1]):
+                            location = self.storyView.itemEntries[temp[1]].pos
+                        else: location = (0,0,0)
+                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.FG,pos = location,scale = (scale,scale,scale),color = (1,1,1,1),fadein = fadein)
+                    self.storyView.newItem(svie)
+                    
+                elif comm.startswith('pdel '):
+                    temp = spaceCutter.split(comm,1)
+                    self.storyView.deleteItem(temp[1])
+                    
+                elif comm.startswith('ploc '):
+                    temp = spaceCutter.split(comm,4)
+                    if len(temp) >= 5:
+                        location =  (eval(temp[2]),eval(temp[3]),eval(temp[4]))
+                    else:
+                        location =  (eval(temp[2]),0,eval(temp[3]))
+                    self.storyView.changePosColorScale(temp[1], pos = location)
+                    
+                elif comm.startswith('pcolor '):
+                    temp = spaceCutter.split(comm,5)
+                    color = (eval(temp[2]),eval(temp[3]),eval(temp[4]),eval(temp[5]))
+                    self.storyView.changePosColorScale(temp[1], color = color)
+                    
+                elif comm.startswith('pscale '):
+                    temp = spaceCutter.split(comm,4)
+                    if len(temp) >= 4:
+                        scale = (eval(temp[2]),eval(temp[3]),eval(temp[4]))
+                    else: scale = (eval(temp[2]),eval(temp[2]),eval(temp[2]))
+                    self.storyView.changePosColorScale(temp[1], scale = scale)
+                
+                elif comm.startswith('o3d '):
+                    temp = spaceCutter.split(comm)
+                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.O3D,pos = (eval(temp[3]),eval(temp[4]),eval(temp[5]))
+                                              ,scale = (eval(temp[10]),eval(temp[11]),eval(temp[12])),color = (eval(temp[6]),eval(temp[7]),eval(temp[8]),eval(temp[9])))
+                    self.storyView.newItem(svie)
+                
+                elif comm.startswith('o2d '):
+                    temp = spaceCutter.split(comm)
+                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.O2D,pos = (eval(temp[3]),eval(temp[4]),eval(temp[5]))
+                                              ,scale = (eval(temp[10]),eval(temp[11]),eval(temp[12])),color = (eval(temp[6]),eval(temp[7]),eval(temp[8]),eval(temp[9])))
+                    self.storyView.newItem(svie)
+                    
+                elif comm.startswith('pa '):
+                    temp = spaceCutter.split(comm)
+                    if len(temp) >= 8:
+                        fadein = temp[7]
+                    else: fadein = 0
+                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.AFG,pos = (eval(temp[3]),0,eval(temp[4]))
+                                              ,scale = (eval(temp[5]),1,eval(temp[6])),fadein = 0)
+                    self.storyView.newItem(svie)
+                
+                elif comm == 'vclear':
+                    self.storyView.clear()
                 
                 else: 
                     print('Undefined Sogal command: ' + comm)
@@ -212,7 +291,7 @@ class StoryManager(DirectObject):
                         text += translate(item) + '\n'
                     
         if text and not is_script:
-            self._gameTextBox.pushText(text = text, speaker = name, continuous = continuous)
+            self.gameTextBox.pushText(text = text, speaker = name, continuous = continuous)
         
         
     def addScriptData(self,fileName):

@@ -70,7 +70,9 @@ class _RuntimeData(object):
     current_text = [None,None]
     
     #The python space of the script
-    script_space = {}
+    script_space = {
+                    
+                    }
     
     
 
@@ -79,6 +81,8 @@ RuntimeData = _RuntimeData()
 
 def saveData(fileName):
     ''''''
+    if RuntimeData.script_space.has_key('storyManager'):
+        del RuntimeData.script_space['storyManager']
     pass
     
 def saveSettings(fileName):

@@ -105,6 +105,10 @@ Jul 23, 2013
 别的系统可能不认
 （嘛窝这边是Visual Studio和Eclipse都用的
 
+关于资源的放置：
+图片（背景、立绘、CG）应以png24形式放在images中
+anm 播放的panda3D egg格式2d动画也应放在images中
+所有声音相关资源在audio中
 
 备忘：
 转义符
@@ -124,15 +128,30 @@ name = -Name    设置名字 可以有空格
 name -Name   设置名字 可以有空格
 文本段中开头-Name: 或-Name：（中文冒号）  设置名字的简化形式
 textboxstyle normal/large 改变文本框格式，会清空文本
-p 格式中用来清空已有字符 ，large文本框用
+p 格式中用来清空已有字符 ，large文本框用,注意和显示图片的p的区别是它不带任何参数
 textbox -propname -content 改变文本框属性，content可以有空格，会在脚本命名空间中eval计算(也就是如果是字符串要加引号)，参考game_text_box.py中GameTextBox.properties
 textbox apply 应用文本框属性的修改，会清空文本
 
+p -key -fileName -x -z (-s) (-fadein)  在指定位置显示立绘位置 0 0表示正中
+                                     1 1表示右上 注意除了Location都不能有空格
+                                     -相同的Keyword会直接替换 也可以有三个数字代表x y z
+                                   
+p -key -fileName 显示立绘，如果已存在，其会在当前位置用新图片替代
+                         -否则绘制在正中
+bg -FileName  立即改变背景
+ploc -key -x -z 改变立绘位置 Location应该是两个数字 x z（或是3个x y z）
+pcolor -key -r -g -b -a  rgba范围都在0到1
+pscale -key -s 缩放
+pdel -key  移除立绘
+vclear 重置场景。移除所有立绘，将背景设置为黑色。用于初始化和场景切换
+o3d -key -fileName -x -y -z -r -g -b -a -sx -sy -sz 显示3D模型，x轴向由 y轴向屏幕内 z轴向上 大小自己看着办吧
+o2d -key -fileName -x -y -z -r -g -b -a -sx -sy -sz 在3D中显示2D图片
+pa -key -fileName -x -z -sx -sy (-f) 显示egg动画在前景注意动画要手动缩放宽高比
+
 未实现（加#表示暂不忙实现）：
 打字机效果外加线性框架！
-sreset 重置场景。停止音乐、移除所有立绘。用于初始化和场景切换
-              隐藏UI、绘制黑色顶层画面
-sreset -Time -FileName 重置场景。以一定速度渐入到某个背景图片，移除所有图片
+vclear -Time 重置场景。在一定时间内淡出到黑色
+vclear -Time -bgFileName重置场景。以一定速度渐入到某个背景图片，移除所有场景
 audio -FileName    播放音频一次
 audio3d -FileName -Location 
 audiostop    停止当前所有audio播放的音效
@@ -147,21 +166,9 @@ voice3d -FileName -Location 3d语音
 wait -Time	等待直到队列中的下一行能够被执行 注意快速播放和人工操作能够打破等待状态
 mstop    立即停止当前音乐
 mstop -Time    淡出当前音乐，Time为淡出时间
-
-p -PicKeyword -fileName -Location  在指定位置显示立绘 Location 0 0表示正中
-                                     1 1表示右上 注意除了Location都不能有空格
-                                     -相同的Keyword会直接替换
-p -PicKeyword -fileName 显示立绘，如果已存在，其会在当前位置用新图片替代
-                         -否则绘制在正中
-
-                   
-ploc -PicKeyword -Location 改变立绘位置
+bg -FileName -Time 交叉淡入淡出改变背景   
 qp -fileName -Location   快速立绘！在进入下一个文本段时就会自动消失！
-pdel -PicKeyword  移除立绘
 pclear 移除所有立绘
-bg -FileName  改变背景
-bg -FileName -Time 交叉淡入淡出改变背景
-
 load -FileName 读取sogal场景脚本文件并添加到事件队列
 script   表示接下来的文本段是python脚本（注意其中不能有空行）
 script -FileName 运行python脚本文件

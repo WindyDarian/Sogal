@@ -1,0 +1,47 @@
+@bg testbg
+温蒂达莉安：
+「绕了好大的弯路的说……」
+
+@p zz testc_dress1_normal
+温蒂达莉安：
+「嘛屏幕上那家伙不是窝，窝的画风才没有那么糟糕（逃」
+
+@p zz testc_dress2_normal 0.33 0.33
+温蒂达莉安：「喵」
+
+@p zz boss
+温蒂达莉安：「喵喵」
+
+@vclear,p zz Lucifer 0.33 0.33 2
+温蒂达莉安：「术式发动！VCLEAR！」
+
+@bg pppp.jpg
+温蒂达莉安：「嘛这背景尺寸不对」
+
+@pscale __bg__ 16/9.0 1 1
+温蒂达莉安：「现在对了」
+
+@pcolor zz 0.2/255 0.75 1 0.5
+温蒂达莉安：「颜色设置」
+
+@pscale zz 2
+温蒂达莉安：「缩放」
+
+@ploc zz -1 0
+温蒂达莉安：「位置」
+
+@vclear, bg testbg
+温蒂达莉安：「窝清」
+
+@pa arrow text_arrow/text_arrow 1 0 1 2 2
+温蒂达莉安：「用panda3d自带的工具打包的动画箭头的说……
+要不要试一试加一只Panda3D的熊猫上去呢……」
+
+@o3d bamboo models/environment -8 42 -1 1 1 1 1 0.25 0.25 0.25,o2d cha Lucifer 5 15 0 1 1 1 1 1 1 1
+温蒂达莉安：「熊猫不在！」
+
+温蒂达莉安：「测试完毕！」
+
+温蒂达莉安：「岂可休淡入淡出还没有实现!今天就到这里吧……」
+
+温蒂达莉安：「那么各位，辛苦了！」

@@ -43,6 +43,7 @@ class SogalEntry(ShowBase):
         ShowBase.__init__(self)
         self.cam2dp.node().getDisplayRegion(0).setSort(-20)  #Set render2dp to background
         self.disableMouse() #Disable panda3d's default mouse control
+        self.cam.node().getDisplayRegion(0).setActive(0) #disable default camera
         
         #背景设置
         self.setBackgroundColor(0,0,0,1); 
@@ -50,24 +51,10 @@ class SogalEntry(ShowBase):
         
         self.storyManager = StoryManager();
         self.storyManager.start();
-        self.storyManager.addScriptData('test0')
+        self.storyManager.addScriptData('imagetest')
         
-        self.cam.node().getDisplayRegion(0).setActive(0)
         
-#         plain = loader.loadModel("models/plain.egg")
-#         cam = self.makeCamera(self.win)
-#         lens = PerspectiveLens()
-#         lens.setAspectRatio(16/9.0)
-#         lens.setNear(1)
-#         lens.setFilmSize(2,2)
-#         cam.node().setLens(lens)
-#         #plain = loader.loadModel("models/plane2.egg")
-#         plain.setTexture(loader.loadTexture(r'images/pppp.jpg'), 1)
-#         plain.reparentTo(cam)
-#         plain.setPos(0,1.1,0)
-#         plain.setScale(1)
-#         plain.setTransparency(1)
-#         self.setGameBackgroundImage('images/pppp.jpg')
+        
         
     def setGameBackgroundImage(self,path):
         "设置背景图片"

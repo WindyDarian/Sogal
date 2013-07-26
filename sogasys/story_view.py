@@ -27,6 +27,8 @@ import math
 
 from panda3d.core import *
 from direct.showbase.DirectObject import DirectObject
+from direct.gui.OnscreenImage import OnscreenImage
+from direct.stdpy.file import exists
 
 import runtime_data
 
@@ -38,6 +40,11 @@ class SVIC(object):
     BG = 1
     #That indicates a 3d model to be added to vNodePath
     O3D = 2
+    #That indicates an egg 2d animation to be added to fgNodePath
+    AFG = 3
+    #That indicates an 2d image to be added to pNodePath
+    O2D = 4
+    #That indicates an 2d image but to be added to vNodePath
 
 class StoryViewItemEntry(object):
     '''
@@ -55,8 +62,22 @@ class StoryViewItemEntry(object):
     
     key = 'Windy'    #And key '__bg__' is for SOGAL script background
     
+    fadein = 0
+    
+    #TODO: 实现带遮罩效果的淡入？
+    
+    def __init__(self,key,fileName,category,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = 0):
+        self.key = key
+        self.fileName = fileName
+        self.category = category
+        self.pos = pos
+        self.scale = scale
+        self.color = color
+        self.fadein = fadein
+        
+    
 
-class StoryView(DirectObject):
+class StoryView(DirectObject, NodePath):
     '''
     The display view of StoryManager 
     It is going to support both a 2D and a 3D view.In fact it has a 3D perspective
@@ -81,31 +102,16 @@ class StoryView(DirectObject):
                  'bg_distance': 5000,    #bgNodePath distance
                  }
     
-    
-    
-    
     itemEntries = {}   
+    
+    _sceneItems = None
 
     def __init__(self,sort = 20,*args,**kwargs):
         '''
         Constructor
         '''
-#         self.displayRegion = base.win.makeDisplayRegion()
-#         self.displayRegion.setSort(20)
-#  
-#         self.camera = NodePath(Camera('myCam2d'))
-#         lens = OrthographicLens()
-#         lens.setFilmSize(2, 2)
-#         lens.setNearFar(-1000, 1000)
-#         self.camera.setLens(lens)
-#  
-#         self.viewRender = NodePath('myRender2d')
-#         self.camera.reparentTo(myRender2d)
-#         self.displayRegion.setCamera(myCamera2d)
-     
-        self.fgNodePath = None
-        self.bgNodePath = None 
-        self.vNodePath = None
+        NodePath.__init__(self,'story_view')
+        self.reparentTo(render)
         
         #sync properties and items link with runtime_data
         if runtime_data.RuntimeData.story_view_properties:  
@@ -116,65 +122,126 @@ class StoryView(DirectObject):
             self.itemEntries = runtime_data.RuntimeData.story_view_itementries
         else: runtime_data.RuntimeData.story_view_itementries = self.itemEntries
         
-        self.construct()
-        
-        
-    def construct(self):
-        if self.fgNodePath:
-            self.fgNodePath.removeNode()
-        if self.bgNodePath:
-            self.bgNodePath.removeNode()
-        if self.vNodePath:
-            self.vNodePath.removeNode()
-        
-        self.fgNodePath = NodePath('svfg') 
-        self.fgNodePath.reparentTo(render)
-        self.bgNodePath = NodePath('svbg') 
-        self.bgNodePath.reparentTo(render)
-        self.vNodePath =  NodePath('sv3d') 
-        self.vNodePath.reparentTo(render)
-        
-        #plain = loader.loadModel("models/plain.egg")  # @UndefinedVariable  DON'T DO THAT PYDEV!
+        self.__destroyed = False
+        self.fgNodePath = None
+        self.bgNodePath = None 
+        self.vNodePath = None
+        self._sceneItems = {}
         
         self.camera = base.makeCamera(base.win)  # @UndefinedVariable 死傲娇PyDev
         self.lens = PerspectiveLens()
+        self.reload()
+        self.accept('window-event', self._adjustAspectRatio) # if window is resized then we need to adjuest the aspect ratio
+        
+        
+        '''    #TEST
+        d3 = loader.loadModel("models/environment")
+        d3.reparentTo(self.vNodePath)
+        d3.setPos(-8,42,-1)
+        d3.setScale(0.25)
+        d3.setTransparency(1)
+ 
+        
+        self.newItem(StoryViewItemEntry('zz','testc_dress1_normal',SVIC.FG, pos = (0.33,0,0)))
+        self.newItem(StoryViewItemEntry('zz','testc_dress2_normal',SVIC.FG, pos = (-0.33,0,-0.2),color = (1,1,1,0.5)))
+        self.newItem(StoryViewItemEntry('zz2','testc_dress1_normal',SVIC.O2D, pos = (0,10,0),color = (1,1,1,0.6)))
+        self.newItem(StoryViewItemEntry('arrow','text_arrow/text_arrow',SVIC.O3D,pos = (0,1.5,0)))
+        self.newItem(StoryViewItemEntry('__bg__','testbg',SVIC.BG))
+        '''
+        
+    def reload(self):
+        '''reload the properties and the items and the camera'''
+        self._resetNode()
+        for key in self.itemEntries:
+            self._createItem(self.itemEntries[key], ignore_fadein = true)
+            
         self.lens.setMinFov(self.properties['minfov'])
         self.lens.setNearFar(self.properties['near_plane'],self.properties['far_plane'])
         self.lens.setAspectRatio(base.getAspectRatio())  # @UndefinedVariable
         self.camera.node().setLens(self.lens)
-        self.accept('window-event', self._adjustAspectRatio) # if window is resized then we need to adjuest the aspect ratio
-
       
         self.fgNodePath.setPos(0,self.properties['fg_distance'],0)
         self.bgNodePath.setPos(0,self.properties['bg_distance'],0)
         self._calculateScale()
+            
+    def newItem(self, entry):
+        '''Create an item according to given item entry and add it to itemEntries'''
+
+        self.itemEntries[entry.key] = entry
+        self._createItem(entry)
         
+    def deleteItem(self,key):
+        '''Delete an item from StoryView'''
+        del self.itemEntries[key]
+        self._sceneItem[key].removeNode()
+        del self.sceneItem[key]
         
-        #FOR TEST
-        plain = loader.loadModel("models/plain.egg")
-        plain.setTexture(loader.loadTexture(r'images/testc_dress2_normal.png'), 1)
-        plain.reparentTo(self.fgNodePath)
-        plain.setPos(0,0,0)
-        plain.setTransparency(1)
+            
+    def _createItem(self, entry, ignore_fadein = False):
+        '''Create an item(not including adding this to itemEntries)'''
+        if self._sceneItems.has_key(entry.key):
+            self._sceneItems[entry.key].removeNode()
+            del self._sceneItems[entry.key]
+        #TODO: Simple fadein support  (load entry.fadein) 嘛很简单只要加Interval控制就行了但是等心情好的时候再说……
+        item = None
+        if entry.category == SVIC.FG or entry.category == SVIC.BG or entry.category == SVIC.O2D:
+            try:
+                texture = loader.loadTexture(r'images/'+entry.fileName+r'.png')
+            except:
+                texture = loader.loadTexture(r'images/'+entry.fileName)
+                
+            '''Alternative
+            item = loader.loadModel(r"models/plain.egg")
+            item.setTexture(texture, 1)
+            item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
+            item.setScale(entry.scale[0]*texture.getOrigFileXSize()/float(texture.getOrigFileYSize()),entry.scale[1],entry.scale[2])  #Always make its height fill the screen normally
+            item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            '''
+
+            item = OnscreenImage(texture)
+            item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
+            item.setScale(entry.scale[0]*texture.getOrigFileXSize()/float(texture.getOrigFileYSize()),entry.scale[1],entry.scale[2])  #Always make its height fill the screen normally
+            item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            item.setName(entry.key)
+            
+            if entry.category == SVIC.FG:
+                item.reparentTo(self.fgNodePath)
+            elif entry.category == SVIC.BG:
+                item.reparentTo(self.bgNodePath)
+            elif entry.category == SVIC.O2D:
+                item.reparentTo(self.vNodePath)
+            
+        elif entry.category == SVIC.AFG:
+            item = loader.loadModel(r'images/'+entry.fileName)
+            item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
+            item.setScale(entry.scale)  #For generated egg animation with "egg-texture-cards" is a 1x1 rectangle by default
+            item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            item.setTransparency(1)
+            item.setName(entry.key)
+            item.reparentTo(self.fgNodePath)
+            #item.setBin("unsorted", 0)
+
+            
+        elif entry.category == SVIC.O3D:
+            try:
+                item = loader.loadModel(r'models/'+entry.fileName)
+            except: 
+                try:
+                    item = loader.loadModel(r'images/'+entry.fileName)
+                except:
+                    item = loader.loadModel(entry.fileName)
+            item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
+            item.setScale(entry.scale)  #For generated egg animation with "egg-texture-cards" is a 1x1 rectangle by default
+            item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            item.setTransparency(1)
+            item.setName(entry.key)
+            item.reparentTo(self.vNodePath)
+            
+  
+            
+        if item:
+            self._sceneItems[entry.key] = item
         
-        plain = loader.loadModel("models/plain.egg")
-        plain.setTexture(loader.loadTexture(r'images/testc_dress1_normal.png'), 1)
-        plain.reparentTo(self.fgNodePath)
-        plain.setPos(5,20,0)
-        plain.setTransparency(1)
-        
-        bplain= loader.loadModel("models/plain.egg")
-        bplain.setTexture(loader.loadTexture(r'images/testcg.png'), 1)
-        bplain.reparentTo(self.bgNodePath)
-        bplain.setPos(0,0,-1)
-        bplain.setScale(16/9.0,1,1)
-        bplain.setTransparency(1)
-        
-        d3 = loader.loadModel("models/environment")
-        #bplain.setTexture(loader.loadTexture(r'images/testcg.png'), 1)
-        d3.reparentTo(self.vNodePath)
-        d3.setPos(-8,42,-1)
-        d3.setScale(0.25)
     
     def _adjustAspectRatio(self,arg):
         if self.camera:
@@ -183,7 +250,7 @@ class StoryView(DirectObject):
     
 
     def destroy(self):
-        
+        self.__destroyed = True
         #Destroy the camera
         dr = self.camera.node().getDisplayRegion(0)
         base.win.removeDisplayRegion(dr)  # @UndefinedVariable 死傲娇PyDev
@@ -193,13 +260,73 @@ class StoryView(DirectObject):
         if self.vNodePath: self.vNodePath.removeNode()
         self.ignoreAll()
         
+        self._sceneItems = None
+        
+    def __del__(self):
+        if not self.__destroyed:
+            self.destroy()
+        
+    def _resetNode(self):
+        if self.fgNodePath:
+            self.fgNodePath.removeNode()
+        if self.bgNodePath:
+            self.bgNodePath.removeNode()
+        if self.vNodePath:
+            self.vNodePath.removeNode()
+        
+        self.vNodePath =  NodePath('sv3d') 
+        self.vNodePath.reparentTo(self,2) 
+        self.vNodePath.setTransparency(TransparencyAttrib.MMultisample)
+         
+        
+        self.fgNodePath = NodePath('svfg') 
+        self.fgNodePath.reparentTo(self,3)
+        self.fgNodePath.setTransparency(TransparencyAttrib.MAlpha)
+        self.fgNodePath.setBin("fixed", 40)
+        self.fgNodePath.setDepthTest(False)
+        self.fgNodePath.setDepthWrite(False)
+        #self.fgNodePath.setAttrib(AlphaTestAttrib.make(RenderAttrib.MLess,0.25))
+ 
+        self.bgNodePath = NodePath('svbg') 
+        self.bgNodePath.reparentTo(self,1)
+        self.bgNodePath.setTransparency(TransparencyAttrib.MAlpha)
+        self.bgNodePath.setDepthTest(False)
+        self.bgNodePath.setDepthWrite(False)
+        self.bgNodePath.setBin("background",10)
+        
+        self._sceneItems = {}
+        
     def _calculateScale(self):
+        
         rfov = math.radians(self.properties['minfov']) 
         fg = self.properties['fg_distance']
         bg = self.properties['bg_distance']
         scaleo = math.tan(rfov/2)
         self.fgNodePath.setScale(fg*scaleo)
         self.bgNodePath.setScale(bg*scaleo)
+        self.__distanceScale2D = scaleo
+        
+    def changePosColorScale(self,key,pos = None,color = None, scale = None):
+        '''Change an item's position, color, and/or scale. 
+        params should be lists having a length of 3 (pos, scale) or 4 (color) floats
+        '''
+        if pos:
+            self.itemEntries[key].pos = pos
+            self._sceneItems[key].setPos(pos)
+        if color:
+            self.itemEntries[key].color = color
+            self._sceneItems[key].setColor(color)
+        if scale:
+            self.itemEntries[key].scale = scale
+            self._sceneItems[key].setScale(self._sceneItems[key].getSx()*scale[0],self._sceneItems[key].getSy()*scale[1],self._sceneItems[key].getSz()*scale[2])
+        #TODO 缩放要加参数和物体类型的判断
+            
+    def clear(self):
+        self.itemEntries.clear()
+        self.reload()
+    
+        
+        
         
     
         

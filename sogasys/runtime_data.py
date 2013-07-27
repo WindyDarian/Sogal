@@ -38,11 +38,14 @@ Created on 2013年7月19日
 # @staticlike_singleton
 
 #game settings, this saves in a game_settings.sogdat file
-game_settings = {'text_speed':20, #文字速度
-                 'aspect_ratio' :16/9.0, #游戏画面的宽高比
-                 'full_screen' :True,    #TODO:use it
-                 'full_screen_resolution': (1280,720),  #TODO: use it
-                 'default_window_resolution': (1280,720),   #TODO: use it
+game_settings = {'text_speed': 20, #文字速度
+                 'aspect_ratio': 16/9.0, #游戏画面的宽高比
+                 'full_screen': True,    #TODO:use it
+                 'screen_resolution': (1280,720),  #TODO: use it
+                 'music_volume': 0.75,
+                 'env_volume': 0.75,
+                 'sfx_volume': 1,
+                 'voice_volume': 1,
                 }
 
 

@@ -40,7 +40,6 @@ from direct.task import Task
 
 from game_text_box import GTBI
 from game_text_box import GameTextBox
-from game_entities import StoryCommand
 from story_view import StoryView,StoryViewItemEntry,SVIC
 
 import runtime_data
@@ -50,6 +49,11 @@ sogalscrtypes = ['.sogal','']
 
 pscriptpathes = ['scenes/','scenes/scripts/','']
 pscriptpathes = ['.py','']
+
+
+
+
+        
 
 class StoryManager(DirectObject):
     """Story controller of Sogal
@@ -149,11 +153,17 @@ class StoryManager(DirectObject):
             '''
             return t.replace(ur'\:', ur':').replace(ur'\：',ur'：').replace(ur'\#',ur'#')
         
+        def seval(str):
+            return eval(str,runtime_data.RuntimeData.script_space)
+        
         name = ''
         text = ''
         continuous = False
         is_script = False
         spaceCutter = self.__spaceCutter
+        
+
+            
         
         #read command line
         if command.command:
@@ -182,7 +192,7 @@ class StoryManager(DirectObject):
                     if temp[1] == 'apply':
                         self.gameTextBox.applyTextBoxProperties()
                     elif len(temp)>=3:
-                        self.gameTextBox.setTextBoxProperty(temp[1],eval(temp[2],runtime_data.RuntimeData.script_space))
+                        self.gameTextBox.setTextBoxProperty(temp[1],seval(temp[2]))
                     else:
                         print('Not enough: ' + comm)
                         
@@ -190,7 +200,7 @@ class StoryManager(DirectObject):
                 elif comm.startswith('bg '):
                     temp = spaceCutter.split(comm,2)
                     if len(temp) >= 3:
-                        fadein = eval(temp(2))
+                        fadein = seval(temp(2))
                     else: fadein = 0
                     svie = StoryViewItemEntry('__bg__',temp[1],SVIC.BG,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = fadein)
                     self.storyView.newItem(svie)
@@ -199,15 +209,15 @@ class StoryManager(DirectObject):
                 elif comm.startswith('p '):
                     temp = spaceCutter.split(comm,6)
                     if len(temp) >= 7:
-                        fadein = eval(temp[6])
+                        fadein = seval(temp[6])
                     else:
                         fadein = 0
                     if len(temp) >= 6:
-                        scale = eval(temp[5])
+                        scale = seval(temp[5])
                     else:
                         scale = 1
                     if len(temp) >= 5:
-                        location = (eval(temp[3]),0,eval(temp[4]))
+                        location = (seval(temp[3]),0,seval(temp[4]))
                     else:
                         if self.storyView.itemEntries.has_key(temp[1]):
                             location = self.storyView.itemEntries[temp[1]].pos
@@ -222,33 +232,33 @@ class StoryManager(DirectObject):
                 elif comm.startswith('ploc '):
                     temp = spaceCutter.split(comm,4)
                     if len(temp) >= 5:
-                        location =  (eval(temp[2]),eval(temp[3]),eval(temp[4]))
+                        location =  (seval(temp[2]),seval(temp[3]),seval(temp[4]))
                     else:
-                        location =  (eval(temp[2]),0,eval(temp[3]))
+                        location =  (seval(temp[2]),0,seval(temp[3]))
                     self.storyView.changePosColorScale(temp[1], pos = location)
                     
                 elif comm.startswith('pcolor '):
                     temp = spaceCutter.split(comm,5)
-                    color = (eval(temp[2]),eval(temp[3]),eval(temp[4]),eval(temp[5]))
+                    color = (seval(temp[2]),seval(temp[3]),seval(temp[4]),seval(temp[5]))
                     self.storyView.changePosColorScale(temp[1], color = color)
                     
                 elif comm.startswith('pscale '):
                     temp = spaceCutter.split(comm,4)
                     if len(temp) >= 4:
-                        scale = (eval(temp[2]),eval(temp[3]),eval(temp[4]))
-                    else: scale = (eval(temp[2]),eval(temp[2]),eval(temp[2]))
+                        scale = (seval(temp[2]),seval(temp[3]),seval(temp[4]))
+                    else: scale = (seval(temp[2]),seval(temp[2]),seval(temp[2]))
                     self.storyView.changePosColorScale(temp[1], scale = scale)
                 
                 elif comm.startswith('o3d '):
                     temp = spaceCutter.split(comm)
-                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.O3D,pos = (eval(temp[3]),eval(temp[4]),eval(temp[5]))
-                                              ,scale = (eval(temp[10]),eval(temp[11]),eval(temp[12])),color = (eval(temp[6]),eval(temp[7]),eval(temp[8]),eval(temp[9])))
+                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.O3D,pos = (seval(temp[3]),seval(temp[4]),seval(temp[5]))
+                                              ,scale = (seval(temp[10]),seval(temp[11]),seval(temp[12])),color = (seval(temp[6]),seval(temp[7]),seval(temp[8]),seval(temp[9])))
                     self.storyView.newItem(svie)
                 
                 elif comm.startswith('o2d '):
                     temp = spaceCutter.split(comm)
-                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.O2D,pos = (eval(temp[3]),eval(temp[4]),eval(temp[5]))
-                                              ,scale = (eval(temp[10]),eval(temp[11]),eval(temp[12])),color = (eval(temp[6]),eval(temp[7]),eval(temp[8]),eval(temp[9])))
+                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.O2D,pos = (seval(temp[3]),seval(temp[4]),seval(temp[5]))
+                                              ,scale = (seval(temp[10]),seval(temp[11]),seval(temp[12])),color = (seval(temp[6]),seval(temp[7]),seval(temp[8]),seval(temp[9])))
                     self.storyView.newItem(svie)
                     
                 elif comm.startswith('pa '):
@@ -256,8 +266,8 @@ class StoryManager(DirectObject):
                     if len(temp) >= 8:
                         fadein = temp[7]
                     else: fadein = 0
-                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.AFG,pos = (eval(temp[3]),0,eval(temp[4]))
-                                              ,scale = (eval(temp[5]),1,eval(temp[6])),fadein = 0)
+                    svie = StoryViewItemEntry(temp[1],temp[2],SVIC.AFG,pos = (seval(temp[3]),0,seval(temp[4]))
+                                              ,scale = (seval(temp[5]),1,seval(temp[6])),fadein = 0)
                     self.storyView.newItem(svie)
                 
                 elif comm == 'vclear':
@@ -304,7 +314,42 @@ class StoryManager(DirectObject):
         '''
         runtime_data.RuntimeData.commands_in_queue.extend(loadScriptData(fileName))
   
-
+class StoryCommand(object):
+    ''' A command (or one paragraph) of the script file
+    divided into a command section (after @ in one line) and a
+    text section (just below the command section without any empty lines)
+    A StoryCommand can have a command section only, or a text section only
+    啊用双语好麻烦而且大地的英语好烂嘛反正无所谓总之就是这样
+    包含一个command和一个text\
+    嘛干脆用中文举个例好了……
+    比如
+    # @name 裸燃, pic 1 lr_naked_burn.png
+    #「为什么又拿我当示范」
+    中，"name 裸燃, pic 1 lr_naked_burn.png"是command section
+    「为什么又拿我当示范」是text section
+    另外在特殊请况 
+    # @pic 1 lr_naked_burn.png
+    # 裸燃：「为什么又拿我当示范」
+    中，command section 依然是"pic 1 lr_naked_burn.png"
+    在text_section中写入的说话者仍然放在text section中由StoryManager处理
+    
+    Attributes:
+        command: A string indicates the command section (@ symbol excluded)
+        text: A string indicates the text section
+    '''
+    command = None
+    text = None
+    
+    def __init__(self, command = None, text = None):
+        '''
+        @param command: A string indicates the command section
+        @param text: A string indicates the text section
+        '''
+        self.command = command
+        self.text = text
+        
+    def __repr__(self):
+        return 'command: ' + str(self.command) + '\ntext: ' + str(self.text) + '\n\n'
 
 def loadScriptData(fileName):
     '''Load the sogal script file (.sogal) 

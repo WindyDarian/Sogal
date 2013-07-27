@@ -24,7 +24,6 @@ SOGAL(七海美少女游戏引擎, Seven Ocean Galgame Engine)的主入口点，
 @author: 大地无敌
 '''
 from sogal_base import SogalBase
-from sogasys.story_manager import StoryManager
 
  
 class SogalEntry(SogalBase): 
@@ -33,9 +32,6 @@ class SogalEntry(SogalBase):
     def __init__(self):
         SogalBase.__init__(self)
         self.storyManager.addScriptData('imagetest')
-       
-   
-
 
 if __name__ == '__main__':
     SogalEntry().run()

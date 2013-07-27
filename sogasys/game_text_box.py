@@ -102,22 +102,6 @@ class GameTextBoxStyle(object):
         '''表示大型对话框的枚举属性'''
         return 1
     """
-class GTBI(object):
-    ''' 'Game Text Box Input' The enum set of GameTextBox
-    '''
-    #If current text is not finished, then finish current text,
-    #else go next
-    DEFAULT = 0
-    
-    #Make the text box ready for next command
-    NEXT = 1
-
-    #Toggle auto-play
-    TAUTO = 2
-    
-    #Toggle skip mode
-    TSKIP = 3
-    
 
 class GameTextBox(GameTextBoxBase):
     '''游戏文本显示器类  Main displayer of current game text.
@@ -170,8 +154,6 @@ class GameTextBox(GameTextBoxBase):
     
     _typerLerpInterval = None
     
-    _isWaitingForUser = False
-    
     def __init__(self,parent,style = GameTextBoxStyle.Normal,currentData = None):
         '''
         Constructor
@@ -200,7 +182,6 @@ class GameTextBox(GameTextBoxBase):
                 self.currentText = currentData[0]
                 if self.currentTextLabel:
                     self.currentTextLabel.setText(currentData[0])
-                    self._isWaitingForUser = True
                     self.generateArrow()
             if currentData[1]:
                 self.currentSpeaker = currentData[1]
@@ -292,7 +273,6 @@ class GameTextBox(GameTextBoxBase):
         if not text:
             return
         
-        self._isWaitingForUser = True
         
         if self._currentStyle == GameTextBoxStyle.Normal:
             if not continuous:
@@ -503,21 +483,6 @@ class GameTextBox(GameTextBoxBase):
     def applyTextBoxProperties(self):
         self.applyStyle()
        
-    def input(self, inputType = GTBI.DEFAULT):
-        '''Do as the input'''
-        if inputType == GTBI.DEFAULT:
-            if not self.getIsWaitingForText():
-                self._isWaitingForUser = False
-            else:
-                self.quickFinish()
-                
-        elif inputType == GTBI.NEXT:
-            self._isWaitingForUser = False
-            if self.getIsWaitingForText():
-                self.quickFinish()
-            
-        #TODO: 自动播放功能实现
-        #TODO: 快进/Skip功能实现 
             
     def getIsWaitingForText(self):
         is_waiting = False
@@ -526,14 +491,12 @@ class GameTextBox(GameTextBoxBase):
         
         return is_waiting
     
-    def getIsWaitingForUser(self):
-        return self._isWaitingForUser
     
     def getIsWaiting(self):
         '''Inherited from GameTextBoxBase
         Get whether the text typer is unfinished
         '''
-        return self.getIsWaitingForText() or self.getIsWaitingForUser()
+        return self.getIsWaitingForText()
 
 
         

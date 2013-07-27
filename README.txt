@@ -134,24 +134,28 @@ textbox apply 应用文本框属性的修改，会清空文本
 
 p -key -fileName -x -z (-s) (-fadein)  在指定位置显示立绘位置 0 0表示正中
                                      1 1表示右上 注意除了Location都不能有空格
-                                     -相同的Keyword会直接替换 也可以有三个数字代表x y z
+                                     -相同的Keyword会直接替换 也可以有三个数字代表x y z fadein是淡入
                                    
 p -key -fileName 显示立绘，如果已存在，其会在当前位置用新图片替代
                          -否则绘制在正中
 bg -FileName  立即改变背景
+
 ploc -key -x -z 改变立绘位置 Location应该是两个数字 x z（或是3个x y z）
 pcolor -key -r -g -b -a  rgba范围都在0到1
 pscale -key -s 缩放
 pdel -key  移除立绘
 vclear 重置场景。移除所有立绘，将背景设置为黑色。用于初始化和场景切换
+vclear -Time 重置场景。在一定时间内淡出到黑色
+vclear -Time -bgFileName重置场景。以一定速度渐入到某个背景图片，移除所有场景
 o3d -key -fileName -x -y -z -r -g -b -a -sx -sy -sz 显示3D模型，x轴向由 y轴向屏幕内 z轴向上 大小自己看着办吧
 o2d -key -fileName -x -y -z -r -g -b -a -sx -sy -sz 在3D中显示2D图片
 pa -key -fileName -x -z -sx -sy (-f) 显示egg动画在前景注意动画要手动缩放宽高比
 
+
 未实现（加#表示暂不忙实现）：
-打字机效果外加线性框架！
-vclear -Time 重置场景。在一定时间内淡出到黑色
-vclear -Time -bgFileName重置场景。以一定速度渐入到某个背景图片，移除所有场景
+bgdel 删除背景
+bgdel -Time  淡出背景
+bg -FileName -Time 淡入背景（在不删除以前背景的情况下）
 audio -FileName    播放音频一次
 audio3d -FileName -Location 
 audiostop    停止当前所有audio播放的音效
@@ -166,7 +170,7 @@ voice3d -FileName -Location 3d语音
 wait -Time	等待直到队列中的下一行能够被执行 注意快速播放和人工操作能够打破等待状态
 mstop    立即停止当前音乐
 mstop -Time    淡出当前音乐，Time为淡出时间
-bg -FileName -Time 交叉淡入淡出改变背景   
+
 qp -fileName -Location   快速立绘！在进入下一个文本段时就会自动消失！
 pclear 移除所有立绘
 load -FileName 读取sogal场景脚本文件并添加到事件队列

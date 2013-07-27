@@ -38,7 +38,6 @@ from direct.showbase.DirectObject import DirectObject
 from direct.stdpy.file import open,exists
 from direct.task import Task
 
-from game_text_box import GTBI
 from game_text_box import GameTextBox
 from story_view import StoryView,StoryViewItemEntry,SVIC
 
@@ -112,24 +111,47 @@ class StoryManager(DirectObject):
         self.accept('mouse1', self.clicked)
         self.gameTextBox = GameTextBox(parent = self._frame,currentData = runtime_data.RuntimeData.current_text)
         self.storyView = StoryView()
-        self.loopTask = taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
-        
+        taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
+        #self.loopTask = 
+        self._inputReady = True
         
         
     def clicked(self):
-        if self.gameTextBox:
-            self.gameTextBox.input(GTBI.DEFAULT)
+        if not self.getSceneReady():
+            self.storyView.quickfinish()
+            self.gameTextBox.quickFinish()
+        else:
+            self.setInputReady(True)
+                
+                
+    def getSceneReady(self):
+        '''Get if the scene is ready'''
+        textbox_ready = False
+        view_ready = False
+        
+        if not self.gameTextBox.getIsWaiting():
+            textbox_ready = True
+            
+        if not self.storyView.getIsWaiting():
+            view_ready = True
+            
+        if textbox_ready and view_ready:
+            return True
+        return False
+    
+    def getInputReady(self):
+        '''define is user's 'next' command given'''
+        return self._inputReady
+    
+    def setInputReady(self, value):
+        self._inputReady = value
+    
 
     def forward(self,is_user = False):
         '''run nextCommand() or finish current operations quickly
         @param is_user: define if this operation is started by the player 
         '''
-        textbox_ready = False
-        
-        if not self.gameTextBox.getIsWaiting():
-            textbox_ready = True
-            
-        if textbox_ready:     #And other readies
+        if self.getSceneReady() and self.getInputReady():
             self.nextCommand()
         
     def nextCommand(self):
@@ -139,7 +161,6 @@ class StoryManager(DirectObject):
         #TODO：添加对条件和选择的支持
         if runtime_data.RuntimeData.commands_in_queue:
             self.processCommand(runtime_data.RuntimeData.commands_in_queue.pop(0))
-            
 
 
     def processCommand(self,command):
@@ -162,6 +183,7 @@ class StoryManager(DirectObject):
         is_script = False
         spaceCutter = self.__spaceCutter
         
+        cleared = False
 
             
         
@@ -271,7 +293,20 @@ class StoryManager(DirectObject):
                     self.storyView.newItem(svie)
                 
                 elif comm == 'vclear':
+
+                    cleared = True
                     self.storyView.clear()
+                    
+                elif comm.startswith('vclear '):
+
+                    cleared = True
+                    temp = spaceCutter.split(comm,2)
+                    if len(temp)>=3:
+                        self.storyView.clear(seval(temp[1]),temp[2])
+                    elif len(temp)==2:
+                        self.storyView.clear(seval(temp[1]))
+                    else:
+                        self.storyView.clear()
                 
                 else: 
                     print('Undefined Sogal command: ' + comm)
@@ -304,9 +339,16 @@ class StoryManager(DirectObject):
                 for item in textlines:
                     if item:
                         text += translate(item) + '\n'
-                    
+            
         if text and not is_script:
+            
             self.gameTextBox.pushText(text = text, speaker = name, continuous = continuous)
+            self._inputReady = False
+            self.gameTextBox.show()
+            
+        else:
+            if cleared:
+                self.gameTextBox.hide()    #better to hide the textbox when 'vclear'
         
         
     def addScriptData(self,fileName):

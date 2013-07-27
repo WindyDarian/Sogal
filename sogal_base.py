@@ -60,7 +60,6 @@ class SogalBase(ShowBase):
         
         
     def setGameBackgroundImage(self,path):
-        "设置背景图片"
         ''' Load a total background image '''
         if self.backgroundImage:
             self.backgroundImage.destroy()
@@ -73,13 +72,7 @@ class SogalBase(ShowBase):
             props.setFullscreen(True)
         else:
             props.setFullscreen(False)
-        
         self.win.requestProperties(props)
-            
-
-    
-    storyManager = None
-    mainMenu = None
     
     
 if __name__ == '__main__':

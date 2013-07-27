@@ -29,6 +29,7 @@ from panda3d.core import *
 from direct.showbase.DirectObject import DirectObject
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.stdpy.file import exists
+from direct.interval.LerpInterval import LerpFunc,LerpColorInterval
 
 import runtime_data
 
@@ -132,6 +133,7 @@ class StoryView(DirectObject, NodePath):
         self.bgNodePath = None 
         self.vNodePath = None
         self._sceneItems = {}
+        self._intervals = []  #seems no need atm
         
         self.camera = base.makeCamera(base.win)  # @UndefinedVariable 死傲娇PyDev
         self.lens = PerspectiveLens()
@@ -145,8 +147,6 @@ class StoryView(DirectObject, NodePath):
         d3.setPos(-8,42,-1)
         d3.setScale(0.25)
         d3.setTransparency(1)
- 
-        
         self.newItem(StoryViewItemEntry('zz','testc_dress1_normal',SVIC.FG, pos = (0.33,0,0)))
         self.newItem(StoryViewItemEntry('zz','testc_dress2_normal',SVIC.FG, pos = (-0.33,0,-0.2),color = (1,1,1,0.5)))
         self.newItem(StoryViewItemEntry('zz2','testc_dress1_normal',SVIC.O2D, pos = (0,10,0),color = (1,1,1,0.6)))
@@ -154,7 +154,10 @@ class StoryView(DirectObject, NodePath):
         self.newItem(StoryViewItemEntry('__bg__','testbg',SVIC.BG))
         '''
         
+        
     def reload(self):
+
+        
         '''reload the properties and the items and the camera'''
         self._resetNode()
         for key in self.itemEntries:
@@ -248,12 +251,15 @@ class StoryView(DirectObject, NodePath):
             item.setTransparency(1)
             item.setName(entry.key)
             item.reparentTo(self.vNodePath)
-            
   
-            
         if item:
+            if entry.fadein:
+                color = item.getColor()
+                lv = LerpColorInterval(item, entry.fadein, item.getColor(), (color[0],color[1],color[2],0) ) 
+                self._intervals.append(lv )
+                lv.start()
             self._sceneItems[entry.key] = item
-        
+    
     
     def _adjustAspectRatio(self,arg):
         if self.camera:
@@ -279,6 +285,12 @@ class StoryView(DirectObject, NodePath):
             self.destroy()
         
     def _resetNode(self):
+        
+        for interval in self._intervals:
+            if interval.isPlaying():  
+                interval.finish()   
+        self._removeDeadLerp()      
+            
         if self.fgNodePath:
             self.fgNodePath.removeNode()
         if self.bgNodePath:
@@ -333,13 +345,60 @@ class StoryView(DirectObject, NodePath):
             self._sceneItems[key].setScale(self._sceneItems[key].getSx()*scale[0],self._sceneItems[key].getSy()*scale[1],self._sceneItems[key].getSz()*scale[2])
         #TODO 缩放要加参数和物体类型的判断
             
-    def clear(self):
-        self.itemEntries.clear()
-        self.reload()
+    def clear(self,fadeout = 0,bgfile = None):
+        if not fadeout:
+            self.itemEntries.clear()
+            self.reload()
+        else:
+            dr = self.camera.node().getDisplayRegion(0)
+            texture = dr.getScreenshot()
+           
+            w = dr.getPixelWidth()
+            h = dr.getPixelHeight()
+                        
+            self.itemEntries.clear()
+            self.reload()
+            
+            if bgfile:
+                bgentry = StoryViewItemEntry(fileName = bgfile,key = '__bg__',category = SVIC.BG)
+                self.newItem(bgentry)
+            
+            tempbg = OnscreenImage(texture)
+            if w > h:
+                tempbg.setScale(1*w/float(h),1,1)
+            else: tempbg.setScale(1,1,1*h/float(w))
+            tempbg.setColor(1,1,1,1)
+            tempbg.reparentTo(self.bgNodePath)
+            tempbg.setName('__tempbg__')
+            
+            li = LerpColorInterval(tempbg, fadeout, (1,1,1,0), (1,1,1,1),blendType = 'easeInOut' ) 
+            self._intervals.append(li)
+            li.start()
+           # self._intervals.append(LerpFunc(self.__sceneLerp,duration = fadeout,blendType = 'easeInOut',extraArgs = [tempbg]))
     
+    #def __sceneLerp(self,lerp,tempbg):
+        #tempbg.setColor(1,1,1,1-lerp)
+    
+    def quickfinish(self):
+        for interval in self._intervals:
+            if interval.isPlaying():
+                interval.finish()
         
-        
-        
+    def getIsWaiting(self):
+        for interval in self._intervals:
+            if interval.isPlaying():
+                return True
+        return False
+    
+    def _removeDeadLerp(self):
+        removelist = []
+        for interval in self._intervals:
+            if not interval.isPlaying():
+                removelist.append(interval)
+        for r in removelist:
+            self._intervals.remove(r)
+    
+    
     
         
         

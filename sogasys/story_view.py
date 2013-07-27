@@ -32,6 +32,11 @@ from direct.stdpy.file import exists
 
 import runtime_data
 
+imagepathes = ['images/','models/','']
+imagetypes = ['.png', '.jpg', '.bmp','']
+modelpathes = ['models/','images/','']
+modeltypes = ['.egg','.egg.pz','.x','']
+
 class SVIC(object):
     '''story view item category'''
     #That indicates a 2d image to be added to fgNodePath
@@ -185,10 +190,13 @@ class StoryView(DirectObject, NodePath):
         #TODO: Simple fadein support  (load entry.fadein) 嘛很简单只要加Interval控制就行了但是等心情好的时候再说……
         item = None
         if entry.category == SVIC.FG or entry.category == SVIC.BG or entry.category == SVIC.O2D:
-            try:
-                texture = loader.loadTexture(r'images/'+entry.fileName+r'.png')
-            except:
-                texture = loader.loadTexture(r'images/'+entry.fileName)
+            
+            texture = None
+            for ft in ((folder,type) for folder in imagepathes for type in imagetypes):
+                if exists(ft[0] + entry.fileName + ft[1]):
+                    texture = loader.loadTexture(ft[0] + entry.fileName + ft[1])
+                    break
+            
                 
             '''Alternative
             item = loader.loadModel(r"models/plain.egg")
@@ -212,7 +220,12 @@ class StoryView(DirectObject, NodePath):
                 item.reparentTo(self.vNodePath)
             
         elif entry.category == SVIC.AFG:
-            item = loader.loadModel(r'images/'+entry.fileName)
+            item = None
+            for ft in ((folder,type) for folder in imagepathes for type in modeltypes):
+                if exists(ft[0] + entry.fileName + ft[1]):
+                    item = loader.loadModel(ft[0] + entry.fileName + ft[1])
+                    break
+            if not item:  item = loader.loadModel(entry.fileName)
             item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
             item.setScale(entry.scale)  #For generated egg animation with "egg-texture-cards" is a 1x1 rectangle by default
             item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
@@ -223,13 +236,12 @@ class StoryView(DirectObject, NodePath):
 
             
         elif entry.category == SVIC.O3D:
-            try:
-                item = loader.loadModel(r'models/'+entry.fileName)
-            except: 
-                try:
-                    item = loader.loadModel(r'images/'+entry.fileName)
-                except:
-                    item = loader.loadModel(entry.fileName)
+            item = None
+            for ft in ((folder,type) for folder in modelpathes for type in modeltypes):
+                if exists(ft[0] + entry.fileName + ft[1]):
+                    item = loader.loadModel(ft[0] + entry.fileName + ft[1])
+                    break
+            if not item:  item = loader.loadModel(entry.fileName)
             item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
             item.setScale(entry.scale)  #For generated egg animation with "egg-texture-cards" is a 1x1 rectangle by default
             item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])

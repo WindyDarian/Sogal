@@ -35,7 +35,7 @@ from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
 #from direct.gui.DirectButton import DirectButton
 from direct.showbase.DirectObject import DirectObject
-from direct.stdpy.file import open
+from direct.stdpy.file import open,exists
 from direct.task import Task
 
 from game_text_box import GTBI
@@ -45,6 +45,11 @@ from story_view import StoryView,StoryViewItemEntry,SVIC
 
 import runtime_data
 
+sogalscrpathes = ['scenes/','']
+sogalscrtypes = ['.sogal','']
+
+pscriptpathes = ['scenes/','scenes/scripts/','']
+pscriptpathes = ['.py','']
 
 class StoryManager(DirectObject):
     """Story controller of Sogal
@@ -298,7 +303,8 @@ class StoryManager(DirectObject):
         '''Load target .sogal script file and add it to the non-processed queue.
         '''
         runtime_data.RuntimeData.commands_in_queue.extend(loadScriptData(fileName))
-    
+  
+
 
 def loadScriptData(fileName):
     '''Load the sogal script file (.sogal) 
@@ -307,18 +313,14 @@ def loadScriptData(fileName):
     读取sogal脚本，将不同的命令区分成很多StoryCommand但是不做解析，仅仅是简单地区分开命令行和文本行
     参见 game_entities.StoryCommand
     '''
+    fileloc = None
+    for pt in ((path,type) for path in sogalscrpathes for type in sogalscrtypes):
+        if exists(pt[0]+fileName+pt[1]):
+            fileloc = pt[0]+fileName+pt[1]
     
-    
-    try:  
-        fileHandle = open('scenes/'+fileName+'.sogal','r',"utf-8")   #for 'from direct.stdpy.file import open', this 'open' is panda3d opereation and not the standard python operation
-    except IOError:
-        try:
-            fileHandle = open('scenes/'+fileName,'r',"utf-8")
-        except IOError:
-            try:
-                fileHandle = open(fileName,'r',"utf-8")
-            except IOError:
-                fileHandle = open(fileName+'.sogal','r',"utf-8")
+  
+    fileHandle = open(fileloc)   #for 'from direct.stdpy.file import open', this 'open' is panda3d opereation and not the standard python operation
+
     
     io_reader = StringIO(fileHandle.read())
     

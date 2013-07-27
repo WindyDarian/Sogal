@@ -5,8 +5,8 @@
 #notify-level-audio debug
 audio-library-name null
 
-want-directtools #t
-want-tk #t
+#want-directtools #t
+#want-tk #t
 
 window-title Sogal
 

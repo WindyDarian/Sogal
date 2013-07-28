@@ -131,33 +131,29 @@ textboxstyle normal/large 改变文本框格式，会清空文本
 p 格式中用来清空已有字符 ，large文本框用,注意和显示图片的p的区别是它不带任何参数
 textbox -propname -content 改变文本框属性，content可以有空格，会在脚本命名空间中eval计算(也就是如果是字符串要加引号)，参考game_text_box.py中GameTextBox.properties
 textbox apply 应用文本框属性的修改，会清空文本
-
-p -key -fileName -x -z (-s) (-fadein)  在指定位置显示立绘位置 0 0表示正中
-                                     1 1表示右上 注意除了Location都不能有空格
-                                     -相同的Keyword会直接替换 也可以有三个数字代表x y z fadein是淡入
-                                   
-p -key -fileName 显示立绘，如果已存在，其会在当前位置用新图片替代
-                         -否则绘制在正中
+p -key -fileName -x -z (-s) (-fadein)  在指定位置显示立绘位置 0 0表示正中  1 1表示右上 注意除了Location都不能有空格 -相同的Keyword会直接替换  fadein是淡入                       
+p -key -fileName 显示立绘，如果已存在，其会在当前位置用新图片替代-否则绘制在正中
 bg -FileName  立即改变背景
-
-ploc -key -x -z 改变立绘位置 Location应该是两个数字 x z（或是3个x y z）
-pcolor -key -r -g -b -a  rgba范围都在0到1
-pscale -key -s 缩放
-pdel -key  移除立绘
-vclear 重置场景。移除所有立绘，将背景设置为黑色。用于初始化和场景切换
-vclear -Time 重置场景。在一定时间内淡出到黑色
-vclear -Time -bgFileName重置场景。以一定速度渐入到某个背景图片，移除所有场景
+bg -FileName -Time 改变背景
+ploc -key -x -y -z (-time)  改变立绘位置 Location应该是两个数字 x z（或是3个x y z）
+ploc -key -x -z 
+pcolor -key -r -g -b -a (-time)  rgba范围都在0到1
+pscale -key -s (-time) 缩放 注意 以总是以这次缩放前的大小为1
+del -key  移除立绘、o3d、o2d、pa
+del -key -time 淡出并移除
+clear 重置场景。移除所有立绘，将背景设置为黑色。用于初始化和场景切换
+clear -Time 重置场景。在一定时间内淡出到黑色
+clear -Time -bgFileName重置场景。以一定速度渐入到某个背景图片，移除所有场景
 o3d -key -fileName -x -y -z -r -g -b -a -sx -sy -sz 显示3D模型，x轴向由 y轴向屏幕内 z轴向上 大小自己看着办吧
 o2d -key -fileName -x -y -z -r -g -b -a -sx -sy -sz 在3D中显示2D图片
 pa -key -fileName -x -z -sx -sy (-f) 显示egg动画在前景注意动画要手动缩放宽高比
-
+delbg 删除背景
+delbg -time  淡出背景
+qp -fileName -x -z   快速立绘！在进入下一个文本段时就会自动消失！
 
 未实现（加#表示暂不忙实现）：
-bgdel 删除背景
-bgdel -Time  淡出背景
-bg -FileName -Time 淡入背景（在不删除以前背景的情况下）
 audio -FileName    播放音频一次
-audio3d -FileName -Location 
+#audio3d -FileName -Location 
 audiostop    停止当前所有audio播放的音效
 music -FileName    循环播放音乐使用默认淡入淡出设置
 music -FileName -Time    Time为淡入或音乐交换用时间（所有时间以秒为单位）
@@ -166,16 +162,15 @@ se -FileName -Time  	淡入或交叉SE
 sestop	停止SE
 sestop -Time	淡出SE
 voice -FileName	语音
-voice3d -FileName -Location 3d语音 
-wait -Time	等待直到队列中的下一行能够被执行 注意快速播放和人工操作能够打破等待状态
+#voice3d -FileName -Location 3d语音 
 mstop    立即停止当前音乐
 mstop -Time    淡出当前音乐，Time为淡出时间
 
-qp -fileName -Location   快速立绘！在进入下一个文本段时就会自动消失！
-pclear 移除所有立绘
-load -FileName 读取sogal场景脚本文件并添加到事件队列
+wait 表示当前需要玩家输入才能继续
+go -FileName 读取sogal场景脚本并跳转
 script   表示接下来的文本段是python脚本（注意其中不能有空行）
 script -FileName 运行python脚本文件
 选择
 循环
+
 

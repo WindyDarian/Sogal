@@ -29,7 +29,9 @@ from panda3d.core import *
 from direct.showbase.DirectObject import DirectObject
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.stdpy.file import exists
-from direct.interval.LerpInterval import LerpFunc,LerpColorInterval
+from direct.interval.LerpInterval import LerpFunc,LerpColorInterval,LerpScaleInterval,LerpPosInterval
+from direct.interval.FunctionInterval import Func,Wait
+from direct.interval.IntervalGlobal import Sequence
 
 import runtime_data
 
@@ -70,9 +72,11 @@ class StoryViewItemEntry(object):
     
     fadein = 0
     
+    quickitem = False
+    
     #TODO: 实现带遮罩效果的淡入？
     
-    def __init__(self,key,fileName,category,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = 0):
+    def __init__(self,key,fileName,category,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = 0,quickitem = False):
         self.key = key
         self.fileName = fileName
         self.category = category
@@ -80,6 +84,7 @@ class StoryViewItemEntry(object):
         self.scale = scale
         self.color = color
         self.fadein = fadein
+        self.quickitem = quickitem
         
     
 
@@ -134,6 +139,7 @@ class StoryView(DirectObject, NodePath):
         self.vNodePath = None
         self._sceneItems = {}
         self._intervals = []  #seems no need atm
+        self._quickitems = []
         
         self.camera = base.makeCamera(base.win)  # @UndefinedVariable 死傲娇PyDev
         self.lens = PerspectiveLens()
@@ -175,21 +181,40 @@ class StoryView(DirectObject, NodePath):
     def newItem(self, entry):
         '''Create an item according to given item entry and add it to itemEntries'''
 
+       
+        if entry.quickitem:
+            entry.key += '__qi__' + str(len(self._quickitems))
+            self._quickitems.append(entry.key)
         self.itemEntries[entry.key] = entry
         self._createItem(entry)
         
-    def deleteItem(self,key):
+    def deleteItem(self,key,fadeout = 0):
         '''Delete an item from StoryView'''
-        del self.itemEntries[key]
-        self._sceneItem[key].removeNode()
-        del self.sceneItem[key]
+        if not fadeout:
+            self.itemEntries.pop(key)
+            node = self._sceneItems.pop(key)
+            node.removeNode()
+            
+        else:    #if it has a fade-out effect then add fade-out intervals
+            self.itemEntries.pop(key) 
+            item = self._sceneItems.pop(key)
+            item.setName('removing_'+item.getName())
+            color = item.getColor()
+            sequcnce = Sequence(LerpColorInterval(item, fadeout, (color[0],color[1],color[2],0), color),
+                                            Func(self.__deletefromScene,item),
+                                            )
+            self._intervals.append(sequcnce)
+            sequcnce.start()
+            
+    def __deletefromScene(self,item):
+        item.removeNode()
         
             
     def _createItem(self, entry, ignore_fadein = False):
         '''Create an item(not including adding this to itemEntries)'''
         if self._sceneItems.has_key(entry.key):
             self._sceneItems[entry.key].removeNode()
-            del self._sceneItems[entry.key]
+            self._sceneItems.pop(entry.key)
         #TODO: Simple fadein support  (load entry.fadein) 嘛很简单只要加Interval控制就行了但是等心情好的时候再说……
         item = None
         if entry.category == SVIC.FG or entry.category == SVIC.BG or entry.category == SVIC.O2D:
@@ -204,15 +229,16 @@ class StoryView(DirectObject, NodePath):
             '''Alternative
             item = loader.loadModel(r"models/plain.egg")
             item.setTexture(texture, 1)
-            item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
-            item.setScale(entry.scale[0]*texture.getOrigFileXSize()/float(texture.getOrigFileYSize()),entry.scale[1],entry.scale[2])  #Always make its height fill the screen normally
-            item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
             '''
-
             item = OnscreenImage(texture)
+            
             item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
             item.setScale(entry.scale[0]*texture.getOrigFileXSize()/float(texture.getOrigFileYSize()),entry.scale[1],entry.scale[2])  #Always make its height fill the screen normally
-            item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            color = (entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            if entry.fadein:
+                lv = LerpColorInterval(item, entry.fadein, color, (color[0],color[1],color[2],0) ) 
+                self._intervals.append(lv)
+                lv.start()
             item.setName(entry.key)
             
             if entry.category == SVIC.FG:
@@ -231,7 +257,11 @@ class StoryView(DirectObject, NodePath):
             if not item:  item = loader.loadModel(entry.fileName)
             item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
             item.setScale(entry.scale)  #For generated egg animation with "egg-texture-cards" is a 1x1 rectangle by default
-            item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            color = (entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            if entry.fadein:
+                lv = LerpColorInterval(item, entry.fadein, color, (color[0],color[1],color[2],0) ) 
+                self._intervals.append(lv)
+                lv.start()
             item.setTransparency(1)
             item.setName(entry.key)
             item.reparentTo(self.fgNodePath)
@@ -247,17 +277,16 @@ class StoryView(DirectObject, NodePath):
             if not item:  item = loader.loadModel(entry.fileName)
             item.setPos(entry.pos[0],entry.pos[1],entry.pos[2])
             item.setScale(entry.scale)  #For generated egg animation with "egg-texture-cards" is a 1x1 rectangle by default
-            item.setColor(entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            color = (entry.color[0],entry.color[1],entry.color[2],entry.color[3])
+            if entry.fadein:
+                lv = LerpColorInterval(item, entry.fadein, color, (color[0],color[1],color[2],0) ) 
+                self._intervals.append(lv)
+                lv.start()
             item.setTransparency(1)
             item.setName(entry.key)
             item.reparentTo(self.vNodePath)
   
         if item:
-            if entry.fadein:
-                color = item.getColor()
-                lv = LerpColorInterval(item, entry.fadein, item.getColor(), (color[0],color[1],color[2],0) ) 
-                self._intervals.append(lv )
-                lv.start()
             self._sceneItems[entry.key] = item
     
     
@@ -265,7 +294,22 @@ class StoryView(DirectObject, NodePath):
         if self.camera:
             self.lens.setAspectRatio(base.getAspectRatio())  # @UndefinedVariable
             
-    
+    def changeBackground(self,backgroundImage,fadein):
+        if not fadein:
+            svie = StoryViewItemEntry('__bg__',backgroundImage,SVIC.BG,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = 0)
+            self.newItem(svie)
+        else:
+            self.itemEntries.pop('__bg__',None) #remove the current background
+            oldbg = self._sceneItems.pop('__bg__',None) #remove the old background after the new background is completely shown
+            svie = StoryViewItemEntry('__bg__',backgroundImage,SVIC.BG,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = fadein)
+            self.newItem(svie)
+           
+            if oldbg:
+                oldbg.setName('removing_'+oldbg.getName())
+                color = oldbg.getColor()
+                sequence = Sequence(Wait(fadein),Func(self.__deletefromScene,oldbg))
+                self._intervals.append(sequence)
+                sequence.start()
 
     def destroy(self):
         self.__destroyed = True
@@ -330,22 +374,44 @@ class StoryView(DirectObject, NodePath):
         self.bgNodePath.setScale(bg*scaleo)
         self.__distanceScale2D = scaleo
         
-    def changePosColorScale(self,key,pos = None,color = None, scale = None):
+    def changePosColorScale(self,key,pos = None,color = None, scale = None,time = 0):
         '''Change an item's position, color, and/or scale. 
         params should be lists having a length of 3 (pos, scale) or 4 (color) floats
         '''
         if pos:
             self.itemEntries[key].pos = pos
-            self._sceneItems[key].setPos(pos)
+            if not time:
+                self._sceneItems[key].setPos(pos)
+            else:
+                ival = LerpPosInterval(self._sceneItems[key],time,pos,self._sceneItems[key].getPos())
+                self._intervals.append(ival)
+                ival.start()
         if color:
             self.itemEntries[key].color = color
-            self._sceneItems[key].setColor(color)
+            if not time:
+                self._sceneItems[key].setColor(color)
+            else:
+                ival = LerpColorInterval(self._sceneItems[key],time,color,self._sceneItems[key].getColor())
+                self._intervals.append(ival)
+                ival.start()
         if scale:
             self.itemEntries[key].scale = scale
-            self._sceneItems[key].setScale(self._sceneItems[key].getSx()*scale[0],self._sceneItems[key].getSy()*scale[1],self._sceneItems[key].getSz()*scale[2])
+            if not time:
+                self._sceneItems[key].setScale(self._sceneItems[key].getSx()*scale[0],
+                                               self._sceneItems[key].getSy()*scale[1],
+                                               self._sceneItems[key].getSz()*scale[2])
+            else:
+                targetscale = (self._sceneItems[key].getSx()*scale[0],
+                               self._sceneItems[key].getSy()*scale[1],
+                               self._sceneItems[key].getSz()*scale[2])
+                ival = LerpScaleInterval(self._sceneItems[key],time,targetscale,self._sceneItems[key].getScale())
+                self._intervals.append(ival)
+                ival.start()
         #TODO 缩放要加参数和物体类型的判断
             
     def clear(self,fadeout = 0,bgfile = None):
+        self.clearQuickItems()
+        
         if not fadeout:
             self.itemEntries.clear()
             self.reload()
@@ -378,6 +444,12 @@ class StoryView(DirectObject, NodePath):
     
     #def __sceneLerp(self,lerp,tempbg):
         #tempbg.setColor(1,1,1,1-lerp)
+        
+    def clearQuickItems(self):
+        '''quick item can be cleared out automatically, called by StoryManager'''
+        for qe in self._quickitems:
+            self.deleteItem(qe)
+        self._quickitems[:] = []
     
     def quickfinish(self):
         for interval in self._intervals:

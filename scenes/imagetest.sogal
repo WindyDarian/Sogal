@@ -12,8 +12,8 @@
 @p zz boss
 温蒂达莉安：「喵喵」
 
-@vclear 0.5,p zz Lucifer 0.33 0.33 2 5
-温蒂达莉安：「术式发动！VCLEAR！」
+@clear 0.5,p zz Lucifer 0.33 0.33 2 5, del zz
+温蒂达莉安：「术式发动！CLEAR！」
 
 @bg pppp
 温蒂达莉安：「嘛这背景尺寸不对」
@@ -21,16 +21,16 @@
 @pscale __bg__ 16/9.0 1 1
 温蒂达莉安：「现在对了」
 
-@pcolor zz 0.2/255 0.75 1 0.5
+@p zz Lucifer -0.33 0, pcolor zz 0.2/255 0.75 1 0.5 2 #立即的话:pcolor zz 0.2/255 0.75 1 0.5
 温蒂达莉安：「颜色设置」
 
-@pscale zz 2
+@pscale zz 2 2 #立即的话:pscale zz 2
 温蒂达莉安：「缩放」
 
-@ploc zz -1 0
+@ploc zz -1 0 0 2 #ploc zz -1 0
 温蒂达莉安：「位置」
 
-@vclear, bg testbg
+@clear, bg testbg
 温蒂达莉安：「窝清」
 
 @pa arrow text_arrow/text_arrow 1 0 1 2 2
@@ -46,8 +46,23 @@
 
 #温蒂达莉安：「那么各位，辛苦了！」 
 
-@vclear 3 testbg,
-温蒂达莉安：「今天实现了淡入效果！」#2013/7/27
-@vclear 5
+@clear 3 testbg,
+温蒂达莉安：「淡入效果！」#2013/7/27
 
-温蒂达莉安：好，到此为止！
+@bg pppp 4
+温蒂达莉安：「淡入切换背景！」 #2013/7/28  #所以记得背景尺寸要一样
+
+@delbg 4,p luc Lucifer 0.33 -0.33 1 2
+温蒂达莉安：「删除背景，添加立绘！」 #2013/7/28
+
+@del luc 4
+温蒂达莉安：「删除立绘！」 #2013/7/28
+
+@qp Lucifer 0 0, qp testc_dress1_normal -1 -0.33,  qp testc_dress2_normal 1 0
+大家：「谢谢！」
+
+@qp Lucifer 0 0
+？？？：「嘛！」
+
+温蒂达莉安：「测试完毕！」 #2013/7/28
+

@@ -177,6 +177,8 @@ class StoryManager(DirectObject):
         def seval(str):
             return eval(str,runtime_data.RuntimeData.script_space)
         
+        self.storyView.clearQuickItems()  #clear out quick items
+        
         name = ''
         text = ''
         continuous = False
@@ -193,6 +195,8 @@ class StoryManager(DirectObject):
             comm = ''
             for item in commands:
                 comm = item.strip()
+                if comm:
+                    messenger.send('sogalcommand',[comm]) #allow other tools to deal with it
                 #名字设置命令
                 if comm.startswith('name ') or comm.startswith('name='): 
                     nameCutter = re.compile(ur'name *=?',re.UNICODE) 
@@ -222,10 +226,9 @@ class StoryManager(DirectObject):
                 elif comm.startswith('bg '):
                     temp = spaceCutter.split(comm,2)
                     if len(temp) >= 3:
-                        fadein = seval(temp(2))
+                        fadein = seval(temp[2])
                     else: fadein = 0
-                    svie = StoryViewItemEntry('__bg__',temp[1],SVIC.BG,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = fadein)
-                    self.storyView.newItem(svie)
+                    self.storyView.changeBackground(temp[1],fadein)
                 
                 #图片显示命令
                 elif comm.startswith('p '):
@@ -247,29 +250,43 @@ class StoryManager(DirectObject):
                     svie = StoryViewItemEntry(temp[1],temp[2],SVIC.FG,pos = location,scale = (scale,scale,scale),color = (1,1,1,1),fadein = fadein)
                     self.storyView.newItem(svie)
                     
-                elif comm.startswith('pdel '):
-                    temp = spaceCutter.split(comm,1)
-                    self.storyView.deleteItem(temp[1])
+                elif comm.startswith('del '):
+                    temp = spaceCutter.split(comm,2)
+                    if len(temp)>=3:
+                        self.storyView.deleteItem(temp[1], seval(temp[2]))
+                    else:
+                        self.storyView.deleteItem(temp[1])
                     
                 elif comm.startswith('ploc '):
-                    temp = spaceCutter.split(comm,4)
+                    temp = spaceCutter.split(comm,5)
                     if len(temp) >= 5:
                         location =  (seval(temp[2]),seval(temp[3]),seval(temp[4]))
                     else:
                         location =  (seval(temp[2]),0,seval(temp[3]))
-                    self.storyView.changePosColorScale(temp[1], pos = location)
+                    if len(temp) >= 6:
+                        fadein = seval(temp[5])
+                    else: fadein = 0
+                    self.storyView.changePosColorScale(temp[1], pos = location,time = fadein)
                     
                 elif comm.startswith('pcolor '):
-                    temp = spaceCutter.split(comm,5)
+                    temp = spaceCutter.split(comm,6)
                     color = (seval(temp[2]),seval(temp[3]),seval(temp[4]),seval(temp[5]))
-                    self.storyView.changePosColorScale(temp[1], color = color)
+                    if len(temp) >= 7:
+                        fadein = seval(temp[6])
+                    else: fadein = 0
+                    self.storyView.changePosColorScale(temp[1], color = color, time = fadein)
                     
                 elif comm.startswith('pscale '):
-                    temp = spaceCutter.split(comm,4)
-                    if len(temp) >= 4:
+                    temp = spaceCutter.split(comm,5)
+                    if len(temp) >= 5:
                         scale = (seval(temp[2]),seval(temp[3]),seval(temp[4]))
                     else: scale = (seval(temp[2]),seval(temp[2]),seval(temp[2]))
-                    self.storyView.changePosColorScale(temp[1], scale = scale)
+                    if len(temp) == 6:
+                        fadein = seval(temp[5])
+                    elif len(temp) == 4:
+                        fadein = seval(temp[3])
+                    else: fadein = 0
+                    self.storyView.changePosColorScale(temp[1], scale = scale, time = fadein)
                 
                 elif comm.startswith('o3d '):
                     temp = spaceCutter.split(comm)
@@ -286,18 +303,17 @@ class StoryManager(DirectObject):
                 elif comm.startswith('pa '):
                     temp = spaceCutter.split(comm)
                     if len(temp) >= 8:
-                        fadein = temp[7]
+                        fadein = seval(temp[7])
                     else: fadein = 0
                     svie = StoryViewItemEntry(temp[1],temp[2],SVIC.AFG,pos = (seval(temp[3]),0,seval(temp[4]))
-                                              ,scale = (seval(temp[5]),1,seval(temp[6])),fadein = 0)
+                                              ,scale = (seval(temp[5]),1,seval(temp[6])),fadein = fadein)
                     self.storyView.newItem(svie)
                 
-                elif comm == 'vclear':
-
+                elif comm == 'clear':
                     cleared = True
                     self.storyView.clear()
                     
-                elif comm.startswith('vclear '):
+                elif comm.startswith('clear '):
 
                     cleared = True
                     temp = spaceCutter.split(comm,2)
@@ -307,9 +323,28 @@ class StoryManager(DirectObject):
                         self.storyView.clear(seval(temp[1]))
                     else:
                         self.storyView.clear()
+                        
+                elif comm.startswith('delbg '):
+                    temp = spaceCutter.split(comm,1)
+                    if len('temp')>=2:
+                        self.storyView.deleteItem('__bg__', seval(temp[1]))
+                    else:
+                        self.storyView.deleteItem('__bg__')
+                        
+                elif comm.startswith('qp '):
+                    temp = spaceCutter.split(comm,3)
+                    svie = StoryViewItemEntry('quickitem',temp[1],SVIC.FG,
+                                              pos = (seval(temp[2]),0,seval(temp[3])),
+                                              quickitem = True
+                                              )
+                    self.storyView.newItem(svie)
+                
                 
                 else: 
-                    print('Undefined Sogal command: ' + comm)
+                    if comm:
+                        print('extra command: ' + comm)
+                        
+                        
                 
                 
                         

@@ -26,62 +26,13 @@ Created on Jul 5, 2013
 '''
 import math
 
+from panda3d.core import *
+from direct.showbase.DirectObject import DirectObject
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.OnscreenText import OnscreenText
-from panda3d.core import *
 from direct.interval.LerpInterval import LerpFunc
 
-import runtime_data
-    
-
-    
-class GameTextBoxBase(DirectFrame):
-    '''The base type of a game text box,
-    you can inherit this to develop various game text box
-    '''
-    def __init__(self,parent):
-        
-        DirectFrame.__init__(self, #parent,
-                            parent,
-                            #borderWidth = ( 0, 0 ),
-                            #relief = DGG.FLAT,
-                            #frameSize = (-1,1,-0.3,0.3),
-                            #frameColor = (1,1,1,1),
-                            #borderWidth = ( .01, .01),
-                            )
-    
-    def destroy(self, *args, **kwargs):
-        return DirectFrame.destroy(self, *args, **kwargs)
-        
-    def pushText(self, text, speaker = None, continuous = False, text_speed = runtime_data.game_settings['text_speed']):
-        pass
-    
-    def getIsWaiting(self):
-        '''得到文本框是否在等待
-        如果等待完毕的话，一般情况下点鼠标就会进入下一步操作
-        否则是快速完毕
-        默认会总是返回False，如果要实现打字机效果则覆载。
-        '''
-        return False
-    
-    def setTextBoxStyle(self,style):
-        '''inherit this to define what to do in @textboxstyle -style (.sogal script) command'''
-        pass
-    
-    def paragraphSparator(self):
-        '''inherit this to define what to do in @p (.sogal script) command'''
-        pass
-    
-    def setTextBoxProperty(self,propname,value):
-        '''inherit this to define what to do in @textbox -propname -content (.sogal script) command'''
-        pass
-    
-    def applyTextBoxProperties(self):
-        '''textbox apply'''
-        pass
-    
-    def input(self,inputType):
-        pass
+import runtime_data 
     
 class GameTextBoxStyle(object):
     '''表示对话框种类的枚举集合
@@ -103,7 +54,7 @@ class GameTextBoxStyle(object):
         return 1
     """
 
-class GameTextBox(GameTextBoxBase):
+class GameTextBox(DirectObject, NodePath):
     '''游戏文本显示器类  Main displayer of current game text.
         继承自Panda3D的DirectFram
     Attributes:
@@ -154,7 +105,7 @@ class GameTextBox(GameTextBoxBase):
     
     _typerLerpInterval = None
     
-    def __init__(self,parent,style = GameTextBoxStyle.Normal,currentData = None):
+    def __init__(self,style = GameTextBoxStyle.Normal,currentData = None):
         '''
         Constructor
         '''
@@ -164,7 +115,8 @@ class GameTextBox(GameTextBoxBase):
         self.textFont.setPageSize(512,512)
         self.textFont.setLineHeight(1.2)
         
-        GameTextBoxBase.__init__(self, parent = parent)
+        NodePath.__init__(self, 'GameTextBox')
+        self.reparentTo(aspect2d)
         
         if runtime_data.RuntimeData.gameTextBox_properties:
             self.properties = runtime_data.RuntimeData.gameTextBox_properties
@@ -263,7 +215,7 @@ class GameTextBox(GameTextBoxBase):
             
         
     
-    def pushText(self, text, speaker = None, continuous = False,text_speed = runtime_data.game_settings['text_speed']):
+    def pushText(self, text, speaker = None, continuous = False, text_speed = None, rate = 1.0):
         '''添加文字
         进行判断并改变文字
         parameters:
@@ -273,6 +225,8 @@ class GameTextBox(GameTextBoxBase):
         if not text:
             return
         
+        if not text_speed:
+            text_speed = runtime_data.game_settings['text_speed']
         
         if self._currentStyle == GameTextBoxStyle.Normal:
             if not continuous:
@@ -324,10 +278,10 @@ class GameTextBox(GameTextBoxBase):
         #This is *very* useful
         print(self.newText)
         
-        #TODO: 大文本框的显示、打字机效果、渐隐效果
+        #TODO: 渐隐效果
         if text:
             if text_speed != 0:
-                duration = float(len(self.newText))/text_speed
+                duration = float(len(self.newText))/(text_speed*rate)
             else: duration = 0.0
         
             self._typerLerpInterval = LerpFunc(self.showTextStep,duration = duration)

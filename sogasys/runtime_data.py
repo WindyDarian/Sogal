@@ -25,6 +25,8 @@ Created on 2013年7月19日
 了游戏了的话嗯
 @author: Windy Darian (大地无敌)
 '''
+import re
+from direct.stdpy.file import open,exists
 
 # def staticlike_singleton(cls,*args,**kw):
 #     '''Fake Static Singleton Decorator
@@ -37,9 +39,8 @@ Created on 2013年7月19日
 #  
 # @staticlike_singleton
 
-#game settings, this saves in a game_settings.sogdat file
+#game settings, this saves in a sconf file
 game_settings = {'text_speed': 20, #文字速度
-                 'aspect_ratio': 16/9.0, #游戏画面的宽高比
                  'full_screen': True,    #TODO:use it
                  'screen_resolution': (1280,720),  #TODO: use it
                  'music_volume': 0.75,
@@ -47,6 +48,7 @@ game_settings = {'text_speed': 20, #文字速度
                  'sfx_volume': 1,
                  'voice_volume': 1,
                 }
+
 
 
 class _RuntimeData(object):
@@ -86,15 +88,27 @@ def saveData(fileName):
     ''''''
     if RuntimeData.script_space.has_key('storyManager'):
         del RuntimeData.script_space['storyManager']
-    pass
+    if RuntimeData.script_space.has_key('gameTextBox'):
+        del RuntimeData.script_space['gameTextBox']
+    if RuntimeData.script_space.has_key('storyView'):
+        del RuntimeData.script_space['storyView']
     
 def saveSettings(fileName):
     pass
     
 def loadData(fileName):
     pass
-    
-def loadSettings(fileName):
-    pass
+
+def loadDefaultSettings(fileName):
+    if exists(fileName):
+        '''Load default unserialized settings'''
+        global game_settings
+        fileHandle = open(fileName)
+        for line in fileHandle:
+            spaceCutter = re.compile(ur'\s+',re.UNICODE) 
+            splited = spaceCutter.split(line,1)
+            game_settings[splited[0]] = eval(splited[1].strip())
+            print str(game_settings)
+    else: raise Exception('No such file: ' + fileName)
 
 print 'constructed'

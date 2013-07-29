@@ -215,7 +215,6 @@ class StoryView(DirectObject, NodePath):
         if self._sceneItems.has_key(entry.key):
             self._sceneItems[entry.key].removeNode()
             self._sceneItems.pop(entry.key)
-        #TODO: Simple fadein support  (load entry.fadein) 嘛很简单只要加Interval控制就行了但是等心情好的时候再说……
         item = None
         if entry.category == SVIC.FG or entry.category == SVIC.BG or entry.category == SVIC.O2D:
             
@@ -239,6 +238,7 @@ class StoryView(DirectObject, NodePath):
                 lv = LerpColorInterval(item, entry.fadein, color, (color[0],color[1],color[2],0) ) 
                 self._intervals.append(lv)
                 lv.start()
+            else: item.setColor(color)
             item.setName(entry.key)
             
             if entry.category == SVIC.FG:
@@ -262,6 +262,7 @@ class StoryView(DirectObject, NodePath):
                 lv = LerpColorInterval(item, entry.fadein, color, (color[0],color[1],color[2],0) ) 
                 self._intervals.append(lv)
                 lv.start()
+            else: item.setColor(color)
             item.setTransparency(1)
             item.setName(entry.key)
             item.reparentTo(self.fgNodePath)
@@ -282,6 +283,7 @@ class StoryView(DirectObject, NodePath):
                 lv = LerpColorInterval(item, entry.fadein, color, (color[0],color[1],color[2],0) ) 
                 self._intervals.append(lv)
                 lv.start()
+            else: item.setColor(color)
             item.setTransparency(1)
             item.setName(entry.key)
             item.reparentTo(self.vNodePath)

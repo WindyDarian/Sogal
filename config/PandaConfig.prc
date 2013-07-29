@@ -4,13 +4,14 @@
 
 #notify-level-audio debug
 audio-library-name null
+#audio-library-name p3openal_audio
 
 want-directtools #t
 want-tk #t
 
 window-title Sogal
 
-win-size 1280 720
+#win-size 1280 720
 
 #Sogal config
 

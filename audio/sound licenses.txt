@@ -1,0 +1,50 @@
+===========================================================================
+env/nana-s-church.wav
+Provided by Puniho, on March 5th, 2011
+from http://www.freesound.org/people/Puniho/sounds/116167/
+Licensed under the Attribution License 
+(CC-BY 3.0 - http://creativecommons.org/licenses/by/3.0/)
+
+This is an old wooden music box in the form of a church, that I fondly
+remember from my childhood. My Nana gave us it and it was a souvenir from a 
+trip she took to Switzerland. It plays the tune Ave Maria and it has a
+curious click clack distortion at one part in the cycle that I used to 
+think of as "the little man running up the stairs in the steeple to wind it
+up again"! I was an innocent child... Long since lost of course. I wound it
+up and placed it on my guitar to resonate, and let it run it's course, 
+along with the ever present chirping, singing sound of the cicadas. A new
+zealand summer is a long way from Switzerland...
+===========================================================================
+===========================================================================
+env/birds-chirping.wav
+Provided by gopalkoduri, on July 23rd, 2013
+from http://www.freesound.org/people/gopalkoduri/sounds/195097/
+Licensed under the Attribution License 
+(CC-BY 3.0 - http://creativecommons.org/licenses/by/3.0/)
+
+This is a recording of birds chirping in Parco della Mura in Genova, Italy.
+===========================================================================
+===========================================================================
+music/velatrisx-ambient-loading-screen-music-3.wav
+Provided by Erokia, on March 1st, 2013
+from http://www.freesound.org/people/Erokia/sounds/179287/
+Licensed under the Attribution License 
+(CC-BY 3.0 - http://creativecommons.org/licenses/by/3.0/)
+
+All piano related samples go into my piano sample pack from now on.
+
+All sounds were generated through basic effects, vst's, wave editing, time
+shifting, EQing, cutting, and sampling.
+----
+https://soundcloud.com/xxabcelxx
+===========================================================================
+===========================================================================
+music/church-organ-music.wav
+Provided by FK_Prod, on June 1st, 2013
+from http://www.freesound.org/people/FK_Prod/sounds/190468/
+Licensed under the Attribution License 
+(CC-BY 3.0 - http://creativecommons.org/licenses/by/3.0/)
+
+A short music I composed for church organ. I used Free VST Church 2 by
+Mainstream Audio in Samplitude 17.
+===========================================================================

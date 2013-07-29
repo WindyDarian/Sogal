@@ -1,0 +1,7 @@
+text_speed 20
+full_screen False
+screen_resolution (1280,720)
+music_volume 0.75
+env_volume 0.75
+sfx_volume 1
+voice_volume 1

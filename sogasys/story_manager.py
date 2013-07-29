@@ -109,7 +109,7 @@ class StoryManager(DirectObject):
         self._frame = DirectFrame(parent = aspect2d)  # @UndefinedVariable pydev在傲娇而已不用管
         self._frame.setTransparency(TransparencyAttrib.MAlpha)
         self.accept('mouse1', self.clicked)
-        self.gameTextBox = GameTextBox(parent = self._frame,currentData = runtime_data.RuntimeData.current_text)
+        self.gameTextBox = GameTextBox(currentData = runtime_data.RuntimeData.current_text)
         self.storyView = StoryView()
         taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
         #self.loopTask = 

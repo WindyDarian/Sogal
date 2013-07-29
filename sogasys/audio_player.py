@@ -114,8 +114,8 @@ class AudioPlayer(DirectObject):
             
         self.bgmMgr = _bgmMgr
         self.envMgr = _envMgr
-        self.voiceMgr = _envMgr
-        self.sfxMgr = _voiceMgr
+        self.voiceMgr = _voiceMgr
+        self.sfxMgr = _sfxMgr
         
         self.applySettings()
         

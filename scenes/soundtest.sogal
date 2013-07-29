@@ -1,0 +1,27 @@
+@bgm church-organ-music 0 0.1
+温蒂达莉安：
+「哟！各位，现在是音效的测试。我们先来第一段音乐吧。」
+@bgmstop 1,p
+@env nana-s-church 2 1
+ 温蒂达莉安：
+「这段音乐盒的音效来自Freesound，原文是这样写的」
+
+@textboxstyle large
+ 温蒂达莉安：
+「This is an old wooden music box in the form of a church, that I fondly remember from my childhood. My Nana gave us it and it was a souvenir from a  trip she took to Switzerland. It plays the tune Ave Maria and it has a curious click clack distortion at one part in the cycle that I used to think of as "the little man running up the stairs in the steeple to wind it up again"! I was an innocent child... Long since lost of course. I wound it up and placed it on my guitar to resonate, and let it run it's course,  along with the ever present chirping, singing sound of the cicadas. A new zealand summer is a long way from Switzerland
+...                        ——Puniho」
+@p, textboxstyle normal
+ 温蒂达莉安：
+ 「来看看下一段音乐吧。」
+@p, textboxstyle large, env birds-chirping 2 1, bgm church-organ-music 3 0.01
+  温蒂达莉安：
+ 「这是背景音乐下语音音效播放测试，准备开始咯」
+@v speak-and-spell-alphbet-a-z
+ ……
+ 
+   温蒂达莉安：
+ 「你没听错，在鸟语花香和教堂音乐下——读字母表！！！窝没有麦！！！！！」
+ 
+@audiostop 3
+    温蒂达莉安：
+ 「谢谢大家！」

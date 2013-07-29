@@ -41,12 +41,25 @@ from direct.stdpy.file import open,exists
 
 #game settings, this saves in a sconf file
 game_settings = {'text_speed': 20, #文字速度
-                 'full_screen': True,    #TODO:use it
-                 'screen_resolution': (1280,720),  #TODO: use it
+                 'full_screen': True, 
+                 'screen_resolution': (1280,720),  
                  'music_volume': 0.75,
                  'env_volume': 0.75,
                  'sfx_volume': 1,
                  'voice_volume': 1,
+                 'sogalscrpathes': ['scenes/',''],
+                 'sogalscrtypes': ['.sogal',''],
+                 'pscriptpathes': ['scenes/','scenes/scripts/',''],
+                 'pscriptpathes': ['.py',''],
+                 'imagepathes': ['images/','models/',''],
+                 'imagetypes': ['.png', '.jpg', '.bmp',''],
+                 'modelpathes': ['models/','images/',''],
+                 'modeltypes': ['.egg','.egg.pz','.x',''],
+                 'musicpathes': ['audio/music/','audio/',''],
+                 'envsoundpathes': ['audio/env/','audio/',''],
+                 'voicepathes': ['audio/voice/','audio/',''],
+                 'sfxpathes':  ['audio/sound/','audio/',''],
+                 'soundtypes': ['.wav','.ogg',''],
                 }
 
 
@@ -79,6 +92,12 @@ class _RuntimeData(object):
                     
                     }
     
+    #Current background music
+    current_bgm = None
+    
+    #Current environment sound
+    current_env = None
+    
     
 
     
@@ -108,7 +127,6 @@ def loadDefaultSettings(fileName):
             spaceCutter = re.compile(ur'\s+',re.UNICODE) 
             splited = spaceCutter.split(line,1)
             game_settings[splited[0]] = eval(splited[1].strip())
-            print str(game_settings)
     else: raise Exception('No such file: ' + fileName)
 
 print 'constructed'

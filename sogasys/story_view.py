@@ -35,10 +35,7 @@ from direct.interval.IntervalGlobal import Sequence
 
 import runtime_data
 
-imagepathes = ['images/','models/','']
-imagetypes = ['.png', '.jpg', '.bmp','']
-modelpathes = ['models/','images/','']
-modeltypes = ['.egg','.egg.pz','.x','']
+
 
 class SVIC(object):
     '''story view item category'''
@@ -212,11 +209,18 @@ class StoryView(DirectObject, NodePath):
             
     def _createItem(self, entry, ignore_fadein = False):
         '''Create an item(not including adding this to itemEntries)'''
+        
+        imagepathes = runtime_data.game_settings['imagepathes']
+        imagetypes = runtime_data.game_settings['imagetypes']
+        modelpathes = runtime_data.game_settings['modelpathes']
+        modeltypes = runtime_data.game_settings['modeltypes']
+        
         if self._sceneItems.has_key(entry.key):
             self._sceneItems[entry.key].removeNode()
             self._sceneItems.pop(entry.key)
         item = None
         if entry.category == SVIC.FG or entry.category == SVIC.BG or entry.category == SVIC.O2D:
+
             
             texture = None
             for ft in ((folder,type) for folder in imagepathes for type in imagetypes):

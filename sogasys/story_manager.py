@@ -43,16 +43,6 @@ from story_view import StoryView,StoryViewItemEntry,SVIC
 
 import runtime_data
 
-sogalscrpathes = ['scenes/','']
-sogalscrtypes = ['.sogal','']
-
-pscriptpathes = ['scenes/','scenes/scripts/','']
-pscriptpathes = ['.py','']
-
-
-
-
-        
 
 class StoryManager(DirectObject):
     """Story controller of Sogal
@@ -72,10 +62,6 @@ class StoryManager(DirectObject):
         self._textFont.setPageSize(512,512)
         self.__spaceCutter = re.compile(ur'\s+',re.UNICODE)
         self.__destroyed = False
-        self.__prevBackground = None #上一个背景图片，用于渐变效果
-        self.__background = None #当前背景图片
-        self.__frontCover = None #前景
-        #self.__buffer = 
         
         
         
@@ -109,10 +95,12 @@ class StoryManager(DirectObject):
         self._frame = DirectFrame(parent = aspect2d)  # @UndefinedVariable pydev在傲娇而已不用管
         self._frame.setTransparency(TransparencyAttrib.MAlpha)
         self.accept('mouse1', self.clicked)
+        
         self.gameTextBox = GameTextBox(currentData = runtime_data.RuntimeData.current_text)
         self.storyView = StoryView()
+        self.audioPlayer = base.audioPlayer  # @UndefinedVariable pydev在傲娇而已不用管
+        
         taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
-        #self.loopTask = 
         self._inputReady = True
         
         
@@ -187,7 +175,9 @@ class StoryManager(DirectObject):
         
         cleared = False
 
-            
+        voiceFlag = False                   #it will be True if voice is stopped in this line of command 
+                                            #used for disable cross voice of different command lines
+                                            #but enable one command line with multiple voices
         
         #read command line
         if command.command:
@@ -314,7 +304,6 @@ class StoryManager(DirectObject):
                     self.storyView.clear()
                     
                 elif comm.startswith('clear '):
-
                     cleared = True
                     temp = spaceCutter.split(comm,2)
                     if len(temp)>=3:
@@ -339,7 +328,77 @@ class StoryManager(DirectObject):
                                               )
                     self.storyView.newItem(svie)
                 
+                elif comm.startswith('v '):
+                    if not voiceFlag:
+                        self.audioPlayer.stopVoice()
+                        voiceFlag = True
+                    temp = spaceCutter.split(comm , 2)
+                    if len(temp)>=3:
+                        volume = seval(temp[2])
+                    else: volume = 1
+                    self.audioPlayer.playVoice(temp[1],volume)
+                    
+                elif comm.startswith('se '):
+                    temp = spaceCutter.split(comm , 2)
+                    if len(temp)>=3:
+                        volume = seval(temp[2])
+                    else: volume = 1
+                    self.audioPlayer.playSound(temp[1],volume)
+                    
+                elif comm == 'vstop':
+                    self.audioPlayer.stopVoice()
+                    voiceFlag = True
+                    
+                elif comm == 'sestop':
+                    self.audioPlayer.stopSound()
+                    
+                elif comm.startswith('bgm '):
+                    temp = spaceCutter.split(comm , 4)
+                    if len(temp)>=3:
+                        fadein = seval(temp[2])
+                    else: fadein = 0
+                    if len(temp)>=4:
+                        volume = seval(temp[3])
+                    else: volume = 1
+                    if len(temp)>=5:
+                        loop = bool(seval(temp[4]))
+                    else: loop = True
+                    self.audioPlayer.playBGM(temp[1], fadein=fadein, volume=volume, loop=loop)      
+                    
+                elif comm.startswith('env '):
+                    temp = spaceCutter.split(comm , 4)
+                    if len(temp)>=3:
+                        fadein = seval(temp[2])
+                    else: fadein = 0
+                    if len(temp)>=4:
+                        volume = seval(temp[3])
+                    else: volume = 1
+                    if len(temp)>=5:
+                        loop = bool(seval(temp[4]))
+                    else: loop = True
+                    self.audioPlayer.playENV(temp[1], fadein=fadein, volume=volume, loop=loop)        
                 
+                elif comm.startswith('bgmstop ') or comm == 'bgmstop':
+                    temp = spaceCutter.split(comm , 1)
+                    if len(temp)>=2:
+                        fadeout = seval(temp[1])
+                    else: fadeout = 0
+                    self.audioPlayer.stopBGM(fadeout)
+                    
+                elif comm.startswith('envstop ') or comm == 'envstop':
+                    temp = spaceCutter.split(comm , 1)
+                    if len(temp)>=2:
+                        fadeout = seval(temp[1])
+                    else: fadeout = 0
+                    self.audioPlayer.stopENV(fadeout)
+                    
+                elif comm.startswith('audiostop ') or comm == 'audiostop':
+                    temp = spaceCutter.split(comm , 1)
+                    if len(temp)>=2:
+                        fadeout = seval(temp[1])
+                    else: fadeout = 0
+                    self.audioPlayer.stopAll(fadeout)
+                                    
                 else: 
                     if comm:
                         print('extra command: ' + comm)
@@ -436,7 +495,7 @@ def loadScriptData(fileName):
     参见 game_entities.StoryCommand
     '''
     fileloc = None
-    for pt in ((path,type) for path in sogalscrpathes for type in sogalscrtypes):
+    for pt in ((path,type) for path in runtime_data.game_settings['sogalscrpathes'] for type in runtime_data.game_settings['sogalscrtypes']):
         if exists(pt[0]+fileName+pt[1]):
             fileloc = pt[0]+fileName+pt[1]
     

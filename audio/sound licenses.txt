@@ -25,20 +25,6 @@ Licensed under the Attribution License
 This is a recording of birds chirping in Parco della Mura in Genova, Italy.
 ===========================================================================
 ===========================================================================
-music/velatrisx-ambient-loading-screen-music-3.wav
-Provided by Erokia, on March 1st, 2013
-from http://www.freesound.org/people/Erokia/sounds/179287/
-Licensed under the Attribution License 
-(CC-BY 3.0 - http://creativecommons.org/licenses/by/3.0/)
-
-All piano related samples go into my piano sample pack from now on.
-
-All sounds were generated through basic effects, vst's, wave editing, time
-shifting, EQing, cutting, and sampling.
-----
-https://soundcloud.com/xxabcelxx
-===========================================================================
-===========================================================================
 music/church-organ-music.wav
 Provided by FK_Prod, on June 1st, 2013
 from http://www.freesound.org/people/FK_Prod/sounds/190468/
@@ -47,4 +33,13 @@ Licensed under the Attribution License
 
 A short music I composed for church organ. I used Free VST Church 2 by
 Mainstream Audio in Samplitude 17.
+===========================================================================
+===========================================================================
+voice/speak-and-spell-alphbet-a-z.ogg
+Provided by hiddenpersuader, on June 14th, 2012
+from http://www.freesound.org/people/hiddenpersuader/sounds/158195/
+Licensed under the Creative Commons 0 License.
+(CC0 1.0 - http://creativecommons.org/publicdomain/zero/1.0/)
+
+Complete Speak and Spell Alphbet A - Z
 ===========================================================================

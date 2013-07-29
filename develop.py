@@ -31,7 +31,7 @@ class SogalEntry(SogalBase):
 
     def __init__(self):
         SogalBase.__init__(self)
-        self.storyManager.addScriptData('imagetest')
+        self.storyManager.addScriptData('soundtest')
 
 if __name__ == '__main__':
     SogalEntry().run()

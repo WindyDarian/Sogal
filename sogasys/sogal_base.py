@@ -31,9 +31,9 @@ from direct.showbase.ShowBase import ShowBase
 
 from direct.filter.FilterManager import FilterManager
 
-from sogasys.story_manager import StoryManager
-from sogasys.runtime_data import game_settings,loadDefaultSettings
-
+from story_manager import StoryManager
+from runtime_data import game_settings,loadDefaultSettings
+from audio_player import AudioPlayer
  
 class SogalBase(ShowBase): 
     "The ShowBase of the sogal"
@@ -59,7 +59,7 @@ class SogalBase(ShowBase):
         self.cam2dp.node().getDisplayRegion(0).setSort(-20)  #Set render2dp to background
         self.disableMouse() #Disable panda3d's default mouse control
         self.cam.node().getDisplayRegion(0).setActive(0) #disable default camera
-        
+        self.audioPlayer = AudioPlayer()
        
         
         #背景设置

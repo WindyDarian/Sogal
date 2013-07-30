@@ -166,6 +166,17 @@ env -FileName (-fadein) (-volume) (0) 循环播放环境音效 末尾的0作为�
 envstop (-fadeout)	淡出环境音效
 audiostop (-fadeout) 停止所有音效 BGM和ENV会淡出
 
+功能逻辑：
+mark: mark 标记以用于跳转，单独占一行命令
+script   表示接下来的文本段是python脚本（注意其中不能有空行）
+script -FileName 运行python脚本文件
+注意: script脚本由专门的脚本命名空间执行 但在命名空间中请不要留下对任何panda3d物件的引用（否则可能影响序列化存档）
+但是，下列引用的对象是可以在脚本空间中访问的（参见story_manager.py中mapScriptSpace(self)）
+        self.scriptSpace['goto'] = self.goto
+        self.scriptSpace['story_manager'] = self    
+        self.scriptSpace['game_text_box'] = self.gameTextBox
+        self.scriptSpace['story_view'] = self.storyView
+        self.scriptSpace['audio_player'] = self.audioPlayer  
 
 未实现（加#表示暂不忙实现）：
 
@@ -175,9 +186,11 @@ audiostop (-fadeout) 停止所有音效 BGM和ENV会淡出
 
 time -time 表示在玩家不操作的情况下需要等待time秒才会进入下一行
 wait 表示当前需要玩家输入才能继续
-go -FileName 读取sogal场景脚本并跳转
-script   表示接下来的文本段是python脚本（注意其中不能有空行）
-script -FileName 运行python脚本文件
+jump -FileName 读取sogal场景脚本并跳转
+expand -FileName 将sogal场景脚本展开到当前脚本中的下一句
+if: condition 条件判断，单独占一行命令
+while: condition
+
 选择
 循环
 

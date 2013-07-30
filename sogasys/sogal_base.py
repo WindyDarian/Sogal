@@ -42,10 +42,6 @@ class SogalBase(ShowBase):
         "初始化"
         #读取设置文件
         loadPrcFile("config/PandaConfig.prc")
-        try:
-            loadDefaultSettings('config/default.sconf')
-        except Exception as exp: print(exp)
-
         
         #构造Panda3D的ShowBase
         ShowBase.__init__(self)

@@ -19,23 +19,8 @@
    limitations under the License.
 
 ====================================================================================
-Created on Jul 5, 2013
-SOGAL(七海美少女游戏引擎, Seven Ocean Galgame Engine)的主入口点，开发时用所以会经常改动
-@author: 大地无敌
+Created on Jul 30, 2013
+
+@author: Windy darian（大地无敌)
 '''
-from sogasys.sogal_base import SogalBase
-from sogasys.runtime_data import game_settings,loadDefaultSettings
-
- 
-class SogalEntry(SogalBase): 
-    "游戏框架，继承自ShowBase"
-
-    def __init__(self):
-        try:
-            loadDefaultSettings('config/default.sconf')
-        except Exception as exp: print(exp)
-        SogalBase.__init__(self)
-        self.storyManager.beginScene('scripttest')
-
-if __name__ == '__main__':
-    SogalEntry().run()
+print 'Hello World!'

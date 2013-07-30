@@ -50,7 +50,7 @@ game_settings = {'text_speed': 20, #文字速度
                  'sogalscrpathes': ['scenes/',''],
                  'sogalscrtypes': ['.sogal',''],
                  'pscriptpathes': ['scenes/','scenes/scripts/',''],
-                 'pscriptpathes': ['.py',''],
+                 'pscripttypes': ['.py',''],
                  'imagepathes': ['images/','models/',''],
                  'imagetypes': ['.png', '.jpg', '.bmp',''],
                  'modelpathes': ['models/','images/',''],
@@ -79,10 +79,13 @@ class _RuntimeData(object):
     story_view_itementries = None
     
     #List of non-processed StoryCommands
-    commands_in_queue = []
+    command_list = []
     
-    #Stack of loop commands
+    #command pointer stack for loop 
     command_stack = []
+    
+    #point to current command
+    command_ptr = 0
     
     #Current text. Index 0 is the text and index 1 is the speaker
     current_text = [None,None]
@@ -99,18 +102,14 @@ class _RuntimeData(object):
     current_env = None
     
     
+    
+    
 
     
 RuntimeData = _RuntimeData()
 
 def saveData(fileName):
-    ''''''
-    if RuntimeData.script_space.has_key('storyManager'):
-        del RuntimeData.script_space['storyManager']
-    if RuntimeData.script_space.has_key('gameTextBox'):
-        del RuntimeData.script_space['gameTextBox']
-    if RuntimeData.script_space.has_key('storyView'):
-        del RuntimeData.script_space['storyView']
+    pass
     
 def saveSettings(fileName):
     pass

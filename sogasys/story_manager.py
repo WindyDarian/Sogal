@@ -44,6 +44,14 @@ from story_view import StoryView,StoryViewItemEntry,SVIC
 import runtime_data
 
 
+space_cutter = re.compile(ur'\s+',re.UNICODE)
+mark_cutter =  re.compile(ur'mark *:',re.UNICODE)
+
+def run_script(script,globals):
+    '''run a script'''
+    if script:
+        exec(script,globals)
+
 class StoryManager(DirectObject):
     """Story controller of Sogal
     Controls the whole story scene.
@@ -53,14 +61,13 @@ class StoryManager(DirectObject):
     gameTextBox: the current GameTextBox, useful for user scripting
     storyView: the current StoryView, useful for user scripting
     """
-    
+    scriptSpace = {}
 
     
     def __init__(self):
         self._textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
         self._textFont.setPixelsPerUnit(60)
         self._textFont.setPageSize(512,512)
-        self.__spaceCutter = re.compile(ur'\s+',re.UNICODE)
         self.__destroyed = False
         
         
@@ -103,7 +110,19 @@ class StoryManager(DirectObject):
         taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
         self._inputReady = True
         
-        
+        self.mapScriptSpace()
+      
+    def mapScriptSpace(self):
+        if runtime_data.RuntimeData.script_space:  #map script space
+            self.scriptSpace = runtime_data.RuntimeData.script_space
+        else: runtime_data.RuntimeData.script_space = self.scriptSpace 
+        self.scriptSpace['goto'] = self.goto
+        self.scriptSpace['story_manager'] = self    
+        self.scriptSpace['game_text_box'] = self.gameTextBox
+        self.scriptSpace['story_view'] = self.storyView
+        self.scriptSpace['audio_player'] = self.audioPlayer        
+
+    
     def clicked(self):
         if not self.getSceneReady():
             self.storyView.quickfinish()
@@ -147,9 +166,31 @@ class StoryManager(DirectObject):
         '''
         #TODO: 还要添加循环的支持，用到runtime_data.command_stack来暂存需要回跳的命令组和回跳节点
         #TODO：添加对条件和选择的支持
-        if runtime_data.RuntimeData.commands_in_queue:
-            self.processCommand(runtime_data.RuntimeData.commands_in_queue.pop(0))
-
+        
+        if len(self.commandList) > self.scrPtr:
+            handled = False
+            if self.commandList[self.scrPtr].command:
+                temp = self.commandList[self.scrPtr].command.strip()
+                if temp.startswith('mark ')or temp.startswith('mark:'):
+                    handled = True
+            
+            if not handled:
+                self.processCommand(self.commandList[self.scrPtr])
+            
+            self.scrPtr = self.scrPtr + 1
+            runtime_data.RuntimeData.command_ptr = self.scrPtr
+    
+    def goto(self, target):
+        '''Jump to a mark'''
+        for i in range(0, len(self.commandList)):
+            if self.commandList[i].command:
+                mark = mark_cutter.split(self.commandList[i].command , 1)
+                if len(mark) > 1:
+                    markText = mark[1].strip()
+                    if markText == target:
+                        self.scrPtr = i
+                        return
+        print 'unable to find mark'
 
     def processCommand(self,command):
         '''Process a StoryCommand
@@ -171,7 +212,7 @@ class StoryManager(DirectObject):
         text = ''
         continuous = False
         is_script = False
-        spaceCutter = self.__spaceCutter
+        spaceCutter = space_cutter
         
         cleared = False
 
@@ -398,7 +439,14 @@ class StoryManager(DirectObject):
                         fadeout = seval(temp[1])
                     else: fadeout = 0
                     self.audioPlayer.stopAll(fadeout)
-                                    
+                    
+                elif comm == 'script':
+                    is_script = True
+                    
+                elif comm.startswith('script '):
+                    temp = spaceCutter.split(comm , 1)
+                    self.runScriptFile(temp[1])       
+                                               
                 else: 
                     if comm:
                         print('extra command: ' + comm)
@@ -434,21 +482,49 @@ class StoryManager(DirectObject):
                     if item:
                         text += translate(item) + '\n'
             
-        if text and not is_script:
-            
-            self.gameTextBox.pushText(text = text, speaker = name, continuous = continuous)
-            self._inputReady = False
-            self.gameTextBox.show()
+        if is_script:
+            run_script(command.text, self.scriptSpace)
+        
+        if text:
+            self.pushText(text = text, speaker = name, continuous = continuous)
+
+                
+        
             
         else:
             if cleared:
                 self.gameTextBox.hide()    #better to hide the textbox when 'vclear'
+    
+    def pushText(self, text, speaker = None, continuous = False):
+        self.gameTextBox.pushText(text = text, speaker = speaker, continuous = continuous)
+        self._inputReady = False
+        self.gameTextBox.show()        
+    
+    def runScript(self,pscriptText):
+        exec(pscriptText,self.scriptSpace)
+    
+    def runScriptFile(self,fileName):
+        pathes = runtime_data.game_settings['pscriptpathes']
+        types = runtime_data.game_settings['pscripttypes']
+        for ft in ((folder,type) for folder in pathes for type in types):
+            if exists(ft[0] + fileName + ft[1]):
+                handler = open(ft[0] + fileName + ft[1])
+                data = handler.read()
+                handler.close()
+                break
+        if data:
+            run_script(data, self.scriptSpace)
+        else:
+            print "file not find: "+ fileName
         
-        
-    def addScriptData(self,fileName):
+    def beginScene(self,fileName):
         '''Load target .sogal script file and add it to the non-processed queue.
         '''
-        runtime_data.RuntimeData.commands_in_queue.extend(loadScriptData(fileName))
+        self.scrPtr = 0
+        self.scrStack = []  #used for stack controller pointers
+        self.commandList = loadScriptData(fileName)
+        runtime_data.RuntimeData.command_stack = self.scrStack
+        runtime_data.RuntimeData.command_list = self.commandList
   
 class StoryCommand(object):
     ''' A command (or one paragraph) of the script file
@@ -513,6 +589,8 @@ def loadScriptData(fileName):
     _current_command = None   #当前的命令文字
     global _current_text
     _current_text = None    #当前的文本
+    controlAttribs_startswith = ['if ','while ','elif ']
+    controlAttribs_equal = ['else','end']
     
     def push_current():
         global _current_command   #如果是python3.0以上在这里用nonlocal就好了……
@@ -529,9 +607,6 @@ def loadScriptData(fileName):
             
     
     while True:
-        
-         
-      
         temp_original = unicode(io_reader.readline().decode('utf-8'))
         if not temp_original:    #文件末
             push_current() 
@@ -552,6 +627,15 @@ def loadScriptData(fileName):
                     push_current() 
                 _current_command = line.lstrip('@')
                 
+                #There should be no text in control parts so it it is an control part then push
+                for attr in controlAttribs_startswith:
+                    if _current_command.startswith(attr):
+                        push_current()
+                for attr in controlAttribs_equal:
+                    if _current_command == attr:
+                        push_current()
+                
+                
             else:    #于是就剩下是文本的情况
                 if _current_text:
                     _current_text += '\n'
@@ -563,7 +647,7 @@ def loadScriptData(fileName):
             
     return loaded_list
        
-        
+
     
     
 

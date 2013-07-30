@@ -8,7 +8,7 @@ voice_volume 1
 sogalscrpathes ['scenes/','']
 sogalscrtypes ['.sogal','']
 pscriptpathes ['scenes/','scenes/scripts/','']
-pscriptpathes ['.py','']
+pscripttypes ['.py','']
 imagepathes ['images/','models/','']
 imagetypes ['.png', '.jpg', '.bmp','']
 modelpathes ['models/','images/','']

@@ -114,6 +114,7 @@ class GameTextBox(DirectObject, NodePath):
         self.textFont.setPixelsPerUnit(60)
         self.textFont.setPageSize(512,512)
         self.textFont.setLineHeight(1.2)
+        self.textFont.setSpaceAdvance(0.5)
         
         NodePath.__init__(self, 'GameTextBox')
         self.reparentTo(aspect2d)

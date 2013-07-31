@@ -36,6 +36,7 @@ class SogalEntry(SogalBase):
         except Exception as exp: print(exp)
         SogalBase.__init__(self)
         self.storyManager.beginScene('scripttest')
+        
 
 if __name__ == '__main__':
     SogalEntry().run()

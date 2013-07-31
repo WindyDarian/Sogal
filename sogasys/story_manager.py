@@ -30,22 +30,26 @@ import re
 
 from panda3d.core import NodePath  # @UnresolvedImport
 from panda3d.core import TransparencyAttrib  # @UnresolvedImport
-from direct.gui.DirectFrame import DirectFrame
-from direct.gui.OnscreenText import OnscreenText
-from direct.gui.OnscreenImage import OnscreenImage
+
 #from direct.gui.DirectButton import DirectButton
 from direct.showbase.DirectObject import DirectObject
 from direct.stdpy.file import open,exists
 from direct.task import Task
 
+from direct.gui.DirectFrame import DirectFrame
+import direct.gui.DirectGuiGlobals as DGG
+
 from game_text_box import GameTextBox
 from story_view import StoryView,StoryViewItemEntry,SVIC
+from story_menu_bar import StoryMenuBar
 
 import runtime_data
 
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
 mark_cutter =  re.compile(ur'mark *:',re.UNICODE)
+
+
 
 def run_script(script,globals):
     '''run a script'''
@@ -65,12 +69,8 @@ class StoryManager(DirectObject):
 
     
     def __init__(self):
-        self._textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
-        self._textFont.setPixelsPerUnit(60)
-        self._textFont.setPageSize(512,512)
+
         self.__destroyed = False
-        
-        
         
     def destroy(self):
         self.__destroyed = True
@@ -106,6 +106,13 @@ class StoryManager(DirectObject):
         self.gameTextBox = GameTextBox(currentData = runtime_data.RuntimeData.current_text)
         self.storyView = StoryView()
         self.audioPlayer = base.audioPlayer  # @UndefinedVariable pydev在傲娇而已不用管
+        self.menu = StoryMenuBar()
+        
+        self.menu.addButton(text = 'Save',state = DGG.DISABLED)
+        self.menu.addButton(text = 'Load',state = DGG.DISABLED)
+        self.menu.addButton(text = 'Quick Save')
+        self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED)
+ 
         
         taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
         self._inputReady = True
@@ -120,8 +127,14 @@ class StoryManager(DirectObject):
         self.scriptSpace['story_manager'] = self    
         self.scriptSpace['game_text_box'] = self.gameTextBox
         self.scriptSpace['story_view'] = self.storyView
-        self.scriptSpace['audio_player'] = self.audioPlayer        
-
+        self.scriptSpace['audio_player'] = self.audioPlayer
+        
+    def unmapScriptSpace(self):
+        self.scriptSpace['goto'] = None
+        self.scriptSpace['story_manager'] = None    
+        self.scriptSpace['game_text_box'] = None
+        self.scriptSpace['story_view'] = None
+        self.scriptSpace['audio_player'] = None
     
     def clicked(self):
         if not self.getSceneReady():
@@ -129,7 +142,6 @@ class StoryManager(DirectObject):
             self.gameTextBox.quickFinish()
         else:
             self.setInputReady(True)
-                
                 
     def getSceneReady(self):
         '''Get if the scene is ready'''

@@ -3,8 +3,8 @@
 #fullscreen #t
 
 #notify-level-audio debug
-audio-library-name null
-#audio-library-name p3openal_audio
+#audio-library-name null
+audio-library-name p3openal_audio
 
 want-directtools #t
 want-tk #t

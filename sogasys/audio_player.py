@@ -30,7 +30,7 @@ from direct.interval.FunctionInterval import Func,Wait
 from direct.interval.IntervalGlobal import Sequence
 from direct.stdpy.file import exists    #use panda3d's file API to support panda's virtual folder
 
-from runtime_data import game_settings
+from runtime_data import game_settings,RuntimeData
 
 _fadeinIntervalTable = {}
 _intervals = []
@@ -175,6 +175,7 @@ class AudioPlayer(DirectObject):
     def playBGM(self, path, fadein = 0, volume = 1, loop = True):
         if self._currentBGM:    #if there is a music playing then stop it
             self.stopBGM(fadein)
+        RuntimeData.current_bgm = [path,fadein,volume,loop] #save for loading
         pathes = game_settings['musicpathes']
         types = game_settings['soundtypes']
         for ft in ((folder,type) for folder in pathes for type in types):
@@ -183,11 +184,13 @@ class AudioPlayer(DirectObject):
                 break
         loader.loadSound(self.bgmMgr,
                      path,
-                     callback = self._setAndPlayBGM,extraArgs = [fadein, volume, loop])    
+                     callback = self._setAndPlayBGM,extraArgs = [fadein, volume, loop]) 
+          
     
     def playENV(self, path, fadein = 0, volume = 1, loop = True):
         if self._currentENV:
             self.stopENV(fadein)
+        RuntimeData.current_env = [path,fadein,volume,loop]
         pathes = game_settings['envsoundpathes']
         types = game_settings['soundtypes']
         for ft in ((folder,type) for folder in pathes for type in types):
@@ -201,10 +204,12 @@ class AudioPlayer(DirectObject):
     def stopBGM(self, fadeout = 0):
         if self._currentBGM:
             stop_audio(self._currentBGM, fadeout)
+        RuntimeData.current_bgm = None
         
     def stopENV(self, fadeout = 0):
         if self._currentENV:
             stop_audio(self._currentENV, fadeout)
+        RuntimeData.current_env = None
     
     def stopVoice(self):
         self.voiceMgr.stopAllSounds()
@@ -220,11 +225,24 @@ class AudioPlayer(DirectObject):
     
     def _setAndPlayBGM(self, audio, fadein, volume, loop):
         self._currentBGM = audio
+        
         play_audio(audio, fadein, volume, loop)
         
     def _setAndPlayENV(self, audio, fadein, volume, loop):
         self._currentENV = audio
         play_audio(audio, fadein, volume, loop)
+        
+    def presave(self):
+        pass
+        
+    def reload(self):
+        'reload sound, should be called by StoryManager after loading'
+        self.stopAll()
+        bgm = RuntimeData.current_bgm
+        self.playBGM(bgm[0],1,bgm[2],bgm[3])
+        env = RuntimeData.current_env
+        self.playENV(bgm[0],1,bgm[2],bgm[3])
+        
         
     
 

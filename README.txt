@@ -171,12 +171,17 @@ mark: mark 标记以用于跳转，单独占一行命令
 script   表示接下来的文本段是python脚本（注意其中不能有空行）
 script -FileName 运行python脚本文件
 注意: script脚本由专门的脚本命名空间执行 但在命名空间中请不要留下对任何panda3d物件的引用（否则可能影响序列化存档）
-但是，下列引用的对象是可以在脚本空间中访问的（参见story_manager.py中mapScriptSpace(self)）
-        self.scriptSpace['goto'] = self.goto
-        self.scriptSpace['story_manager'] = self    
-        self.scriptSpace['game_text_box'] = self.gameTextBox
-        self.scriptSpace['story_view'] = self.storyView
-        self.scriptSpace['audio_player'] = self.audioPlayer  
+但是，下列引用的对象是可以在脚本空间中访问的（相对的）全局对象（参见story_manager.py中mapScriptSpace(self)）
+        script_global['goto'] = self.goto
+        script_global['story_manager'] = self    
+        script_global['game_text_box'] = self.gameTextBox
+        script_global['story_view'] = self.storyView
+        script_global['audio_player'] = self.audioPlayer
+        script_global['gdict'] = self.script_space
+另外因为Panda3D的关系（会在脚本的全局命名空间加一些无法被pickle序列化的C内容）和窝的一些小诡计所以全局命名空间不
+会保存到存档文件中（但本地命名空间能保存和在下一段脚本中继承）所以使用global时要注意
+——但，你可以把本地空间当成全局空间用……
+
 
 未实现（加#表示暂不忙实现）：
 

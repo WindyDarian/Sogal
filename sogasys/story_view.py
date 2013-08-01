@@ -156,10 +156,21 @@ class StoryView(DirectObject, NodePath):
         self.newItem(StoryViewItemEntry('arrow','text_arrow/text_arrow',SVIC.O3D,pos = (0,1.5,0)))
         self.newItem(StoryViewItemEntry('__bg__','testbg',SVIC.BG))
         '''
+    def presave(self):
+        '''what to do before saving'''
+        pass
         
         
     def reload(self):
 
+        #sync properties and items link with runtime_data
+        if runtime_data.RuntimeData.story_view_properties:  
+            self.properties = runtime_data.RuntimeData.story_view_properties
+        else: runtime_data.RuntimeData.story_view_properties = self.properties
+        
+        if runtime_data.RuntimeData.story_view_itementries:  
+            self.itemEntries = runtime_data.RuntimeData.story_view_itementries
+        else: runtime_data.RuntimeData.story_view_itementries = self.itemEntries
         
         '''reload the properties and the items and the camera'''
         self._resetNode()
@@ -475,7 +486,8 @@ class StoryView(DirectObject, NodePath):
                 removelist.append(interval)
         for r in removelist:
             self._intervals.remove(r)
-    
+            
+ 
     
     
         

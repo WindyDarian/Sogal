@@ -26,7 +26,7 @@ SOGAL的故事模式（Galgame通常流程）管理器
 
 
 from StringIO import StringIO
-import re
+import re,copy
 
 from panda3d.core import NodePath  # @UnresolvedImport
 from panda3d.core import TransparencyAttrib  # @UnresolvedImport
@@ -34,8 +34,9 @@ from panda3d.core import TransparencyAttrib  # @UnresolvedImport
 #from direct.gui.DirectButton import DirectButton
 from direct.showbase.DirectObject import DirectObject
 from direct.stdpy.file import open,exists
+from direct.stdpy import threading
+from direct.stdpy import pickle
 from direct.task import Task
-
 from direct.gui.DirectFrame import DirectFrame
 import direct.gui.DirectGuiGlobals as DGG
 
@@ -48,13 +49,10 @@ import runtime_data
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
 mark_cutter =  re.compile(ur'mark *:',re.UNICODE)
+script_global = {}
 
 
 
-def run_script(script,globals):
-    '''run a script'''
-    if script:
-        exec(script,globals)
 
 class StoryManager(DirectObject):
     """Story controller of Sogal
@@ -65,12 +63,12 @@ class StoryManager(DirectObject):
     gameTextBox: the current GameTextBox, useful for user scripting
     storyView: the current StoryView, useful for user scripting
     """
-    scriptSpace = {}
-
+    script_space = {}
+    _currentDump = None
     
     def __init__(self):
-
         self.__destroyed = False
+        self.step = 0    #shows how many commands line it had run, used to sync data dumps
         
     def destroy(self):
         self.__destroyed = True
@@ -79,7 +77,6 @@ class StoryManager(DirectObject):
             self._frame = None
             
         self.gameTextBox = None
-        
         self.removeNode()
         self.ignoreAll()
         taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
@@ -87,6 +84,8 @@ class StoryManager(DirectObject):
     def __del__(self):
         if not self.__destroyed:
             self.destroy()
+            
+    
             
     def loopTask(self,task):
         '''
@@ -103,38 +102,73 @@ class StoryManager(DirectObject):
         self._frame.setTransparency(TransparencyAttrib.MAlpha)
         self.accept('mouse1', self.clicked)
         
-        self.gameTextBox = GameTextBox(currentData = runtime_data.RuntimeData.current_text)
+        
         self.storyView = StoryView()
         self.audioPlayer = base.audioPlayer  # @UndefinedVariable pydev在傲娇而已不用管
         self.menu = StoryMenuBar()
+        self.gameTextBox = GameTextBox()
         
-        self.menu.addButton(text = 'Save',state = DGG.DISABLED)
-        self.menu.addButton(text = 'Load',state = DGG.DISABLED)
-        self.menu.addButton(text = 'Quick Save')
-        self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED)
+        self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED)
+        self.button_load = self.menu.addButton(text = 'Load',state = DGG.DISABLED)
+        self.button_quicksave = self.menu.addButton(text = 'Quick Save',command = self.quickSave)
+        self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED)
  
         
         taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
         self._inputReady = True
         
         self.mapScriptSpace()
+        
+    def _enableSavingButton(self):
+        self.button_save['state'] = DGG.NORMAL
+        self.button_quicksave['state'] = DGG.NORMAL
+        
+    def _disableSavingButton(self):
+        self.button_save['state'] = DGG.DISABLED
+        self.button_quicksave['state'] = DGG.DISABLED
+        
+    def dumpsData(self,runtimedatadeepcopy,step):
+        '''dumps data to memory,that may run automaically'''
+
+        '''serialization '''
+        lock = threading.Lock()
+        if lock.acquire():    #avoid many dumping at the same time
+            
+            if step != self.step: #if StoryManager has already gone to another command
+                lock.release()
+                return   
+            self._currentDump = pickle.dumps(runtimedatadeepcopy, protocol = 2)
+        
+            print('data dumped: ' + str(len(self._currentDump)))
+        
+            #For test
+            #print(str(self.script_space))
+            
+            if step == self.step:
+                self._enableSavingButton()  #allow user to save a dumped data as file
+                
+            lock.release()
+       
+        
+        
+    def presave(self):
+        runtime_data.RuntimeData.command_ptr = self.scrPtr
+        
+    def reload(self):
+        self.scrPtr = runtime_data.RuntimeData.command_ptr
+        self.mapScriptSpace()
       
     def mapScriptSpace(self):
         if runtime_data.RuntimeData.script_space:  #map script space
-            self.scriptSpace = runtime_data.RuntimeData.script_space
-        else: runtime_data.RuntimeData.script_space = self.scriptSpace 
-        self.scriptSpace['goto'] = self.goto
-        self.scriptSpace['story_manager'] = self    
-        self.scriptSpace['game_text_box'] = self.gameTextBox
-        self.scriptSpace['story_view'] = self.storyView
-        self.scriptSpace['audio_player'] = self.audioPlayer
+            self.script_space = runtime_data.RuntimeData.script_space
+        else: runtime_data.RuntimeData.script_space = self.script_space 
+        script_global['goto'] = self.goto
+        script_global['story_manager'] = self    
+        script_global['game_text_box'] = self.gameTextBox
+        script_global['story_view'] = self.storyView
+        script_global['audio_player'] = self.audioPlayer
         
-    def unmapScriptSpace(self):
-        self.scriptSpace['goto'] = None
-        self.scriptSpace['story_manager'] = None    
-        self.scriptSpace['game_text_box'] = None
-        self.scriptSpace['story_view'] = None
-        self.scriptSpace['audio_player'] = None
+
     
     def clicked(self):
         if not self.getSceneReady():
@@ -142,6 +176,10 @@ class StoryManager(DirectObject):
             self.gameTextBox.quickFinish()
         else:
             self.setInputReady(True)
+            
+    def quickSave(self):
+        '''quicksave the data'''
+        
                 
     def getSceneReady(self):
         '''Get if the scene is ready'''
@@ -178,6 +216,21 @@ class StoryManager(DirectObject):
         '''
         #TODO: 还要添加循环的支持，用到runtime_data.command_stack来暂存需要回跳的命令组和回跳节点
         #TODO：添加对条件和选择的支持
+
+        
+        #Dumps story data for saving or further use
+        self._disableSavingButton() #disable saving until dumping completed
+        self.step += 1 
+        self.presave()
+        self.gameTextBox.presave()
+        self.storyView.presave()
+        self.audioPlayer.presave()
+#         runtimedatacopy =  runtime_data.RuntimeData.copy()
+#         self.unmapScriptSpace(runtimedatacopy.scriptVarDict)
+#         runtimedatacopy.scriptVarDict = copy.deepcopy(runtimedatacopy.scriptVarDict)
+        taskMgr.add(self.dumpsData, 'dumpsdata',
+                     sort = 3, priority = 1,
+                     extraArgs = [copy.deepcopy(runtime_data.RuntimeData),self.step])#dumps a copy of RuntimeData for restoring
         
         if len(self.commandList) > self.scrPtr:
             handled = False
@@ -191,6 +244,9 @@ class StoryManager(DirectObject):
             
             self.scrPtr = self.scrPtr + 1
             runtime_data.RuntimeData.command_ptr = self.scrPtr
+        
+        
+    
     
     def goto(self, target):
         '''Jump to a mark'''
@@ -216,7 +272,7 @@ class StoryManager(DirectObject):
             return t.replace(ur'\:', ur':').replace(ur'\：',ur'：').replace(ur'\#',ur'#')
         
         def seval(str):
-            return eval(str,runtime_data.RuntimeData.script_space)
+            return eval(str,script_global,runtime_data.RuntimeData.script_space)
         
         self.storyView.clearQuickItems()  #clear out quick items
         
@@ -249,6 +305,7 @@ class StoryManager(DirectObject):
                 elif comm.startswith('textboxstyle '):
                     if self.gameTextBox:
                         self.gameTextBox.setTextBoxStyle(spaceCutter.split(comm, 1)[1])
+                        self.gameTextBox.applyStyle()
                 
                 #文本框分段命令
                 elif comm == 'p':
@@ -495,7 +552,7 @@ class StoryManager(DirectObject):
                         text += translate(item) + '\n'
             
         if is_script:
-            run_script(command.text, self.scriptSpace)
+            self.runScript(command.text)
         
         if text:
             self.pushText(text = text, speaker = name, continuous = continuous)
@@ -513,19 +570,15 @@ class StoryManager(DirectObject):
         self.gameTextBox.show()        
     
     def runScript(self,pscriptText):
-        exec(pscriptText,self.scriptSpace)
+        exec(pscriptText,script_global,self.script_space)
     
     def runScriptFile(self,fileName):
         pathes = runtime_data.game_settings['pscriptpathes']
         types = runtime_data.game_settings['pscripttypes']
         for ft in ((folder,type) for folder in pathes for type in types):
             if exists(ft[0] + fileName + ft[1]):
-                handler = open(ft[0] + fileName + ft[1])
-                data = handler.read()
-                handler.close()
+                execfile(ft[0] + fileName + ft[1], script_global, self.script_space)
                 break
-        if data:
-            run_script(data, self.scriptSpace)
         else:
             print "file not find: "+ fileName
         

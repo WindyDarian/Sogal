@@ -105,7 +105,7 @@ class GameTextBox(DirectObject, NodePath):
     
     _typerLerpInterval = None
     
-    def __init__(self,style = GameTextBoxStyle.Normal,currentData = None):
+    def __init__(self):
         '''
         Constructor
         '''
@@ -118,28 +118,29 @@ class GameTextBox(DirectObject, NodePath):
         
         NodePath.__init__(self, 'GameTextBox')
         self.reparentTo(aspect2d)
-        
-        if runtime_data.RuntimeData.gameTextBox_properties:
+        self.reload()
+    
+    def presave(self):
+        runtime_data.RuntimeData.current_text[0] = self.currentText
+        runtime_data.RuntimeData.current_text[1] = self.currentSpeaker
+                    
+    def reload(self):
+        if runtime_data.RuntimeData.gameTextBox_properties: #this creates an reference
             self.properties = runtime_data.RuntimeData.gameTextBox_properties
         else: runtime_data.RuntimeData.gameTextBox_properties = self.properties
-
-    
-        self._currentStyle = style
-       
         
         self.applyStyle()
         
-        if currentData:
-            if currentData[0]:
-                self.existingText = currentData[0]
-                self.currentText = currentData[0]
+        if runtime_data.RuntimeData.current_text:
+            if runtime_data.RuntimeData.current_text[0]:
+                self.existingText = runtime_data.RuntimeData.current_text[0]
+                self.currentText = runtime_data.RuntimeData.current_text[0]
                 if self.currentTextLabel:
-                    self.currentTextLabel.setText(currentData[0])
-                    self.generateArrow()
-            if currentData[1]:
-                self.currentSpeaker = currentData[1]
+                    self.currentTextLabel.setText(runtime_data.RuntimeData.current_text[0])
+            if runtime_data.RuntimeData.current_text[1]:
+                self.currentSpeaker = runtime_data.RuntimeData.current_text[1]
                 if self._normal_speakerLabel:
-                    self._normal_speakerLabel.setText(currentData[1])
+                    self._normal_speakerLabel.setText(runtime_data.RuntimeData.current_text[1])
     
     def generateArrow(self):
         if not self._textArrow: 
@@ -261,18 +262,6 @@ class GameTextBox(DirectObject, NodePath):
                 
         self.existingText = self.currentText
         
-        '''    #WHY did i use StringIO? 脑洞系列
-        textIO = StringIO(text)
-        textIO.seek(0)
-        finished = False
-        while not finished:
-            line = textIO.readline()
-            if line:
-                self.currentText += line
-                #self.currentTextWithoutSpeaker += line 
-            else: 
-                finished = True
-        '''
         self.currentText += text
         self.newText = text
         
@@ -336,6 +325,9 @@ class GameTextBox(DirectObject, NodePath):
         
         self.destroyElements()
         
+        if self.properties.has_key('style'):
+            self.setTextBoxStyle(self.properties['style'])
+            
         st = self._currentStyle
         
         if st == GameTextBoxStyle.Normal:
@@ -425,7 +417,9 @@ class GameTextBox(DirectObject, NodePath):
         elif style.strip() == 'large':
             self._currentStyle = GameTextBoxStyle.Large
         else: print('Unknown style: ' + str(style))
-        self.applyStyle()
+        self.properties['style'] = style
+        
+        
             
 
     def paragraphSparator(self):

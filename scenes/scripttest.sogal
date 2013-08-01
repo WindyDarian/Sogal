@@ -1,6 +1,6 @@
 @mark: startpoint
 @textboxstyle normal
-@name 温蒂达莉安, bgm church-organ-music 3 #已知问题 BGM相同的情况下会重播
+@name 温蒂达莉安#, bgm church-organ-music 3 #已知问题 BGM相同的情况下会重播
 「窝是脚本测试员！」
 
 @name 温蒂达莉安,script
@@ -23,17 +23,16 @@ i = 3 + 3
   story_view    游戏的StoryView对象
   audio_player  游戏的AudioPlayer对象  」
   
-温蒂达莉安:
-「script脚本由专门的脚本命名空间执行 但在命名空间中请不要留下对任何游戏结构物件的引用（否则可能影响序列化存档）
-除了刚才提到的的那几个」
-
 @p
+温蒂达莉安:
+「script脚本由专门的脚本命名空间执行 但在命名空间中请不要留下对任何游戏结构物件的引用（否则可能影响序列化存档）除了刚才提到的的那几个，另外因为Panda3D的关系和窝的一些小诡计所以全局命名空间不会保存（但本地命名空间能保存和在下一段脚本中继承）所以使用时要注意」
+
 温蒂达莉安:
 「内置的控制语句尚未实现，用mark和goto函数代替吧」
 
 温蒂达莉安：
 「开始新的轮回吧！」
 
-@script
+@script #
 if i > 5:
     goto('startpoint')

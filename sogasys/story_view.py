@@ -55,25 +55,9 @@ class StoryViewItemEntry(object):
     '''
     An item in the story view to be added into the scene or to be stored
     '''
-    fileName = ''    #name or path of the item
-    
-    category = SVIC.FG     #Category of the item
-    
-    scale = (1,1,1)   #Note that y should always be 1 for 2D objects
-    
-    pos = (0,0,0)    #Note that y should usually be 0 for 2D objects
-    
-    color = (1,1,1,1) 
-    
-    key = 'Windy'    #And key '__bg__' is for SOGAL script background
-    
-    fadein = 0
-    
-    quickitem = False
-    
     #TODO: 实现带遮罩效果的淡入？
     
-    def __init__(self,key,fileName,category,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = 0,quickitem = False):
+    def __init__(self,key,fileName,category = SVIC.FG ,pos = (0,0,0),scale = (1,1,1),color = (1,1,1,1),fadein = 0,quickitem = False):
         self.key = key
         self.fileName = fileName
         self.category = category
@@ -103,21 +87,23 @@ class StoryView(DirectObject, NodePath):
     
     '''
     
-    properties ={'minfov': 50.534016,    #atan(tan(40deg)*9/16)*2 in 16:9 the hfow is 80
+
+
+    def __init__(self,sort = 20,*args,**kwargs):
+        '''
+        Constructor
+        '''
+        self.properties ={'minfov': 50.534016,    #atan(tan(40deg)*9/16)*2 in 16:9 the hfow is 80
                  'near_plane': 1,    #Near plane distance
                  'far_plane': 100000,    #Far plane distance
                  'fg_distance': 2,    #fgNodePath distance
                  'bg_distance': 5000,    #bgNodePath distance
                  }
     
-    itemEntries = {}   
+   
     
-    _sceneItems = None
-
-    def __init__(self,sort = 20,*args,**kwargs):
-        '''
-        Constructor
-        '''
+        self._sceneItems = None
+        self.itemEntries = {}   
         NodePath.__init__(self,'story_view')
         self.reparentTo(render)
         
@@ -175,7 +161,7 @@ class StoryView(DirectObject, NodePath):
         '''reload the properties and the items and the camera'''
         self._resetNode()
         for key in self.itemEntries:
-            self._createItem(self.itemEntries[key], ignore_fadein = true)
+            self._createItem(self.itemEntries[key], ignore_fadein = True)
             
         self.lens.setMinFov(self.properties['minfov'])
         self.lens.setNearFar(self.properties['near_plane'],self.properties['far_plane'])
@@ -328,6 +314,7 @@ class StoryView(DirectObject, NodePath):
                 sequence.start()
 
     def destroy(self):
+        self.itemEntries = None
         self.__destroyed = True
         #Destroy the camera
         dr = self.camera.node().getDisplayRegion(0)

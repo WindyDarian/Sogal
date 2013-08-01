@@ -58,48 +58,48 @@ game_settings = {'text_speed': 20, #文字速度
 
 class _RuntimeData(object):
     '''A class that holds runtime'''
-    
-    #Properties of game text box, will be loaded into a GameTextBox when GameTextBox is created
-    #and saved when the text box is destroyed
-    #if None, it is to use default value (it will just create a reference to GameTextBox.properties)
-    gameTextBox_properties = None
-    
-    #As you can see:) StoryView's properties
-    story_view_properties = None
-    
-    #The items in StoryView
-    story_view_itementries = None
-    
-    #List of non-processed StoryCommands
-    command_list = []
-    
-    #command pointer stack for loop 
-    command_stack = []
-    
-    #point to current command
-    command_ptr = 0
-    
-    #Current text. Index 0 is the text and index 1 is the speaker
-    current_text = [None,None]
-    
-    #The python space of the script
-    script_space = {}
-    
-    #Current background music
-    current_bgm = None
-    
-    #Current environment sound
-    current_env = None
-    
-    #TODO: Enable the attributes below
-    #only works for saved object
-    saved_date = None
-    
-    #only works for saved object
-    saved_title = None
-    
-    #only works for saved object
-    saved_image = None
+    def __init__(self):
+        #Properties of game text box, will be loaded into a GameTextBox when GameTextBox is created
+        #and saved when the text box is destroyed
+        #if None, it is to use default value (it will just create a reference to GameTextBox.properties)
+        self.gameTextBox_properties = None
+        
+        #As you can see:) StoryView's properties
+        self.story_view_properties = None
+        
+        #The items in StoryView
+        self.story_view_itementries = None
+        
+        #List of non-processed StoryCommands
+        self.command_list = []
+        
+        #command pointer stack for loop 
+        self.command_stack = []
+        
+        #point to current command
+        self.command_ptr = 0
+        
+        #Current text. Index 0 is the text and index 1 is the speaker
+        self.current_text = [None,None]
+        
+        #The python space of the script
+        self.script_space = {}
+        
+        #Current background music
+        self.current_bgm = None
+        
+        #Current environment sound
+        self.current_env = None
+        
+        #TODO: Enable the attributes below
+        #only works for saved object
+        self.saved_date = None
+        
+        #only works for saved object
+        self.saved_title = None
+        
+        #only works for saved object
+        self.saved_image = None
     
     def load(self, loadedInstance):
         self.gameTextBox_properties = loadedInstance.gameTextBox_properties

@@ -64,51 +64,47 @@ class GameTextBox(DirectObject, NodePath):
         properties: Properties of the text box. 
     '''
     
-    currentText = "" 
-    currentSpeaker = ""
-    newText = None
-    existingText = None
- 
-    
-    textfont = None
-        
-    properties = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
-                  'arrow_color' : (1,1,1,1),
-                  'arrow_scale' : 0.08,
-                  'arrow_rightspace' : 0.18,
-                  'foreground_color' : (1,1,1,1),
-                  'normal_background_image':None,
-                  'normal_height': 0.6,
-                  'normal_width': 2.6666667,
-                  'normal_pos': (0,-0.65),
-                  'normal_name_pos' : (0.14,-0.12),
-                  'normal_text_pos' : (0.25,-0.25),
-                  'normal_text_scale' : 0.09,
-                  'normal_name_scale' : 0.07,
-                  'normal_text_wrap' : 24,
-                  'large_background_image':None,
-                  'large_height': 1.9,
-                  'large_width' :2.3,
-                  'large_pos': (0,0),
-                  'large_text_pos': (0.18,-0.25),
-                  'large_text_scale' : 0.08,
-                  'large_name_scale' : 0.06,
-                  'large_text_wrap' : 24,
-                }
-    _normal_speakerLabel = None
-    _normal_textLabel = None
-    _large_label = None
-    
-    _frame = None
-    _textArrow = None
-    
-    
-    _typerLerpInterval = None
+
     
     def __init__(self):
         '''
         Constructor
         '''
+        self.currentText = "" 
+        self.currentSpeaker = ""
+        self.newText = None
+        self.existingText = None
+        self.textfont = None
+        self.properties = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
+                      'arrow_color' : (1,1,1,1),
+                      'arrow_scale' : 0.08,
+                      'arrow_rightspace' : 0.18,
+                      'foreground_color' : (1,1,1,1),
+                      'normal_background_image':None,
+                      'normal_height': 0.6,
+                      'normal_width': 2.6666667,
+                      'normal_pos': (0,-0.65),
+                      'normal_name_pos' : (0.14,-0.12),
+                      'normal_text_pos' : (0.25,-0.25),
+                      'normal_text_scale' : 0.09,
+                      'normal_name_scale' : 0.07,
+                      'normal_text_wrap' : 24,
+                      'large_background_image':None,
+                      'large_height': 1.9,
+                      'large_width' :2.3,
+                      'large_pos': (0,0),
+                      'large_text_pos': (0.18,-0.25),
+                      'large_text_scale' : 0.08,
+                      'large_name_scale' : 0.06,
+                      'large_text_wrap' : 24,
+                    }
+        self._normal_speakerLabel = None
+        self._normal_textLabel = None
+        self._large_label = None
+        self._frame = None
+        self._textArrow = None
+        self._typerLerpInterval = None
+        
         NodePath.__init__(self, 'GameTextBox')
         self.reparentTo(aspect2d)
         self.reload()
@@ -277,6 +273,8 @@ class GameTextBox(DirectObject, NodePath):
         if not self.currentTextLabel:
             return
         
+        #FIXME: There is a performance issue, and it is hard to apply any gradient effect
+        #Maybe we can create a NodePath class to group up TextNodes to fix this issue.
         text = self.existingText + self.newText[0:int(math.floor((len(self.newText)-1)*lerp_value))]
         self.currentTextLabel.setText(text)
         

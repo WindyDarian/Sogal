@@ -49,11 +49,13 @@ class StoryMenuBar(NodePath,DirectObject):
     '''
     The menu in story mode
     '''
-    margin = 0.05
-    topdistance = 0.3
-    rightdistance = 0.3
+
 
     def __init__(self,parent = None):
+        self.margin = 0.05
+        self.topdistance = 0.3
+        self.rightdistance = 0.3
+        
         NodePath.__init__(self,'menubar')
         if not parent:
             self.reparentTo(aspect2d)

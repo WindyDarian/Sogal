@@ -27,7 +27,7 @@ Created on 2013年7月19日
 '''
 import re,copy
 from direct.stdpy.file import open,exists
-
+from direct.stdpy import pickle
 
 
 #game settings, this saves in a sconf file
@@ -101,8 +101,21 @@ class _RuntimeData(object):
     #only works for saved object
     saved_image = None
     
-
-_runtimeData = _RuntimeData()
+    def load(self, loadedInstance):
+        self.gameTextBox_properties = loadedInstance.gameTextBox_properties
+        self.story_view_itementries = loadedInstance.story_view_itementries
+        self.story_view_properties = loadedInstance.story_view_properties
+        self.command_list = loadedInstance.command_list
+        self.command_stack = loadedInstance.command_stack
+        self.command_ptr = loadedInstance.command_ptr
+        self.current_text = loadedInstance.current_text
+        self.script_space = loadedInstance.script_space
+        self.current_bgm = loadedInstance.current_bgm
+        self.current_env = loadedInstance.current_env
+        
+        
+    
+RuntimeData = _RuntimeData()
 
 def saveSettings(fileName):
     pass
@@ -119,19 +132,13 @@ def loadDefaultSettings(fileName):
             game_settings[splited[0]] = eval(splited[1].strip())
     else: raise Exception('No such file: ' + fileName)
     
-def sstatic(method,*args,**kw):
-    '''Fake Static Decorator (solve the problem that from xx import xx is a 'value')
-    伪静态方式访问的的装饰器！     '''
-    return method(*args,**kw)
-  
-@sstatic
-def RuntimeData():
-    return _runtimeData
-
 def restoreRuntimeData(dumped):
     '''restore the data from dumped runtime data'''
-    _runtimeData = pickle.loads(dumped)
+    global RuntimeData
+    RuntimeData.load(dumped)
     
 def loadRuntimeData(saved):
     '''restore the data from saved runtime data'''
-    _runtimeData = pickle.load(saved)
+    global RuntimeData
+    data = pickle.load(saved)
+    RuntimeData.load(data)

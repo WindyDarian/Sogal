@@ -323,7 +323,6 @@ class StoryView(DirectObject, NodePath):
            
             if oldbg:
                 oldbg.setName('removing_'+oldbg.getName())
-                color = oldbg.getColor()
                 sequence = Sequence(Wait(fadein),Func(self.__deletefromScene,oldbg))
                 self._intervals.append(sequence)
                 sequence.start()
@@ -457,11 +456,7 @@ class StoryView(DirectObject, NodePath):
             li = LerpColorInterval(tempbg, fadeout, (1,1,1,0), (1,1,1,1),blendType = 'easeInOut' ) 
             self._intervals.append(li)
             li.start()
-           # self._intervals.append(LerpFunc(self.__sceneLerp,duration = fadeout,blendType = 'easeInOut',extraArgs = [tempbg]))
-    
-    #def __sceneLerp(self,lerp,tempbg):
-        #tempbg.setColor(1,1,1,1-lerp)
-        
+
     def clearQuickItems(self):
         '''quick item can be cleared out automatically, called by StoryManager'''
         for qe in self._quickitems:

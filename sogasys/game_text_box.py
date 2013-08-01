@@ -109,20 +109,12 @@ class GameTextBox(DirectObject, NodePath):
         '''
         Constructor
         '''
-        
-        self.textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
-        self.textFont.setPixelsPerUnit(60)
-        self.textFont.setPageSize(512,512)
-        self.textFont.setLineHeight(1.2)
-        self.textFont.setSpaceAdvance(0.5)
-        
         NodePath.__init__(self, 'GameTextBox')
         self.reparentTo(aspect2d)
         self.reload()
     
     def presave(self):
-        runtime_data.RuntimeData.current_text[0] = self.currentText
-        runtime_data.RuntimeData.current_text[1] = self.currentSpeaker
+        runtime_data.RuntimeData.current_text = [self.currentText, self.currentSpeaker]
                     
     def reload(self):
         if runtime_data.RuntimeData.gameTextBox_properties: #this creates an reference
@@ -197,8 +189,10 @@ class GameTextBox(DirectObject, NodePath):
 
         
     def destroy(self, *args, **kwargs):
-        self.destroyElements()
-        return GameTextBoxBase.destroy(self, *args, **kwargs)
+        self._typerLerpInterval.pause()
+        if self._frame:
+            self._frame.destroy()
+            self._frame = None
  
     def clearText(self):
         '''make current text empty'''
@@ -327,6 +321,7 @@ class GameTextBox(DirectObject, NodePath):
         
         if self.properties.has_key('style'):
             self.setTextBoxStyle(self.properties['style'])
+        else: self.setTextBoxStyle('normal')
             
         st = self._currentStyle
         
@@ -343,7 +338,7 @@ class GameTextBox(DirectObject, NodePath):
             
             self._normal_speakerLabel = OnscreenText(parent = self._frame
                                       , text = self.currentText
-                                      , font = self.textFont
+                                      , font = base.textFont
                                       , fg = self.properties['foreground_color']
                                       , mayChange = True  # @UndefinedVariable
                                       , align = TextNode.ALeft#@UndefinedVariable
@@ -352,7 +347,7 @@ class GameTextBox(DirectObject, NodePath):
             
             self._normal_textLabel = OnscreenText(parent = self._frame
                                       , text = self.currentText
-                                      , font = self.textFont
+                                      , font = base.textFont
                                       , fg = self.properties['foreground_color']
                                       , mayChange = True  # @UndefinedVariable
                                       , align = TextNode.ALeft#@UndefinedVariable
@@ -392,7 +387,7 @@ class GameTextBox(DirectObject, NodePath):
             
             self._large_label = OnscreenText(parent = self._frame
                                       , text = self.currentText
-                                      , font = self.textFont
+                                      , font = base.textFont
                                       , fg = self.properties['foreground_color']
                                       , mayChange = True  # @UndefinedVariable
                                       , align = TextNode.ALeft#@UndefinedVariable

@@ -60,10 +60,7 @@ class StoryMenuBar(NodePath,DirectObject):
         #self.vbox = VBox(margin = 0.05)
         self._items = []
         
-        self._textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
-        self._textFont.setPixelsPerUnit(60)
-        self._textFont.setPageSize(512,512)
-        self.resetPos()
+        self.resetPos() 
         
         self.bar = NodePath('storymenu')
         self.bar.reparentTo(self)
@@ -82,7 +79,7 @@ class StoryMenuBar(NodePath,DirectObject):
     
     def addButton(self,**args):
         '''Add a button and return it'''
-        btn = DirectButton(**dict(default_style,text_font = self._textFont,**args))
+        btn = DirectButton(**dict(default_style,text_font = base.textFont,**args))
         if self._items:
             btn.setPos(0,0,self._items[-1].getPos()[2] +
                            self._items[-1]['frameSize'][2] -

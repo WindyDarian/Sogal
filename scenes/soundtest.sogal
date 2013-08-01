@@ -13,7 +13,7 @@
 @p, textboxstyle normal
  温蒂达莉安：
  「来看看下一段音乐吧。」
-@p, textboxstyle large, env birds-chirping 2 1, bgm church-organ-music 3 0.01
+@p, textboxstyle large, env birds-chirping 2 1, bgm church-organ-music 3 0.1
   温蒂达莉安：
  「这是背景音乐下语音音效播放测试，准备开始咯」
 @v speak-and-spell-alphbet-a-z

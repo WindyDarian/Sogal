@@ -237,11 +237,13 @@ class AudioPlayer(DirectObject):
         
     def reload(self):
         'reload sound, should be called by StoryManager after loading'
-        self.stopAll()
+        
         bgm = RuntimeData.current_bgm
-        self.playBGM(bgm[0],1,bgm[2],bgm[3])
+        if bgm:
+            self.playBGM(bgm[0],1,bgm[2],bgm[3])
         env = RuntimeData.current_env
-        self.playENV(bgm[0],1,bgm[2],bgm[3])
+        if env:
+            self.playENV(env[0],1,env[2],env[3])
         
         
     

@@ -65,27 +65,23 @@ class StoryManager(DirectObject):
     """
     script_space = {}
     _currentDump = None
+    __destroyed = False
     
     def __init__(self):
-        self.__destroyed = False
         self.step = 0    #shows how many commands line it had run, used to sync data dumps
+        self.scrStack = []
+        self.commandList = []
         
     def destroy(self):
         self.__destroyed = True
+        self.ignoreAll()
+        taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
         if self._frame:
             self._frame.destroy()
             self._frame = None
             
-        self.gameTextBox = None
-        self.removeNode()
-        self.ignoreAll()
-        taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
-        
-    def __del__(self):
-        if not self.__destroyed:
-            self.destroy()
-            
-    
+        self.gameTextBox.destroy()
+        self.storyView.destroy()
             
     def loopTask(self,task):
         '''
@@ -97,11 +93,24 @@ class StoryManager(DirectObject):
         else: return task.done
 
     def start(self,):
+        if not runtime_data.RuntimeData.command_ptr:
+            self.scrPtr = 0
+        else: self.scrPtr = runtime_data.RuntimeData.command_ptr
+        
+        if not runtime_data.RuntimeData.command_stack:
+            runtime_data.RuntimeData.command_stack = self.scrStack
+        else: self.scrStack = runtime_data.RuntimeData.command_stack
+        
+        if not runtime_data.RuntimeData.command_list:
+            runtime_data.RuntimeData.command_list = self.commandList
+        else: self.commandList = runtime_data.RuntimeData.command_list
+                
         
         self._frame = DirectFrame(parent = aspect2d)  # @UndefinedVariable pydev在傲娇而已不用管
         self._frame.setTransparency(TransparencyAttrib.MAlpha)
         self.accept('mouse1', self.clicked)
         
+
         
         self.storyView = StoryView()
         self.audioPlayer = base.audioPlayer  # @UndefinedVariable pydev在傲娇而已不用管
@@ -110,8 +119,8 @@ class StoryManager(DirectObject):
         
         self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED)
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.DISABLED)
-        self.button_quicksave = self.menu.addButton(text = 'Quick Save',command = self.quickSave)
-        self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED)
+        self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
+        self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
  
         
         taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
@@ -122,11 +131,12 @@ class StoryManager(DirectObject):
     def _enableSavingButton(self):
         self.button_save['state'] = DGG.NORMAL
         self.button_quicksave['state'] = DGG.NORMAL
-        
+
     def _disableSavingButton(self):
         self.button_save['state'] = DGG.DISABLED
         self.button_quicksave['state'] = DGG.DISABLED
         
+    """  
     def dumpsData(self,runtimedatadeepcopy,step):
         '''dumps data to memory,that may run automaically'''
 
@@ -148,15 +158,25 @@ class StoryManager(DirectObject):
                 self._enableSavingButton()  #allow user to save a dumped data as file
                 
             lock.release()
-       
-        
+    """
+    
         
     def presave(self):
-        runtime_data.RuntimeData.command_ptr = self.scrPtr
+        if self.scrPtr:
+            runtime_data.RuntimeData.command_ptr = self.scrPtr
+        self.gameTextBox.presave()
+        self.storyView.presave()
+        self.audioPlayer.presave()
         
     def reload(self):
+        taskMgr.remove('storyManagerLoop')
         self.scrPtr = runtime_data.RuntimeData.command_ptr
         self.mapScriptSpace()
+        self.gameTextBox.reload()
+        self.storyView.reload()
+        self.audioPlayer.reload()
+        taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
+       
       
     def mapScriptSpace(self):
         if runtime_data.RuntimeData.script_space:  #map script space
@@ -168,17 +188,24 @@ class StoryManager(DirectObject):
         script_global['story_view'] = self.storyView
         script_global['audio_player'] = self.audioPlayer
         
-
+    def quickfinish(self):
+        self.storyView.quickfinish()
+        self.gameTextBox.quickFinish()        
     
     def clicked(self):
         if not self.getSceneReady():
-            self.storyView.quickfinish()
-            self.gameTextBox.quickFinish()
+            self.quickfinish()
         else:
             self.setInputReady(True)
             
     def quickSave(self):
         '''quicksave the data'''
+        if self._currentDump:
+            messenger.send('save_data',[self._currentDump,'quick_save.dat'])
+            
+    def quickLoad(self):
+        if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
+            messenger.send('load_data',['quick_save.dat'])
         
                 
     def getSceneReady(self):
@@ -219,18 +246,13 @@ class StoryManager(DirectObject):
 
         
         #Dumps story data for saving or further use
-        self._disableSavingButton() #disable saving until dumping completed
+        if self.__destroyed:
+            return
+        
         self.step += 1 
         self.presave()
-        self.gameTextBox.presave()
-        self.storyView.presave()
-        self.audioPlayer.presave()
-#         runtimedatacopy =  runtime_data.RuntimeData.copy()
-#         self.unmapScriptSpace(runtimedatacopy.scriptVarDict)
-#         runtimedatacopy.scriptVarDict = copy.deepcopy(runtimedatacopy.scriptVarDict)
-        taskMgr.add(self.dumpsData, 'dumpsdata',
-                     sort = 3, priority = 1,
-                     extraArgs = [copy.deepcopy(runtime_data.RuntimeData),self.step])#dumps a copy of RuntimeData for restoring
+        self._currentDump = copy.deepcopy(runtime_data.RuntimeData)
+        if self._currentDump: self._enableSavingButton()
         
         if len(self.commandList) > self.scrPtr:
             handled = False
@@ -246,7 +268,8 @@ class StoryManager(DirectObject):
             runtime_data.RuntimeData.command_ptr = self.scrPtr
         
         
-    
+        if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
+            self.button_quickload['state'] = DGG.NORMAL 
     
     def goto(self, target):
         '''Jump to a mark'''
@@ -520,10 +543,6 @@ class StoryManager(DirectObject):
                     if comm:
                         print('extra command: ' + comm)
                         
-                        
-                
-                
-                        
         if command.text:
             if not is_script:
                 #检查有无在文本中的name
@@ -556,9 +575,6 @@ class StoryManager(DirectObject):
         
         if text:
             self.pushText(text = text, speaker = name, continuous = continuous)
-
-                
-        
             
         else:
             if cleared:
@@ -573,17 +589,22 @@ class StoryManager(DirectObject):
         exec(pscriptText,script_global,self.script_space)
     
     def runScriptFile(self,fileName):
+        #'''note that would ignore panda virtual pathes'''
         pathes = runtime_data.game_settings['pscriptpathes']
         types = runtime_data.game_settings['pscripttypes']
         for ft in ((folder,type) for folder in pathes for type in types):
             if exists(ft[0] + fileName + ft[1]):
-                execfile(ft[0] + fileName + ft[1], script_global, self.script_space)
+                handle = open(ft[0] + fileName + ft[1])
+                script = handle.read()
+                handle.close()
                 break
+        if script:
+            self.runScript(script)
         else:
             print "file not find: "+ fileName
         
     def beginScene(self,fileName):
-        '''Load target .sogal script file and add it to the non-processed queue.
+        '''Load target .sogal script file and go to that file.
         '''
         self.scrPtr = 0
         self.scrStack = []  #used for stack controller pointers

@@ -23,16 +23,20 @@ Created on Jul 27, 2013
 
 @author: Windy Darian (大地无敌)
 '''
-
+import os
+from StringIO import StringIO
 
 from panda3d.core import loadPrcFile,WindowProperties # @UnresolvedImport
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.showbase.ShowBase import ShowBase
 
 from direct.filter.FilterManager import FilterManager
+from direct.stdpy.file import open,exists
+from direct.stdpy import threading
+from direct.stdpy import pickle
 
 from story_manager import StoryManager
-from runtime_data import game_settings,loadDefaultSettings
+from runtime_data import game_settings,loadDefaultSettings,loadRuntimeData,restoreRuntimeData
 from audio_player import AudioPlayer
  
 class SogalBase(ShowBase): 
@@ -57,6 +61,19 @@ class SogalBase(ShowBase):
         self.cam.node().getDisplayRegion(0).setActive(0) #disable default camera
         self.audioPlayer = AudioPlayer()
        
+        dir = os.path.dirname(game_settings['save_folder'])
+
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        
+        #Font setting
+        self.textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
+        self.textFont.setPixelsPerUnit(60)
+        self.textFont.setPageSize(512,512)
+        self.textFont.setLineHeight(1.2)
+        self.textFont.setSpaceAdvance(0.5)
+            
+        
         
         #背景设置
         self.setBackgroundColor(0,0,0,1); 
@@ -66,6 +83,8 @@ class SogalBase(ShowBase):
         self.storyManager.start();
         
         self.accept('alt-enter', self.toggleFullScreen)
+        self.accept('save_data', self.save)
+        self.accept('load_data', self.load)
         
         
     def setGameBackgroundImage(self,path):
@@ -73,6 +92,28 @@ class SogalBase(ShowBase):
         if self.backgroundImage:
             self.backgroundImage.destroy()
         self.backgroundImage = OnscreenImage(parent=aspect2dp, image=path)  # @UndefinedVariable
+        
+    def save(self,saving,fileName):
+        f = open(game_settings['save_folder']+fileName,'wb')
+        pickle.dump(saving, f, 2)
+        f.close()
+        
+    def load(self,fileName):
+        self.storyManager.destroy()
+        self.audioPlayer.stopAll(0.5)
+        f = open(game_settings['save_folder']+fileName,'rb')
+        loadRuntimeData(f)
+        f.close() 
+        self.audioPlayer.reload()
+        
+        self.storyManager = StoryManager();    
+        self.storyManager.start()
+        
+        #self.storyManager.reload()
+        
+        
+    #def loadData(self,fileName):
+        
     
     def toggleFullScreen(self):
         props = WindowProperties( self.win.getProperties() )

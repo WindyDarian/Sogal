@@ -24,3 +24,5 @@ Created on Jul 30, 2013
 @author: Windy darian（大地无敌)
 '''
 print 'Hello World!'
+i = i+1
+print i

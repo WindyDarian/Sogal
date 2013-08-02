@@ -32,7 +32,6 @@ from panda3d.core import NodePath  # @UnresolvedImport
 from panda3d.core import TransparencyAttrib  # @UnresolvedImport
 
 #from direct.gui.DirectButton import DirectButton
-from direct.showbase.DirectObject import DirectObject
 from direct.stdpy.file import open,exists
 from direct.stdpy import threading
 from direct.stdpy import pickle
@@ -43,6 +42,7 @@ import direct.gui.DirectGuiGlobals as DGG
 from game_text_box import GameTextBox
 from story_view import StoryView,StoryViewItemEntry,SVIC
 from story_menu_bar import StoryMenuBar
+from sogal_form import SogalForm
 
 import runtime_data
 
@@ -53,8 +53,7 @@ script_global = {}
 
 
 
-
-class StoryManager(DirectObject):
+class StoryManager(SogalForm):
     """Story controller of Sogal
     Controls the whole story scene.
     Mainly for logic control
@@ -72,27 +71,7 @@ class StoryManager(DirectObject):
         self.scrStack = []
         self.commandList = []
         
-    def destroy(self):
-        self.__destroyed = True
-        self.ignoreAll()
-        taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
-        if self._frame:
-            self._frame.destroy()
-            self._frame = None
-            
-        self.gameTextBox.destroy()
-        self.storyView.destroy()
-            
-    def loopTask(self,task):
-        '''
-        The task loop of StoryManager, trying to advance every task frame
-        '''
-        if not self.__destroyed:
-            self.forward(False)
-            return task.cont
-        else: return task.done
-
-    def start(self,):
+        
         if not runtime_data.RuntimeData.command_ptr:
             self.scrPtr = 0
         else: self.scrPtr = runtime_data.RuntimeData.command_ptr
@@ -108,7 +87,7 @@ class StoryManager(DirectObject):
         
         self._frame = DirectFrame(parent = aspect2d)  # @UndefinedVariable pydev在傲娇而已不用管
         self._frame.setTransparency(TransparencyAttrib.MAlpha)
-        self.accept('mouse1', self.clicked)
+
         
 
         
@@ -121,12 +100,49 @@ class StoryManager(DirectObject):
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.DISABLED)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
- 
         
-        taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
         self._inputReady = True
         
         self.mapScriptSpace()
+        SogalForm.__init__(self)
+        self.show()
+        taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
+
+        
+    def focused(self):
+        self.accept('mouse1', self.clicked, [1])
+        self.accept('mouse3', self.clicked, [3])
+        SogalForm.focused(self)
+        
+    def defocused(self):
+        self.ignore('mouse1')
+        self.ignore('mouse3')
+        SogalForm.defocused(self)
+   
+        
+    def destroy(self):
+        self.__destroyed = True
+        taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
+        if self._frame:
+            self._frame.destroy()
+            self._frame = None
+            
+        self.gameTextBox.destroy()
+        self.storyView.destroy()
+        self.menu.destroy()
+        SogalForm.destroy(self)
+            
+    def loopTask(self,task):
+        '''
+        The task loop of StoryManager, trying to advance every task frame
+        '''
+        if not self.__destroyed:
+            if self.hasFocus():
+                self.forward(False)
+            return task.cont
+        else: return task.done
+
+
         
     def _enableSavingButton(self):
         self.button_save['state'] = DGG.NORMAL
@@ -135,30 +151,6 @@ class StoryManager(DirectObject):
     def _disableSavingButton(self):
         self.button_save['state'] = DGG.DISABLED
         self.button_quicksave['state'] = DGG.DISABLED
-        
-    """  
-    def dumpsData(self,runtimedatadeepcopy,step):
-        '''dumps data to memory,that may run automaically'''
-
-        '''serialization '''
-        lock = threading.Lock()
-        if lock.acquire():    #avoid many dumping at the same time
-            
-            if step != self.step: #if StoryManager has already gone to another command
-                lock.release()
-                return   
-            self._currentDump = pickle.dumps(runtimedatadeepcopy, protocol = 2)
-        
-            print('data dumped: ' + str(len(self._currentDump)))
-        
-            #For test
-            #print(str(self.script_space))
-            
-            if step == self.step:
-                self._enableSavingButton()  #allow user to save a dumped data as file
-                
-            lock.release()
-    """
     
         
     def presave(self):
@@ -169,7 +161,7 @@ class StoryManager(DirectObject):
         self.audioPlayer.presave()
         
     def reload(self):
-        taskMgr.remove('storyManagerLoop')
+        taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
         self.scrPtr = runtime_data.RuntimeData.command_ptr
         self.mapScriptSpace()
         self.gameTextBox.reload()
@@ -192,20 +184,31 @@ class StoryManager(DirectObject):
         self.storyView.quickfinish()
         self.gameTextBox.quickFinish()        
     
-    def clicked(self):
-        if not self.getSceneReady():
+    def clicked(self,key = 1):
+        if not self.hasFocus():
+            return
+        
+        if key == 1 :
+            if not self.getSceneReady():
+                self.quickfinish()
+            else:
+                self.setInputReady(True)
+        elif key == 3:
             self.quickfinish()
-        else:
-            self.setInputReady(True)
+            if self.getSceneReady():
+                self.menu.show()
             
     def quickSave(self):
         '''quicksave the data'''
+        self.menu.hide()
+        self.button_quicksave['state'] = DGG.DISABLED
+        self.button_quickload['state'] = DGG.DISABLED
         if self._currentDump:
-            messenger.send('save_data',[self._currentDump,'quick_save.dat'])
+            messenger.send('save_data',[self._currentDump,'quick_save.dat'])  # @UndefinedVariable
             
     def quickLoad(self):
         if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
-            messenger.send('load_data',['quick_save.dat'])
+            messenger.send('load_data',['quick_save.dat'])  # @UndefinedVariable
         
                 
     def getSceneReady(self):
@@ -318,7 +321,7 @@ class StoryManager(DirectObject):
             for item in commands:
                 comm = item.strip()
                 if comm:
-                    messenger.send('sogalcommand',[comm]) #allow other tools to deal with it
+                    messenger.send('sogalcommand',[comm]) #allow other tools to deal with it @UndefinedVariable
                 #名字设置命令
                 if comm.startswith('name ') or comm.startswith('name='): 
                     nameCutter = re.compile(ur'name *=?',re.UNICODE) 

@@ -36,11 +36,12 @@ from direct.stdpy import threading
 from direct.stdpy import pickle
 
 from story_manager import StoryManager
-from runtime_data import game_settings,loadDefaultSettings,loadRuntimeData,restoreRuntimeData
+from runtime_data import game_settings,loadDefaultSettings,restoreRuntimeData
 from audio_player import AudioPlayer
  
 class SogalBase(ShowBase): 
     "The ShowBase of the sogal"
+    
 
     def __init__(self):
         "初始化"
@@ -60,11 +61,19 @@ class SogalBase(ShowBase):
         self.disableMouse() #Disable panda3d's default mouse control
         self.cam.node().getDisplayRegion(0).setActive(0) #disable default camera
         self.audioPlayer = AudioPlayer()
-       
+        self.focusStack = [] #a stack that shows windowstop window gets focus
+        
         dir = os.path.dirname(game_settings['save_folder'])
 
         if not os.path.exists(dir):
             os.makedirs(dir)
+            
+        #add event handlers
+        self.accept('alt-enter', self.toggleFullScreen)
+        self.accept('save_data', self.save)
+        self.accept('load_data', self.load)
+        self.accept('request_focus', self.grantFocus)
+        self.accept('remove_focus', self.cancelFocus)
         
         #Font setting
         self.textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
@@ -72,20 +81,45 @@ class SogalBase(ShowBase):
         self.textFont.setPageSize(512,512)
         self.textFont.setLineHeight(1.2)
         self.textFont.setSpaceAdvance(0.5)
-            
-        
         
         #背景设置
         self.setBackgroundColor(0,0,0,1); 
         self.backgroundImage = None
         
-        self.storyManager = StoryManager();
-        self.storyManager.start();
+        self.storyManager = StoryManager()
         
-        self.accept('alt-enter', self.toggleFullScreen)
-        self.accept('save_data', self.save)
-        self.accept('load_data', self.load)
+
         
+
+        
+    def getCurrentFocus(self):
+        if len(self.focusStack) > 0:
+            return self.focusStack[-1]
+        else: return None
+        
+    def hasFocus(self,obj):
+        '''returns whether the object is the current focus'''
+        return self.getCurrentFocus() == obj
+        
+    def grantFocus(self,obj):
+        pre = self.getCurrentFocus()
+        if obj in self.focusStack:
+            self.focusStack.remove(obj)
+            self.focusStack.append(obj)
+        else:
+            self.focusStack.append(obj)
+        if pre != obj:
+            if pre:
+                pre.defocused()
+            obj.focused()
+        
+    def cancelFocus(self,obj):
+        if obj in self.focusStack:
+            self.focusStack.remove(obj)
+            obj.defocused()
+        cur = self.getCurrentFocus()
+        if cur != obj and cur:
+            cur.focused()
         
     def setGameBackgroundImage(self,path):
         ''' Load a total background image '''
@@ -99,15 +133,19 @@ class SogalBase(ShowBase):
         f.close()
         
     def load(self,fileName):
+        try:
+            f = open(game_settings['save_folder']+fileName,'rb')
+            savedData = pickle.load(f)
+            f.close()
+        except Exception as exp: 
+            print(exp)
+            return
+            
         self.storyManager.destroy()
         self.audioPlayer.stopAll(0.5)
-        f = open(game_settings['save_folder']+fileName,'rb')
-        loadRuntimeData(f)
-        f.close() 
+        restoreRuntimeData(savedData)
         self.audioPlayer.reload()
-        
-        self.storyManager = StoryManager();    
-        self.storyManager.start()
+        self.storyManager = StoryManager()
         
         #self.storyManager.reload()
         

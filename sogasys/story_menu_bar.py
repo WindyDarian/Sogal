@@ -24,12 +24,16 @@ Menu in story mode
 @author: Windy Darian (大地无敌)
 '''
 
-from panda3d.core import NodePath,Vec4
-from direct.showbase.DirectObject import DirectObject
+from panda3d.core import NodePath,Vec4,TransparencyAttrib
 import direct.gui.DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectButton import DirectButton
-from gui.boxes import VBox
+
+from direct.interval.LerpInterval import LerpFunc,LerpPosInterval
+from direct.interval.FunctionInterval import Func
+from direct.interval.IntervalGlobal import Sequence,Parallel
+
+from sogal_form import SogalForm
 
 
 
@@ -42,46 +46,65 @@ default_style = {'frameSize':(-0.2,0.2,-0.03,0.07),
                  'text_fg':(1,1,1,1),
                  'text_shadow':(0,0,1,1),
                  'relief': DGG.FLAT,
-                
                 }
 
-class StoryMenuBar(NodePath,DirectObject):
+class StoryMenuBar(SogalForm):
     '''
     The menu in story mode
     '''
 
 
-    def __init__(self,parent = None):
+    def __init__(self):
         self.margin = 0.05
         self.topdistance = 0.3
         self.rightdistance = 0.3
         
-        NodePath.__init__(self,'menubar')
-        if not parent:
-            self.reparentTo(aspect2d)
-        #self.vbox = VBox(margin = 0.05)
+        SogalForm.__init__(self,
+                           fading = True, 
+                           fading_position_offset = (0.5,0,0),
+                           fading_duration = 0.3)
+        
         self._items = []
+        self._currentInterval = None
         
         self.resetPos() 
         
-        self.bar = NodePath('storymenu')
+        self.bar = NodePath('menubar')
         self.bar.reparentTo(self)
+        self.setTransparency(TransparencyAttrib.MAlpha)
         self.accept('window-event', self.resetPos)
+    
+    def focused(self):
+        self.accept('mouse3', self.hide)
+        SogalForm.focused(self)
+    
+    def defocused(self):
+        self.ignore('mouse3')
+        SogalForm.defocused(self)
         
     def resetPos(self,arg = None):
-        aspect = base.getAspectRatio()
+        aspect = base.getAspectRatio()  # @UndefinedVariable
         if aspect > 1:
             self.setPos(1*aspect-self.rightdistance,0,1-self.topdistance)
         elif aspect: 
             self.setPos(1-self.rightdistance,0,1-self.topdistance)
+            
+    def show(self):
+        SogalForm.show(self)
+       
+    
+    def hide(self):
+        if self.hasFocus():
+            self.removeFocus()
+            SogalForm.hide(self)
 
     def destroy(self):
-        self.ignoreAll()
-        self.removeNode()
+        SogalForm.destroy(self)
+        
     
     def addButton(self,**args):
         '''Add a button and return it'''
-        btn = DirectButton(**dict(default_style,text_font = base.textFont,**args))
+        btn = DirectButton(parent = self.bar,**dict(default_style,text_font = base.textFont,**args))  # @UndefinedVariable
         if self._items:
             btn.setPos(0,0,self._items[-1].getPos()[2] +
                            self._items[-1]['frameSize'][2] -
@@ -89,13 +112,13 @@ class StoryMenuBar(NodePath,DirectObject):
                            btn['frameSize'][3])
         else:
             btn.setPos(0,0,0)
+            
         
-        btn.reparentTo(self.bar)
         
         self._items.append(btn)
         #self.vbox.pack(btn)
         return btn
-        
+
     
         
         

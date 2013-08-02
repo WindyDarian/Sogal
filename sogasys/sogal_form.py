@@ -75,15 +75,15 @@ class SogalForm(NodePath, DirectObject):
             self.requestFocus()
             if self.__currentInterval:
                 self.__currentInterval.pause()
-                pos = tuple(map(operator.add,self.__originPos,self.__fadingPositionOffset))
-                self.__currentInterval = Sequence(Parallel(LerpFunc(_modifyAlphaScale,self.__fadingDuration,0,1,blendType = 'easeOut',extraArgs = [self]),
-                                                           LerpPosInterval(self,self.__fadingDuration,
-                                                                           self.__originPos,
-                                                                           pos,
-                                                                           blendType = 'easeOut'),
-                                                  )
-                                         )
-                self.__currentInterval.start()
+            pos = tuple(map(operator.add,self.__originPos,self.__fadingPositionOffset))
+            self.__currentInterval = Sequence(Parallel(LerpFunc(_modifyAlphaScale,self.__fadingDuration,0,1,blendType = 'easeOut',extraArgs = [self]),
+                                                       LerpPosInterval(self,self.__fadingDuration,
+                                                                       self.__originPos,
+                                                                       pos,
+                                                                       blendType = 'easeOut'),
+                                              )
+                                     )
+            self.__currentInterval.start()
             
     
     def hide(self):

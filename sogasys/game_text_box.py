@@ -130,21 +130,18 @@ class GameTextBox(DirectObject, NodePath):
                 if self._normal_speakerLabel:
                     self._normal_speakerLabel.setText(runtime_data.RuntimeData.current_text[1])
     
-    def generateArrow(self):
-        if not self._textArrow: 
-            arrow = loader.loadModel('models/text_arrow/text_arrow.egg')  # @UndefinedVariable
-            arrow.reparentTo(self._frame)
-            arrow.setColor(self.properties['arrow_color'])
-            arrow.setScale(self.properties['arrow_scale'])
-            width = 2.0
-            if self._currentStyle == GameTextBoxStyle.Normal:
-                width = self.properties['normal_width']
-            elif self._currentStyle == GameTextBoxStyle.Large:
-                width = self.properties['large_width']
-            arrow.setPos(width/2-self.properties['arrow_rightspace'],
-                         0,
-                         self.currentTextLabel.textNode.getLowerRight3d()[2]-0.03)
-            self._textArrow = arrow
+    def showArrow(self):
+        if self._textArrow: 
+            if self.currentTextLabel:
+                self._textArrow.setPos(self._frame.getWidth()/2-self.properties['arrow_rightspace'],
+                             0,
+                             self.currentTextLabel.textNode.getLowerRight3d()[2]-0.03)
+            else: self._textArrow.setPos(0,0,0)
+            self._textArrow.show()
+            
+    def hideArrow(self):
+        if self._textArrow:
+            self._textArrow.hide()
     
             
     def quickFinish(self):
@@ -163,7 +160,7 @@ class GameTextBox(DirectObject, NodePath):
                 self._typerLerpInterval.finish()
         
         if self._textArrow:
-            self._textArrow.detachNode()
+            self._textArrow.removeNode()
             self._textArrow = None
         
         if self._normal_textLabel:
@@ -213,6 +210,7 @@ class GameTextBox(DirectObject, NodePath):
         parameters:
             speaker: A string contains the speaker's name. (None means no speaker)
         '''
+        
         #The text is necessary
         if not text:
             return
@@ -277,13 +275,6 @@ class GameTextBox(DirectObject, NodePath):
         #Maybe we can create a NodePath class to group up TextNodes to fix this issue.
         text = self.existingText + self.newText[0:int(math.floor((len(self.newText)-1)*lerp_value))]
         self.currentTextLabel.setText(text)
-        
-        if lerp_value < 1:
-            if self._textArrow:
-                self._textArrow.detachNode()
-                self._textArrow = None
-        elif not self._textArrow: 
-            self.generateArrow()
             
     
         
@@ -403,6 +394,20 @@ class GameTextBox(DirectObject, NodePath):
             self._large_label.setShadow((0.1,0.1,0.1,0.5))
             self._large_label.textNode.setTabWidth(1.0)
             self._large_label.textNode.setWordwrap(self.properties['large_text_wrap'])
+           
+        #generate an arrow after text 
+        arrow = loader.loadModel('models/text_arrow/text_arrow.egg')  # @UndefinedVariable
+        arrow.reparentTo(self._frame)
+        arrow.setColor(self.properties['arrow_color'])
+        arrow.setScale(self.properties['arrow_scale'])
+        width = 2.0
+        if self._currentStyle == GameTextBoxStyle.Normal:
+            width = self.properties['normal_width']
+        elif self._currentStyle == GameTextBoxStyle.Large:
+            width = self.properties['large_width']
+
+        self._textArrow = arrow
+        self._textArrow.hide()
 
     def setTextBoxStyle(self, style):
         if style.strip() == 'normal':

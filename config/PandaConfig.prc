@@ -6,8 +6,8 @@
 #audio-library-name null
 audio-library-name p3openal_audio
 
-want-directtools #t
-want-tk #t
+#want-directtools #t
+#want-tk #t
 
 window-title Sogal
 

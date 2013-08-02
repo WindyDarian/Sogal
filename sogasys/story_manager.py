@@ -102,6 +102,7 @@ class StoryManager(SogalForm):
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
         
         self._inputReady = True
+        self.__arrow_shown = False
         
         self.mapScriptSpace()
         SogalForm.__init__(self)
@@ -118,6 +119,8 @@ class StoryManager(SogalForm):
         self.ignore('mouse1')
         self.ignore('mouse3')
         SogalForm.defocused(self)
+        self.__arrow_shown = False
+        self.gameTextBox.hideArrow()
    
         
     def destroy(self):
@@ -238,7 +241,13 @@ class StoryManager(SogalForm):
         '''run nextCommand() or finish current operations quickly
         @param is_user: define if this operation is started by the player 
         '''
-        if self.getSceneReady() and self.getInputReady():
+        scene_ready = self.getSceneReady()
+        if scene_ready and not self.__arrow_shown:
+            self.gameTextBox.showArrow()
+            self.__arrow_shown = False
+            
+        
+        if scene_ready and self.getInputReady():
             self.nextCommand()
         
     def nextCommand(self):
@@ -246,7 +255,9 @@ class StoryManager(SogalForm):
         '''
         #TODO: 还要添加循环的支持，用到runtime_data.command_stack来暂存需要回跳的命令组和回跳节点
         #TODO：添加对条件和选择的支持
-
+        
+        self.__arrow_shown = False
+        self.gameTextBox.hideArrow()
         
         #Dumps story data for saving or further use
         if self.__destroyed:

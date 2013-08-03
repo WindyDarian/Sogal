@@ -107,9 +107,8 @@ class SogalForm(NodePath, DirectObject):
             self.__currentInterval.start()
             
     def setPos(self, *args, **kwargs):
-        if args:
-            self.__originPos = args        
-        return NodePath.setPos(self, *args, **kwargs)
+        NodePath.setPos(self, *args, **kwargs)
+        self.__originPos = NodePath.getPos(self)
 
         
     def requestFocus(self):

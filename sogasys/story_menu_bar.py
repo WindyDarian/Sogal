@@ -34,6 +34,7 @@ from direct.interval.FunctionInterval import Func
 from direct.interval.IntervalGlobal import Sequence,Parallel
 
 from sogal_form import SogalForm
+from layout import VLayout,HLayout
 
 
 
@@ -55,16 +56,16 @@ class StoryMenuBar(SogalForm):
 
 
     def __init__(self):
-        self.margin = 0.05
         self.topdistance = 0.3
         self.rightdistance = 0.3
+        #self.rightdistance = 2
         
         SogalForm.__init__(self,
                            fading = True, 
                            fading_position_offset = (0.5,0,0),
                            fading_duration = 0.3)
         
-        self._items = []
+        self._buttonbox = VLayout(parent = self, margin = 0.05)
         self._currentInterval = None
         
         self.resetPos() 
@@ -105,17 +106,17 @@ class StoryMenuBar(SogalForm):
     def addButton(self,**args):
         '''Add a button and return it'''
         btn = DirectButton(parent = self.bar,**dict(default_style,text_font = base.textFont,**args))  # @UndefinedVariable
-        if self._items:
-            btn.setPos(0,0,self._items[-1].getPos()[2] +
-                           self._items[-1]['frameSize'][2] -
-                           self.margin -
-                           btn['frameSize'][3])
-        else:
-            btn.setPos(0,0,0)
-            
+#         if self._buttonbox:
+#             btn.setPos(0,0,self._buttonbox[-1].getPos()[2] +
+#                            self._buttonbox[-1]['frameSize'][2] -
+#                            self.margin -
+#                            btn['frameSize'][3])
+#         else:
+#             btn.setPos(0,0,0)
+#             
+#         
         
-        
-        self._items.append(btn)
+        self._buttonbox.append(btn)
         #self.vbox.pack(btn)
         return btn
 

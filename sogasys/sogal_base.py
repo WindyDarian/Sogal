@@ -140,8 +140,8 @@ class SogalBase(ShowBase):
         f1 = open(game_settings['save_folder']+fileName + game_settings['save_infotype'],'wb')
         pickle.dump(info, f1, 2)
         f1.close()
-        self.saveForm.reload()
-        self.loadForm.reload()
+        self.saveForm.reloadMember(fileName)
+        self.loadForm.reloadMember(fileName)
         
     def load(self,fileName):
         try:

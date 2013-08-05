@@ -24,7 +24,7 @@ Created on Jul 5, 2013
 继承自Panda3D的DirectFrame
 @author: Windy Darian (大地无敌)
 '''
-import math
+import math,copy
 
 from panda3d.core import *
 from direct.showbase.DirectObject import DirectObject
@@ -33,6 +33,7 @@ from direct.gui.OnscreenText import OnscreenText
 from direct.interval.LerpInterval import LerpFunc
 
 import runtime_data 
+import color_themes
     
 class GameTextBoxStyle(object):
     '''表示对话框种类的枚举集合
@@ -75,29 +76,7 @@ class GameTextBox(DirectObject, NodePath):
         self.newText = None
         self.existingText = None
         self.textfont = None
-        self.properties = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
-                      'arrow_color' : (1,1,1,1),
-                      'arrow_scale' : 0.08,
-                      'arrow_rightspace' : 0.18,
-                      'foreground_color' : (1,1,1,1),
-                      'normal_background_image':None,
-                      'normal_height': 0.6,
-                      'normal_width': 2.6666667,
-                      'normal_pos': (0,-0.65),
-                      'normal_name_pos' : (0.14,-0.12),
-                      'normal_text_pos' : (0.25,-0.25),
-                      'normal_text_scale' : 0.09,
-                      'normal_name_scale' : 0.07,
-                      'normal_text_wrap' : 24,
-                      'large_background_image':None,
-                      'large_height': 1.9,
-                      'large_width' :2.3,
-                      'large_pos': (0,0),
-                      'large_text_pos': (0.18,-0.25),
-                      'large_text_scale' : 0.08,
-                      'large_name_scale' : 0.06,
-                      'large_text_wrap' : 24,
-                    }
+        self.properties = copy.deepcopy(color_themes.ilia_textbox)
         self._normal_speakerLabel = None
         self._normal_textLabel = None
         self._large_label = None

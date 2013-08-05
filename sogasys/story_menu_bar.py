@@ -35,17 +35,9 @@ from direct.interval.IntervalGlobal import Sequence,Parallel
 
 from sogal_form import SogalForm
 from layout import DirectVLayout
+import color_themesfrom sogasys.save_load_form import FRAMESIZE
 
-default_style = {'frameSize':(-0.2,0.2,-0.03,0.07),
-                 'frameColor':((36/255.0,195/255.0,229/255.0,0.75),
-                               (1.0,1.0,1.0,1),
-                               (72/255.0,235/255.0,255/255.0,0.95),
-                               (0.5,0.5,0.5,0.75),),
-                 'text_scale':0.07,
-                 'text_fg':(1,1,1,1),
-                 'text_shadow':(0.5,0.5,0.5,1),
-                 'relief': DGG.FLAT,
-                }
+BUTTON_SIZE = (-0.2,0.2,-0.03,0.07)
 
 class StoryMenuBar(SogalForm):
     '''
@@ -103,16 +95,7 @@ class StoryMenuBar(SogalForm):
     
     def addButton(self,**args):
         '''Add a button and return it'''
-        btn = DirectButton(parent = self.bar,**dict(default_style,text_font = base.textFont,**args))  # @UndefinedVariable
-#         if self._buttonbox:
-#             btn.setPos(0,0,self._buttonbox[-1].getPos()[2] +
-#                            self._buttonbox[-1]['frameSize'][2] -
-#                            self.margin -
-#                            btn['frameSize'][3])
-#         else:
-#             btn.setPos(0,0,0)
-#             
-#         
+        btn = DirectButton(parent = self.bar,**dict(color_themes.ilia_button, frameSize = BUTTON_SIZE, text_font = base.textFont,**args))  # @UndefinedVariable
         
         self._buttonbox.append(btn)
         #self.vbox.pack(btn)

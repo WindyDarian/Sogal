@@ -38,37 +38,17 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from runtime_data import game_settings
 from sogal_form import SogalForm
 from layout import HLayOut,VLayout
+import color_themes
 
 
 #pos = (-0.57,0,0.67)
 hspacing = 1.33
 vspacing = 0.4
-default_saveloadlabelbutton_style = {'frameSize':(0,1.2,-0.33,0),
-                                     'frameColor':((36/255.0,195/255.0,229/255.0,0.75),
-                                                   (1.0,1.0,1.0,1),
-                                                   (72/255.0,235/255.0,255/255.0,0.95),
-                                                   (0.5,0.5,0.5,0.75),),
+FRAMESIZE = (-1.35,1.35,-0.95,0.95)
+LOAD_CANVAS_SIZE = (-0.05,2.55,-vspacing*101 ,vspacing/2)
+SAVE_CANVAS_SIZE = (-0.05,2.55,-vspacing*100 ,vspacing/2)
+AUTO_HIDE_SCROLLBARS = True
 
-                                     'relief': DGG.FLAT,
-                                     
-                                     }
-default_saveloadlabel_style = {'scale':0.07,
-                               'fg':(1,1,1,1),
-                               'shadow':(0.6,0.6,0.5,1),
-                               'pos': (0.05, -0.10),
-                               'align': TextNode.ALeft,
-                               }
-default_savingscrollframe_style = {'frameSize': (-1.35,1.35,-0.95,0.95),
-                                   'canvasSize' : (-0.05,2.55,-vspacing*100 ,vspacing/2),
-                                   'autoHideScrollBars' : True,
-                                   'frameColor': (36/255.0,195/255.0,229/255.0,0.3)
-                                   }
-
-default_loadingscrollframe_style = {'frameSize': (-1.35,1.35,-0.95,0.95),
-                                   'canvasSize' : (-0.05,2.55,-vspacing*101 ,vspacing/2), #Larger for quicksave and autosave
-                                   'autoHideScrollBars' : True,
-                                   'frameColor': (229/255.0,195/255.0,36/255.0,0.3)
-                                   }
 
 class SavingInfo(object):
     '''Info for saving data'''
@@ -81,8 +61,9 @@ class SaveLoadLabel(NodePath):
     '''
     A data label of save/load scene
     '''
-    def __init__(self, command = None, always_enable = False, fileName = None, head = '',extraArgs = None):
 
+    def __init__(self, command = None, always_enable = False, fileName = None, head = '',extraArgs = None,style = color_themes.ilia_button):
+        self.__exists = False
         self.__command = command
         self.__always_enable = always_enable
         self.__fileName = fileName
@@ -91,13 +72,10 @@ class SaveLoadLabel(NodePath):
         else: self.__extraArgs = extraArgs
         NodePath.__init__(self,'SaveLoadLabel')
         
-        self.__button = DirectButton(parent = self, command = command,  extraArgs = self.__extraArgs, **default_saveloadlabelbutton_style)  # @UndefinedVariable
-        self.__text = OnscreenText(parent = self,font = base.textFont, **default_saveloadlabel_style)
-        
+        self.__button = DirectButton(parent = self, command = command,  extraArgs = self.__extraArgs, frameSize = (0,1.2,-0.33,0), **style) 
+        self.__text = OnscreenText(parent = self,font = base.textFont, pos = (0.05, -0.10), align = TextNode.ALeft, **color_themes.system_text) # @UndefinedVariable
         
         self.reload()
-    
-       
         
     def reload(self):
         if self.__always_enable:
@@ -114,7 +92,16 @@ class SaveLoadLabel(NodePath):
                 text = text[0:13] + '...'
             self.__text.setText(self.__head+'\n'+info.time.strftime('%Y-%m-%d %H:%M')+'\n'+'  '+text)
             self.__button['state'] = DGG.NORMAL
-        else: self.__text.setText(self.__head + '\n    NO DATA')
+            self.__exists = True
+        else: 
+            self.__text.setText(self.__head + '\n    NO DATA')
+            self.__exists = False
+        
+    def getExists(self):
+        return self.__exists
+    
+    def getFileName(self):
+        return self.__fileName
        
 
 class SaveForm(SogalForm):
@@ -128,14 +115,20 @@ class SaveForm(SogalForm):
         '''
         SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True)
         self.reparentTo(aspect2d,sort = 100)
-        self.frame = DirectScrolledFrame(parent = self, **default_savingscrollframe_style)
+        self.frame = DirectScrolledFrame(parent = self, canvasSize = SAVE_CANVAS_SIZE, 
+                                         frameSize = FRAMESIZE, 
+                                         autoHideScrollBars = AUTO_HIDE_SCROLLBARS,
+                                         **color_themes.ilia_frame)
+
         self.labels = []
+        self.labelDict = {}
         self.vbox = VLayout(parent = self.frame.getCanvas(), margin = vspacing)
         hbox = None
         self.__dumped = None
-        for i in range(200):
+        for i in range(1,201):
             label = SaveLoadLabel(command = self.save, always_enable = True, fileName = 'save' + str(i), head = str(i),extraArgs = [i],)
             self.labels.append(label)
+            self.labelDict[label.getFileName()] = label
             if not hbox:
                 hbox = HLayOut(margin = hspacing)
                 self.vbox.append(hbox)
@@ -144,6 +137,9 @@ class SaveForm(SogalForm):
                 hbox.append(label)
                 hbox = None
                 
+    def roll(self,value):
+        self.frame.verticalScroll.setValue(self.frame.verticalScroll.getValue() + value)
+                
     def setData(self,dumped,message):
         self.__dumped = dumped
         self.__message = message
@@ -151,6 +147,10 @@ class SaveForm(SogalForm):
     def reload(self):
         for label in self.labels:
             label.reload()
+    
+    def reloadMember(self,key):
+        if self.labelDict.has_key(key):
+            self.labelDict[key].reload()
     
     def save(self,i):
         if not self.__dumped:
@@ -161,9 +161,29 @@ class SaveForm(SogalForm):
         
     def focused(self):
         self.accept('mouse3', self.hide)
+        self.accept('wheel_up', self.roll, [-0.04])
+        self.accept('wheel_down', self.roll, [0.04])
+        self.accept('arrow_up-repeat', self.roll, [-0.04])
+        self.accept('arrow_down-repeat', self.roll, [0.04])
+        self.accept('arrow_up', self.roll, [-0.04])
+        self.accept('arrow_down', self.roll, [0.04])
+        self.accept('w-repeat', self.roll, [-0.04])
+        self.accept('s-repeat', self.roll, [0.04])
+        self.accept('w', self.roll, [-0.04])
+        self.accept('s', self.roll, [0.04])
         
     def defocused(self):
         self.ignore('mouse3')
+        self.ignore('wheel_up')
+        self.ignore('wheel_down')
+        self.ignore('arrow_up-repeat')
+        self.ignore('arrow_down-repeat')
+        self.ignore('arrow_up')
+        self.ignore('arrow_down')
+        self.ignore('w-repeat')
+        self.ignore('s-repeat')
+        self.ignore('w')
+        self.ignore('s')
         
         
 class LoadForm(SogalForm):
@@ -177,14 +197,23 @@ class LoadForm(SogalForm):
         '''
         SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True)
         self.reparentTo(aspect2d,sort = 100)
-        self.frame = DirectScrolledFrame(parent = self, **default_loadingscrollframe_style)
+
+        self.frame = DirectScrolledFrame(parent = self, canvasSize = LOAD_CANVAS_SIZE, 
+                                         frameSize = FRAMESIZE, 
+                                         autoHideScrollBars = AUTO_HIDE_SCROLLBARS,
+                                         **color_themes.sirius_frame)
+ 
         self.labels = []
+        self.labelDict = {}
         self.vbox = VLayout(parent = self.frame.getCanvas(), margin = vspacing)
+        
         hbox = None
         self.__dumped = None
-        for i in range(200):
-            label = SaveLoadLabel(command = self.load, always_enable = False, fileName = 'save' + str(i), head = str(i),extraArgs = [i])
+        for i in range(1,201):
+            label = SaveLoadLabel(command = self.load, always_enable = False,
+                                  fileName = 'save' + str(i), head = str(i),extraArgs = [i],style = color_themes.sirius_button)
             self.labels.append(label)
+            self.labelDict[label.getFileName()] = label
             if not hbox:
                 hbox = HLayOut(margin = hspacing)
                 self.vbox.append(hbox)
@@ -192,10 +221,18 @@ class LoadForm(SogalForm):
             else:
                 hbox.append(label)
                 hbox = None
-        qs = SaveLoadLabel(command = self.quickLoad, always_enable = False, fileName = 'quick_save', head = 'QuickSave')
+                
+        #QuickSave label
+        qs = SaveLoadLabel(command = self.quickLoad, always_enable = False, fileName = 'quick_save', 
+                           head = 'QuickSave',style = color_themes.sirius_button)
         hbox = HLayOut(margin = hspacing)
         self.vbox.append(hbox)
         hbox.append(qs)
+        self.labels.append(qs)
+        self.labelDict[qs.getFileName()] = qs
+        
+    def roll(self,value):
+        self.frame.verticalScroll.setValue(self.frame.verticalScroll.getValue() + value)
                 
     def setData(self,dumped,message):
         self.__dumped = dumped
@@ -204,6 +241,10 @@ class LoadForm(SogalForm):
     def reload(self):
         for label in self.labels:
             label.reload()
+            
+    def reloadMember(self,key):
+        if self.labelDict.has_key(key):
+            self.labelDict[key].reload()
     
     def load(self,i):
         messenger.send('load_data',['save' + str(i)])  
@@ -215,7 +256,26 @@ class LoadForm(SogalForm):
         
     def focused(self):
         self.accept('mouse3', self.hide)
+        self.accept('wheel_up', self.roll, [-0.04])
+        self.accept('wheel_down', self.roll, [0.04])
+        self.accept('arrow_up-repeat', self.roll, [-0.04])
+        self.accept('arrow_down-repeat', self.roll, [0.04])
+        self.accept('arrow_up', self.roll, [-0.04])
+        self.accept('arrow_down', self.roll, [0.04])
+        self.accept('w-repeat', self.roll, [-0.04])
+        self.accept('s-repeat', self.roll, [0.04])
+        self.accept('w', self.roll, [-0.04])
+        self.accept('s', self.roll, [0.04])
         
     def defocused(self):
         self.ignore('mouse3')
-        
+        self.ignore('wheel_up')
+        self.ignore('wheel_down')
+        self.ignore('arrow_up-repeat')
+        self.ignore('arrow_down-repeat')
+        self.ignore('arrow_up')
+        self.ignore('arrow_down')
+        self.ignore('w-repeat')
+        self.ignore('s-repeat')
+        self.ignore('w')
+        self.ignore('s')

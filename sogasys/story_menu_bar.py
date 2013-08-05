@@ -34,11 +34,9 @@ from direct.interval.FunctionInterval import Func
 from direct.interval.IntervalGlobal import Sequence,Parallel
 
 from sogal_form import SogalForm
-from layout import VLayout,HLayout
+from layout import DirectVLayout
 
-
-
-default_style = {'frameSize':(-0.2,0.2,-0.03,0.07),
+default_style = {'frameSize':(-0.2,0.2,-0.03,0.07),
                  'frameColor':((36/255.0,195/255.0,229/255.0,0.75),
                                (1.0,1.0,1.0,1),
                                (72/255.0,235/255.0,255/255.0,0.95),
@@ -65,7 +63,7 @@ class StoryMenuBar(SogalForm):
                            fading_position_offset = (0.5,0,0),
                            fading_duration = 0.3)
         
-        self._buttonbox = VLayout(parent = self, margin = 0.05)
+        self._buttonbox = DirectVLayout(parent = self,margin = 0.05)
         self._currentInterval = None
         
         self.resetPos() 

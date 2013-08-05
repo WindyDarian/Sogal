@@ -42,13 +42,17 @@ class SogalForm(NodePath, DirectObject):
     make self a NodePath under aspect
     '''
     
-    def __init__(self, pos = (0,0,0), fading = False, fading_position_offset = (0,0,0), fading_duration = 0.5  ):
+    def __init__(self, pos = (0,0,0), fading = False, fading_position_offset = (0,0,0), fading_duration = 0.5, backgroundImage = None, backgroundColor = None):
         '''if fading enabled, it will apply a fading effect on show()&hide()'''
         self.__fading = fading
         self.__fadingPositionOffset = fading_position_offset
         self.__fadingDuration = fading_duration
         self.__originPos = pos
         self.__currentInterval = None
+        
+        if backgroundImage or backgroundColor:
+            pass
+            #TODO: you know~
         
         
         NodePath.__init__(self,self.__class__.__name__)

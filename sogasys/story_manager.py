@@ -96,13 +96,15 @@ class StoryManager(SogalForm):
         self.menu = StoryMenuBar()
         self.gameTextBox = GameTextBox()
         
-        self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED)
+        self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED, command = self.save)
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.DISABLED)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
         
         self._inputReady = True
         self.__arrow_shown = False
+        
+        self._currentMessage = ''
         
         self.mapScriptSpace()
         SogalForm.__init__(self)
@@ -200,6 +202,9 @@ class StoryManager(SogalForm):
             self.quickfinish()
             if self.getSceneReady():
                 self.menu.show()
+                
+    def save(self):
+        base.saveForm.show()
             
     def quickSave(self):
         '''quicksave the data'''
@@ -207,11 +212,11 @@ class StoryManager(SogalForm):
         self.button_quicksave['state'] = DGG.DISABLED
         self.button_quickload['state'] = DGG.DISABLED
         if self._currentDump:
-            messenger.send('save_data',[self._currentDump,'quick_save.dat'])  # @UndefinedVariable
+            messenger.send('save_data',[self._currentDump,'quick_save',self._currentMessage])  # @UndefinedVariable
             
     def quickLoad(self):
         if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
-            messenger.send('load_data',['quick_save.dat'])  # @UndefinedVariable
+            messenger.send('load_data',['quick_save'])  # @UndefinedVariable
         
                 
     def getSceneReady(self):
@@ -266,7 +271,7 @@ class StoryManager(SogalForm):
         self.step += 1 
         self.presave()
         self._currentDump = copy.deepcopy(runtime_data.RuntimeData)
-        if self._currentDump: self._enableSavingButton()
+        
         
         if len(self.commandList) > self.scrPtr:
             handled = False
@@ -284,6 +289,13 @@ class StoryManager(SogalForm):
         
         if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
             self.button_quickload['state'] = DGG.NORMAL 
+            
+        if self.gameTextBox.newText:
+            self._currentMessage = self.gameTextBox.newText
+            
+        if self._currentDump: 
+            
+            self._enableSavingButton()
     
     def goto(self, target):
         '''Jump to a mark'''

@@ -38,6 +38,7 @@ from direct.stdpy import pickle
 from story_manager import StoryManager
 from runtime_data import game_settings,loadDefaultSettings,restoreRuntimeData
 from audio_player import AudioPlayer
+from save_load_form import SaveForm
  
 class SogalBase(ShowBase): 
     "The ShowBase of the sogal"
@@ -85,10 +86,11 @@ class SogalBase(ShowBase):
         #背景设置
         self.setBackgroundColor(0,0,0,1); 
         self.backgroundImage = None
+            
+        self.saveForm = SaveForm()
         
         self.storyManager = StoryManager()
-        
-
+    
         
 
         
@@ -128,13 +130,14 @@ class SogalBase(ShowBase):
         self.backgroundImage = OnscreenImage(parent=aspect2dp, image=path)  # @UndefinedVariable
         
     def save(self,saving,fileName):
-        f = open(game_settings['save_folder']+fileName,'wb')
+        f = open(game_settings['save_folder']+fileName + game_settings['save_type'],'wb')
         pickle.dump(saving, f, 2)
         f.close()
+        self.saveForm.reload()
         
     def load(self,fileName):
         try:
-            f = open(game_settings['save_folder']+fileName,'rb')
+            f = open(game_settings['save_folder']+fileName + game_settings['save_type'],'rb')
             savedData = pickle.load(f)
             f.close()
         except Exception as exp: 

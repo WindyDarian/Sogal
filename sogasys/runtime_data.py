@@ -39,6 +39,8 @@ game_settings = {'text_speed': 20, #文字速度
                  'sfx_volume': 1,
                  'voice_volume': 1,
                  'save_folder': 'savedata/',
+                 'save_type' : '.dat',
+                 'save_infotype' : '.sinf',
                  'sogalscrpathes': ['scenes/',''],
                  'sogalscrtypes': ['.sogal',''],
                  'pscriptpathes': ['scenes/','scenes/scripts/',''],
@@ -90,16 +92,6 @@ class _RuntimeData(object):
         
         #Current environment sound
         self.current_env = None
-        
-        #TODO: Enable the attributes below
-        #only works for saved object
-        self.saved_date = None
-        
-        #only works for saved object
-        self.saved_title = None
-        
-        #only works for saved object
-        self.saved_image = None
     
     def load(self, loadedInstance):
         self.gameTextBox_properties = loadedInstance.gameTextBox_properties

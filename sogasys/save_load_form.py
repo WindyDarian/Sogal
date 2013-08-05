@@ -23,19 +23,127 @@ Created on Apr 4, 2013
 Saving/Loading Window
 @author: Windy Darian (大地无敌)
 '''
+from datetime import datetime
+
+from panda3d.core import NodePath,TextNode
+from direct.stdpy.file import open, exists
+from direct.stdpy import pickle
+import direct.gui.DirectGuiGlobals as DGG
+from direct.gui.DirectFrame import DirectFrame
+from direct.gui.DirectButton import DirectButton
+from direct.gui.DirectScrolledFrame import DirectScrolledFrame
+
+from runtime_data import game_settings
 from sogal_form import SogalForm
+from layout import HLayOut,VLayout
 
-class SaveLoadForm(SogalForm):
-    '''
-    Save and load form base
-    '''
 
+pos = (-0.57,0,0.67)
+hspacing = 1.33
+vspacing = 0.4
+default_saveloadlabelbutton_style = {'frameSize':(0,1.2,0,0.33),
+                                     'frameColor':((36/255.0,195/255.0,229/255.0,0.75),
+                                                   (1.0,1.0,1.0,1),
+                                                   (72/255.0,235/255.0,255/255.0,0.95),
+                                                   (0.5,0.5,0.5,0.75),),
+                                     'text_scale':0.07,
+                                     'text_fg':(1,1,1,1),
+                                     'text_shadow':(0,0,1,1),
+                                     'relief': DGG.FLAT,
+                                     'text_pos': (0.2,0,0.03),
+                                     'text_align': TextNode.ALeft,
+                                     }
+default_savingscrollframe_style = {'frameSize': (-1.35,1.35,-0.95,0.95),
+                                   'canvasSize' : (-1.3,1.3,-vspacing*100 ,vspacing/2),
+                                   'autoHideScrollBars' : True,
+                                   'frameColor': (36/255.0,195/255.0,229/255.0,0.3)
+                                   }
+
+class SavingInfo(object):
+    '''Info for saving data'''
+    def __init__(self,text,time):
+        self.text = text
+        self.time = time
+        
+
+class SaveLoadLabel(NodePath):
+    '''
+    A data label of save/load scene
+    '''
+    def __init__(self, command = None, always_enable = False, fileName = None, head = '',extraArgs = None):
+        self.__command = command
+        self.__always_enable = always_enable
+        self.__fileName = fileName
+        self.__head = head
+        if not extraArgs: self.__extraArgs = [self]
+        else: self.__extraArgs = extraArgs
+        NodePath.__init__(self,'SaveLoadLabel')
+        self.__button = DirectButton(parent = self, command = command, text_font = base.textFont, extraArgs = extraArgs, **default_saveloadlabelbutton_style)  # @UndefinedVariable
+        self.reload()
+       
+        
+    def reload(self):
+        if self.__always_enable:
+            self.__button['state'] = DGG.NORMAL
+        else: self.__button['state'] = DGG.DISABLED
+        datafile = game_settings['save_folder']+ self.__fileName + game_settings['save_type']
+        infofile = game_settings['save_folder']+ self.__fileName + game_settings['save_infotype']
+        if exists(datafile) and exists(infofile):
+            infostream = open(game_settings['save_folder']+ self.__fileName + game_settings['save_infotype'],'rb')
+            info = pickle.load(infostream)
+            infostream.close()
+            text = info.text.splitlines()[0]
+            if len(text)>15:
+                text = text[0:13] + '...'
+            self.__button['text'] = self.__head+'\n'+info.time.strftime('%Y-%m-%d %H:%M')+'\n'+'  '+text
+            self.__button['state'] = DGG.NORMAL
+        else: self.__button['text'] = '\n    NO DATA'
+       
+
+class SaveForm(SogalForm):
+    '''
+    Form of saving
+    '''
 
     def __init__(self):
         '''
         Constructor
         '''
-        
-        
         SogalForm.__init__(self, fading = True, fading_duration = 0.5)
+        self.frame = DirectScrolledFrame(parent = self, **default_savingscrollframe_style)
+        self.labels = []
+        self.vbox = VLayout(parent = self, margin = vspacing)
+        hbox = None
+        self.__dumped = None
+        for i in range(200):
+            label = SaveLoadLabel(command = self.save, always_enable = True, fileName = 'save' + str(i), head = str(i),extraArgs = [i])
+            self.labels.append(label)
+            if not hbox:
+                hbox = HLayOut(margin = hspacing)
+                self.vbox.append(hbox)
+                hbox.append(label)
+            else:
+                hbox.append(label)
+                hbox = None
+                
+    def setData(self,dumped,message):
+        self.__dumped = dumped
+        self.__message = message
+        
+    def reload(self):
+        for label in self.labels:
+            label.reload()
+    
+    def save(self,i):
+        if not self.__dumped:
+            return
+        else:
+            messenger.send('save_data',[self.__dumped,'save' + str(i),self.__message])
+            
+        
+    def focused(self):
+        self.accept('mouse3', self.hide)
+        
+    def defocused(self):
+        self.ignore('mouse3')
         

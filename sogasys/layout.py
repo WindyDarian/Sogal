@@ -63,10 +63,84 @@ class LayoutBase(NodePath):
     def __setslice__(self, i, j, value):
         self._itemlist[i:j] = value
         self.resort()
+        
+        
+class HLayOut(LayoutBase):
+    '''horizontal layout for direct objects '''
+    
+    def __init__(self,parent = None,margin = .5):
+        LayoutBase.__init__(self, parent)
+        self.__margin = margin
+        
+    def append(self, directobj):
+        directobj.reparentTo(self)
+        if not self._itemlist:
+            self._applyLayout(directobj, None)
+        else:
+            self._applyLayout(directobj, self._itemlist[-1])
+        self._itemlist.append(directobj)
+        
+    def resort(self):
+        last = None
+        for item in self:
+            self._applyLayout(item, last)
+            last = item
+        
+    def _applyLayout(self,directobj,previous):
+        if previous:
+            directobj.setPos(previous.getPos()[0] + self.__margin,0,0)
+        else:
+            directobj.setPos(0,0,0)
+            
+            
+    def getMargin(self):
+        return self.__margin
+    
+    def setMargin(self, value):
+        self.__margin = value
+        self.resort()
+        
+class VLayout(LayoutBase):
+    '''vertical layout for direct objects'''
+    
+    def __init__(self,parent = None,margin = .05):
+        LayoutBase.__init__(self, parent)
+        self.__margin = margin
+        
+    def append(self, directobj):
+        directobj.reparentTo(self)
+        if not self._itemlist:
+            self._applyLayout(directobj, None)
+        else:
+            self._applyLayout(directobj, self._itemlist[-1])
+        self._itemlist.append(directobj)
+        
+    def resort(self):
+        last = None
+        for item in self:
+            self._applyLayout(item, last)
+            last = item
+        
+    def _applyLayout(self,directobj,previous):
+        if previous:
+            directobj.setPos(0,0,previous.getPos()[2] - self.__margin)
+        else:
+            directobj.setPos(0,0,0)
+            
+    def getMargin(self):
+        return self.__margin
+    
+    def setMargin(self, value):
+        self.__margin = value
+        self.resort()
+    
+        
     
 
-class HLayout(LayoutBase):
-    '''horizontal layout for direct objects '''
+class DirectHLayout(LayoutBase):
+    '''horizontal layout for direct objects
+    Specially for DirectObjects for it can read its frame size  
+    '''
     
     def __init__(self,parent = None,margin = .05):
         LayoutBase.__init__(self, parent)
@@ -95,7 +169,6 @@ class HLayout(LayoutBase):
                            ,0,0)
         else:
             directobj.setPos(-directobj['frameSize'][0] * directobj.getSx(),0,0)
-        #print str(self.getTightBounds()) #FIXME: make this not (0,0,0)s and make it able to contain another Layout or any NodePath
             
             
     def getMargin(self):
@@ -106,8 +179,10 @@ class HLayout(LayoutBase):
         self.resort()
         
         
-class VLayout(LayoutBase):
-    '''vertical layout for direct objects '''
+class DirectVLayout(LayoutBase):
+    '''vertical layout for direct objects
+    Specially for DirectObjects for it can read its frame size  
+    '''
     
     def __init__(self,parent = None,margin = .05):
         LayoutBase.__init__(self, parent)

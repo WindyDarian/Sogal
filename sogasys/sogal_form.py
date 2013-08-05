@@ -27,6 +27,8 @@ import operator
 
 from panda3d.core import NodePath
 from direct.showbase.DirectObject import DirectObject
+import direct.gui.DirectGuiGlobals as DGG
+from direct.gui.DirectButton import DirectButton
 
 from direct.interval.LerpInterval import LerpFunc,LerpPosInterval
 from direct.interval.FunctionInterval import Func
@@ -42,24 +44,72 @@ class SogalForm(NodePath, DirectObject):
     make self a NodePath under aspect
     '''
     
-    def __init__(self, pos = (0,0,0), fading = False, fading_position_offset = (0,0,0), fading_duration = 0.5, backgroundImage = None, backgroundColor = None):
-        '''if fading enabled, it will apply a fading effect on show()&hide()'''
+    def __init__(self,
+                 pos = (0,0,0),
+                 fading = False,
+                 fading_position_offset = (0,0,0),
+                 fading_duration = 0.5, 
+                 backgroundImage = None, 
+                 backgroundColor = None,
+                 enableMask = False,
+                 ):
+        '''if fading enabled, it will apply a fading effect on show()&hide()
+        Important Attributes:
+        enableMask: This creates a big transparent plane (DirectButton) off screen so the directGui below won't be
+        clicked (However due to this trick we won't be able to accept mouse events (I have paid back 'mouse3' by 
+        self.__maskClick))
+        '''
         self.__fading = fading
         self.__fadingPositionOffset = fading_position_offset
         self.__fadingDuration = fading_duration
         self.__originPos = pos
         self.__currentInterval = None
+        self.__maskEnabled = enableMask
+        
+        self.__mask = None
+        if self.__maskEnabled:
+            self.__mask = DirectButton(parent = aspect2d, frameColor =(1,1,1,0.1), relief = DGG.FLAT,commandButtons = [DGG.RMB],command = self.__maskClick)
+            self.__mask.hide()
+        NodePath.__init__(self,self.__class__.__name__)
+        
+        
+        
+        self.windowResize(None)
+        self.accept('window-event', self.windowResize)
         
         if backgroundImage or backgroundColor:
             pass
             #TODO: you know~
         
-        
-        NodePath.__init__(self,self.__class__.__name__)
         NodePath.hide(self)
         self.setPos(pos)
         self.reparentTo(aspect2d)  # @UndefinedVariable
         
+    def __maskClick(self,button = 2):
+        '''Cuz the mask is a DirectButton it will interrupt screen mouse events so ...'''
+        
+        #FIXME: make the mask accept left and middle buttons
+        if button == 0: #Left mouse button
+            messenger.send('mouse1')
+        elif button == 1: #Middle button
+            messenger.send('mouse2')
+        elif button == 2: #Right button
+            messenger.send('mouse3')
+        
+        
+    def windowResize(self,arg):
+        if self.__mask:
+            self.__mask.reparentTo(aspect2d,sort = self.getSort())
+            self.reparentTo(aspect2d,sort = self.getSort())
+            aspect = base.getAspectRatio()  # @UndefinedVariable
+            if aspect > 1:
+                #width = 2 * aspect
+                #hw = width/2.0
+                #trick: half width == aspect
+                self.__mask['frameSize'] = (-aspect,aspect,-1,1)
+            elif aspect: 
+                hh = 1.0/aspect
+                self.__mask['frameSize'] = (-1,1,-hh,hh)
     
     def destroy(self):
         '''Call this method to destroy the form'''
@@ -71,6 +121,10 @@ class SogalForm(NodePath, DirectObject):
 
         
     def show(self):
+        if self.__mask:
+            self.__mask.reparentTo(aspect2d,sort = self.getSort())
+            self.__mask.show()
+            self.reparentTo(aspect2d,sort = self.getSort())
         if not (self.__fading and self.__fadingDuration):
             NodePath.show(self)
             self.requestFocus()
@@ -106,8 +160,10 @@ class SogalForm(NodePath, DirectObject):
                                                                       blendType = 'easeIn'),
                                                      ),
                                               Func(NodePath.hide,self),
-                                              Func(self.removeFocus)
+                                              Func(self.removeFocus),
                                              )
+            if self.__mask:
+                self.__currentInterval.append(Func(self.__mask.hide))
             self.__currentInterval.start()
             
     def setPos(self, *args, **kwargs):

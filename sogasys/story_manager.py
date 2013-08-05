@@ -45,6 +45,7 @@ from story_menu_bar import StoryMenuBar
 from sogal_form import SogalForm
 
 import runtime_data
+from sogasys.save_load_form import SaveForm
 
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
@@ -97,7 +98,7 @@ class StoryManager(SogalForm):
         self.gameTextBox = GameTextBox()
         
         self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED, command = self.save)
-        self.button_load = self.menu.addButton(text = 'Load',state = DGG.DISABLED)
+        self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.load)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
         
@@ -204,7 +205,13 @@ class StoryManager(SogalForm):
                 self.menu.show()
                 
     def save(self):
+        self.menu.hide()
+        base.saveForm.setData(self._currentDump, self._currentMessage)
         base.saveForm.show()
+        
+    def load(self):
+        self.menu.hide()
+        base.loadForm.show()
             
     def quickSave(self):
         '''quicksave the data'''
@@ -215,7 +222,7 @@ class StoryManager(SogalForm):
             messenger.send('save_data',[self._currentDump,'quick_save',self._currentMessage])  # @UndefinedVariable
             
     def quickLoad(self):
-        if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
+        if exists(runtime_data.game_settings['save_folder'] + 'quick_save' + runtime_data.game_settings['save_type'] ):
             messenger.send('load_data',['quick_save'])  # @UndefinedVariable
         
                 

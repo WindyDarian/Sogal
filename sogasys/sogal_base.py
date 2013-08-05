@@ -25,6 +25,7 @@ Created on Jul 27, 2013
 '''
 import os
 from StringIO import StringIO
+from datetime import datetime
 
 from panda3d.core import loadPrcFile,WindowProperties # @UnresolvedImport
 from direct.gui.OnscreenImage import OnscreenImage
@@ -38,7 +39,7 @@ from direct.stdpy import pickle
 from story_manager import StoryManager
 from runtime_data import game_settings,loadDefaultSettings,restoreRuntimeData
 from audio_player import AudioPlayer
-from save_load_form import SaveForm
+from save_load_form import SaveForm,SavingInfo,LoadForm
  
 class SogalBase(ShowBase): 
     "The ShowBase of the sogal"
@@ -88,6 +89,7 @@ class SogalBase(ShowBase):
         self.backgroundImage = None
             
         self.saveForm = SaveForm()
+        self.loadForm = LoadForm()
         
         self.storyManager = StoryManager()
     
@@ -129,11 +131,17 @@ class SogalBase(ShowBase):
             self.backgroundImage.destroy()
         self.backgroundImage = OnscreenImage(parent=aspect2dp, image=path)  # @UndefinedVariable
         
-    def save(self,saving,fileName):
+    def save(self,saving,fileName,message):
+        info = SavingInfo(message,datetime.now())
         f = open(game_settings['save_folder']+fileName + game_settings['save_type'],'wb')
         pickle.dump(saving, f, 2)
         f.close()
+                
+        f1 = open(game_settings['save_folder']+fileName + game_settings['save_infotype'],'wb')
+        pickle.dump(info, f1, 2)
+        f1.close()
         self.saveForm.reload()
+        self.loadForm.reload()
         
     def load(self,fileName):
         try:

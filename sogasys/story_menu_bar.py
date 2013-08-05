@@ -43,7 +43,7 @@ from layout import DirectVLayout
                                (0.5,0.5,0.5,0.75),),
                  'text_scale':0.07,
                  'text_fg':(1,1,1,1),
-                 'text_shadow':(0,0,1,1),
+                 'text_shadow':(0.5,0.5,0.5,1),
                  'relief': DGG.FLAT,
                 }
 

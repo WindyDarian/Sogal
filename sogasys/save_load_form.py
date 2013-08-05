@@ -87,11 +87,11 @@ class SaveLoadLabel(NodePath):
         self.__always_enable = always_enable
         self.__fileName = fileName
         self.__head = head
-        if not extraArgs: self.__extraArgs = [self]
+        if not extraArgs: self.__extraArgs = []
         else: self.__extraArgs = extraArgs
         NodePath.__init__(self,'SaveLoadLabel')
         
-        self.__button = DirectButton(parent = self, command = command,  extraArgs = extraArgs, **default_saveloadlabelbutton_style)  # @UndefinedVariable
+        self.__button = DirectButton(parent = self, command = command,  extraArgs = self.__extraArgs, **default_saveloadlabelbutton_style)  # @UndefinedVariable
         self.__text = OnscreenText(parent = self,font = base.textFont, **default_saveloadlabel_style)
         
         
@@ -183,7 +183,7 @@ class LoadForm(SogalForm):
         hbox = None
         self.__dumped = None
         for i in range(200):
-            label = SaveLoadLabel(command = self.load, always_enable = False, fileName = 'save' + str(i), head = str(i),extraArgs = [i],)
+            label = SaveLoadLabel(command = self.load, always_enable = False, fileName = 'save' + str(i), head = str(i),extraArgs = [i])
             self.labels.append(label)
             if not hbox:
                 hbox = HLayOut(margin = hspacing)
@@ -192,7 +192,7 @@ class LoadForm(SogalForm):
             else:
                 hbox.append(label)
                 hbox = None
-        qs = SaveLoadLabel(command = self.quickLoad, always_enable = False, fileName = 'save', head = 'QuickSave',)
+        qs = SaveLoadLabel(command = self.quickLoad, always_enable = False, fileName = 'quick_save', head = 'QuickSave')
         hbox = HLayOut(margin = hspacing)
         self.vbox.append(hbox)
         hbox.append(qs)

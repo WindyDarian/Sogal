@@ -206,12 +206,12 @@ class StoryManager(SogalForm):
                 self.menu.show()
                 
     def save(self):
-        #self.menu.hide()
+        self.menu.hide()
         base.saveForm.setData(self._currentDump, self._currentMessage)
         base.saveForm.show()
         
     def load(self):
-        #self.menu.hide()
+        self.menu.hide()
         base.loadForm.show()
             
     def quickSave(self):

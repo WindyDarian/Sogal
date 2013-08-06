@@ -227,8 +227,7 @@ class DialogMask(DirectButton):
         self.bind(self.B5RELEASE, self.rethrowEvent,['mouse5-up'])
         
     def windowResize(self,arg):
-        #Make this mask fill the screen
-        self.reparentTo(aspect2d,sort = self.getSort())
+        #fill the screen
         aspect = base.getAspectRatio()
         if aspect > 1:
             self['frameSize'] = (-aspect,aspect,-1,1)

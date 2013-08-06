@@ -25,10 +25,11 @@ The moudle implements an base class for sogal forms (in-game window)
 '''
 import operator
 
-from panda3d.core import NodePath
+from panda3d.core import NodePath,PGButton,MouseButton
 from direct.showbase.DirectObject import DirectObject
 import direct.gui.DirectGuiGlobals as DGG
 from direct.gui.DirectButton import DirectButton
+from direct.gui.DirectDialog import DirectDialog
 
 from direct.interval.LerpInterval import LerpFunc,LerpPosInterval
 from direct.interval.FunctionInterval import Func
@@ -68,14 +69,14 @@ class SogalForm(NodePath, DirectObject):
         
         self.__mask = None
         if self.__maskEnabled:
-            self.__mask = DirectButton(parent = aspect2d, frameColor =(1,1,1,0.1), relief = DGG.FLAT,commandButtons = [DGG.RMB],command = self.__maskClick)
+            self.__mask = DialogMask()
+            #self.__mask = DirectButton(parent = aspect2d, frameColor =(1,1,1,0.1), relief = DGG.FLAT,commandButtons = [DGG.RMB],command = self.__maskClick)
             self.__mask.hide()
         NodePath.__init__(self,self.__class__.__name__)
         
         
         
-        self.windowResize(None)
-        self.accept('window-event', self.windowResize)
+        #self.accept('window-event', self.windowResize)
         
         if backgroundImage or backgroundColor:
             pass
@@ -84,7 +85,7 @@ class SogalForm(NodePath, DirectObject):
         NodePath.hide(self)
         self.setPos(pos)
         self.reparentTo(aspect2d)  # @UndefinedVariable
-        
+    """
     def __maskClick(self,button = 2):
         '''Cuz the mask is a DirectButton it will interrupt screen mouse events so ...'''
         
@@ -95,26 +96,16 @@ class SogalForm(NodePath, DirectObject):
             messenger.send('mouse2')
         elif button == 2: #Right button
             messenger.send('mouse3')
+    """ 
         
-        
-    def windowResize(self,arg):
-        if self.__mask:
-            self.__mask.reparentTo(aspect2d,sort = self.getSort())
-            self.reparentTo(aspect2d,sort = self.getSort())
-            aspect = base.getAspectRatio()  # @UndefinedVariable
-            if aspect > 1:
-                #width = 2 * aspect
-                #hw = width/2.0
-                #trick: half width == aspect
-                self.__mask['frameSize'] = (-aspect,aspect,-1,1)
-            elif aspect: 
-                hh = 1.0/aspect
-                self.__mask['frameSize'] = (-1,1,-hh,hh)
+
     
     def destroy(self):
         '''Call this method to destroy the form'''
         if self.__currentInterval:
             self.__currentInterval.pause
+        if self.__mask:
+            self.__mask.destroy()
         self.ignoreAll()
         self.removeNode()
         self.removeFocus()
@@ -189,3 +180,96 @@ class SogalForm(NodePath, DirectObject):
     def defocused(self):
         '''Define what to do when a subclass object loses focus here'''
         pass        
+    
+
+
+
+
+class DialogMask(DirectButton):
+    '''used to generate a full-screen mask to prevent button-clicking below the focused window/dialog
+    Added some tricks to make panda3d mouse events still available
+    '''
+    B1PRESS = PGButton.getPressPrefix() + MouseButton.one().getName() + '-'  
+    B2PRESS = PGButton.getPressPrefix() + MouseButton.two().getName() + '-'  
+    B3PRESS = PGButton.getPressPrefix() + MouseButton.three().getName() + '-'
+    B4PRESS = PGButton.getPressPrefix() + MouseButton.four().getName() + '-'
+    B5PRESS = PGButton.getPressPrefix() + MouseButton.five().getName() + '-'
+    WHEELUP = PGButton.getReleasePrefix() + MouseButton.wheelUp().getName() + '-'
+    WHEELDOWN = PGButton.getReleasePrefix() + MouseButton.wheelDown().getName() + '-'
+    WHEELLEFT = PGButton.getReleasePrefix() + MouseButton.wheelLeft().getName() + '-'
+    WHEELRIGHT = PGButton.getReleasePrefix() + MouseButton.wheelRight().getName() + '-'
+    B1RELEASE = PGButton.getReleasePrefix() + MouseButton.one().getName() + '-'  
+    B2RELEASE = PGButton.getReleasePrefix() + MouseButton.two().getName() + '-'  
+    B3RELEASE = PGButton.getReleasePrefix() + MouseButton.three().getName() + '-'
+    B4RELEASE = PGButton.getReleasePrefix() + MouseButton.four().getName() + '-'
+    B5RELEASE = PGButton.getReleasePrefix() + MouseButton.five().getName() + '-'
+    
+    def __init__(self):
+        DirectButton.__init__(self,parent = aspect2d, frameColor =(1,1,1,0), relief = DGG.FLAT,commandButtons = [])
+        self.accept('window-event', self.windowResize)
+        self.windowResize(None)
+        #trick: make this re-throw mouse events
+        self.bind(self.B1PRESS, self.rethrowEvent,['mouse1'])
+        self.bind(self.B2PRESS, self.rethrowEvent,['mouse2'])
+        self.bind(self.B3PRESS, self.rethrowEvent,['mouse3'])
+        self.bind(self.B4PRESS, self.rethrowEvent,['mouse4'])
+        self.bind(self.B5PRESS, self.rethrowEvent,['mouse5'])
+        
+        self.bind(self.WHEELUP, self.rethrowEvent, ['wheel_up'])
+        self.bind(self.WHEELDOWN, self.rethrowEvent, ['wheel_down'])
+        self.bind(self.WHEELLEFT, self.rethrowEvent, ['wheel_left'])
+        self.bind(self.WHEELRIGHT, self.rethrowEvent, ['wheel_right'])
+        
+        self.bind(self.B1RELEASE, self.rethrowEvent,['mouse1-up'])
+        self.bind(self.B2RELEASE, self.rethrowEvent,['mouse2-up'])
+        self.bind(self.B3RELEASE, self.rethrowEvent,['mouse3-up'])
+        self.bind(self.B4RELEASE, self.rethrowEvent,['mouse4-up'])
+        self.bind(self.B5RELEASE, self.rethrowEvent,['mouse5-up'])
+        
+    def windowResize(self,arg):
+        #Make this mask fill the screen
+        self.reparentTo(aspect2d,sort = self.getSort())
+        aspect = base.getAspectRatio()
+        if aspect > 1:
+            self['frameSize'] = (-aspect,aspect,-1,1)
+        elif aspect: 
+            hh = 1.0/aspect
+            self['frameSize'] = (-1,1,-hh,hh)
+            
+    def setCommandButtons(self, *args, **kwargs):
+        #inherited 
+        pass
+        
+    def rethrowEvent(self,sevent,event):
+        messenger.send(sevent)
+        
+                
+    def destroy(self):
+        self.ignoreAll()
+        
+    
+    
+class SogalDialog(SogalForm):
+    '''
+    A dialog that derived from SogalForm
+    (Which contains a DirectDialog)
+    '''
+    def __init__(self,pos = (0,0,0),
+                      fading = False,
+                      fading_position_offset = (0,0,0),
+                      fading_duration = 0.5, 
+                      backgroundImage = None, 
+                      backgroundColor = None,
+                      enableMask = True, #NOTE THAT IT IS TRUE BY DEFAULT
+                      ):
+        SogalForm.__init__(self,
+                           pos= pos, 
+                           fading= fading, 
+                           fading_position_offset= fading_position_offset, 
+                           fading_duration= fading_duration,
+                           backgroundImage= backgroundImage,
+                           backgroundColor= backgroundColor,
+                           enableMask = enableMask
+                           )
+        
+        

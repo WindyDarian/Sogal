@@ -161,7 +161,8 @@ class GameTextBox(DirectObject, NodePath):
 
         
     def destroy(self, *args, **kwargs):
-        self._typerLerpInterval.pause()
+        if self._typerLerpInterval:
+            self._typerLerpInterval.pause()
         if self._frame:
             self._frame.destroy()
             self._frame = None

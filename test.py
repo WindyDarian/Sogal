@@ -5,6 +5,7 @@ from direct.task import Task
 from direct.actor import Actor
 from direct.interval.IntervalGlobal import *
 from panda3d.core import *
+import direct.gui.DirectGuiGlobals as DGG
  
 #add some text
 bk_text = "DirectDialog- YesNoDialog Demo"
@@ -25,7 +26,16 @@ def itemSel(arg):
     textObject.setText(output)
  
 #create a frame
-dialog = YesNoDialog(dialogName="YesNoCancelDialog", text="Please choose:", command=itemSel)
+dialog = DirectDialog(dialogName="YesNoCancelDialog", text="Please choose:",
+                     buttonTextList = ['love','HAHAHAHA','Windy Darian'], 
+                     command=itemSel,
+                     button_frameColor =((239/255.0,195/255.0,46/255.0,0.75),
+                                         (1.0,1.0,1.0,1),
+                                         (249/255.0,235/255.0,85/255.0,0.95),
+                                         (0.5,0.5,0.5,0.75),),
+                     button_relief = DGG.FLAT,
+                     relief = DGG.FLAT
+                     )
  
 base.camera.setPos(0,-20,0)
 

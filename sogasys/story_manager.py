@@ -46,6 +46,7 @@ from sogal_form import SogalForm
 
 import runtime_data
 from sogasys.save_load_form import SaveForm
+from cgitb import text
 
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
@@ -667,17 +668,20 @@ class StoryCommand(object):
     Attributes:
         command: A string indicates the command section (@ symbol excluded)
         text: A string indicates the text section
+        index: The command index in this file, used to mark read/Unread
+        fileLoc: The file that contains this StoryCommand
     '''
-    command = None
-    text = None
     
-    def __init__(self, command = None, text = None):
+    def __init__(self, command = None, text = None, index = None, fileLoc = None):
         '''
         @param command: A string indicates the command section
         @param text: A string indicates the text section
         '''
         self.command = command
         self.text = text
+        #TODO: use self.index and self.fileloc to mark read/unread
+        self.index = index
+        self.fileLoc = fileLoc
         
     def __repr__(self):
         return 'command: ' + str(self.command) + '\ntext: ' + str(self.text) + '\n\n'
@@ -689,14 +693,22 @@ def loadScriptData(fileName):
     读取sogal脚本，将不同的命令区分成很多StoryCommand但是不做解析，仅仅是简单地区分开命令行和文本行
     参见 game_entities.StoryCommand
     '''
+    
     fileloc = None
     for pt in ((path,type) for path in runtime_data.game_settings['sogalscrpathes'] for type in runtime_data.game_settings['sogalscrtypes']):
         if exists(pt[0]+fileName+pt[1]):
             fileloc = pt[0]+fileName+pt[1]
+            break
     
-  
+    if not fileloc:
+        print('file not found: ' + fileName)
+        return
+   
     fileHandle = open(fileloc)   #for 'from direct.stdpy.file import open', this 'open' is panda3d opereation and not the standard python operation
-
+   
+    global _current_index #I hate python below 3
+    _current_index = 0 #current index of the command
+    
     
     io_reader = StringIO(fileHandle.read())
     
@@ -714,13 +726,15 @@ def loadScriptData(fileName):
     def push_current():
         global _current_command   #如果是python3.0以上在这里用nonlocal就好了……
         global _current_text
+        global _current_index
         '''将当前命令文本加入到loaded_list末尾'''
         if not _current_command and not _current_text:
             _current_command = None
             _current_text = None
             return
         else:
-            loaded_list.append(StoryCommand(command = _current_command, text = _current_text))
+            loaded_list.append(StoryCommand(command = _current_command, text = _current_text,index= _current_index, fileLoc= fileloc))
+            _current_index += 1 
             _current_command = None
             _current_text = None
             

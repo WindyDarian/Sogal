@@ -25,7 +25,7 @@ Saving/Loading Window
 '''
 from datetime import datetime
 
-from panda3d.core import NodePath,TextNode
+from panda3d.core import NodePath,TextNode,PGButton,MouseButton
 from direct.stdpy.file import open, exists
 from direct.stdpy import pickle
 import direct.gui.DirectGuiGlobals as DGG
@@ -40,6 +40,10 @@ from sogal_form import SogalForm
 from layout import HLayOut,VLayout
 import color_themes
 
+WHEELUP = PGButton.getReleasePrefix() + MouseButton.wheelUp().getName() + '-'
+WHEELDOWN = PGButton.getReleasePrefix() + MouseButton.wheelDown().getName() + '-'
+WHEELLEFT = PGButton.getReleasePrefix() + MouseButton.wheelLeft().getName() + '-'
+WHEELRIGHT = PGButton.getReleasePrefix() + MouseButton.wheelRight().getName() + '-'
 
 #pos = (-0.57,0,0.67)
 hspacing = 1.33
@@ -73,9 +77,17 @@ class SaveLoadLabel(NodePath):
         NodePath.__init__(self,'SaveLoadLabel')
         
         self.__button = DirectButton(parent = self, command = command,  extraArgs = self.__extraArgs, frameSize = (0,1.2,-0.33,0), **style) 
+        #In case of interfering with mouse wheel input
+        self.__button.bind(WHEELUP, self.__rethrowEvent, ['wheel_up'])
+        self.__button.bind(WHEELDOWN, self.__rethrowEvent, ['wheel_down'])
+        self.__button.bind(WHEELLEFT, self.__rethrowEvent, ['wheel_left'])
+        self.__button.bind(WHEELRIGHT, self.__rethrowEvent, ['wheel_right'])
+        
         self.__text = OnscreenText(parent = self,font = base.textFont, pos = (0.05, -0.10), align = TextNode.ALeft, **color_themes.system_text) # @UndefinedVariable
         
         self.reload()
+        
+        
         
     def reload(self):
         if self.__always_enable:
@@ -102,6 +114,9 @@ class SaveLoadLabel(NodePath):
     
     def getFileName(self):
         return self.__fileName
+    
+    def __rethrowEvent(self,sevent,event):
+        messenger.send(sevent)
        
 
 class SaveForm(SogalForm):

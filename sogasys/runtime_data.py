@@ -29,6 +29,7 @@ import re,copy
 from direct.stdpy.file import open,exists
 from direct.stdpy import pickle
 
+import color_themes
 
 #game settings, this saves in a sconf file
 game_settings = {'text_speed': 20, #文字速度
@@ -38,6 +39,7 @@ game_settings = {'text_speed': 20, #文字速度
                  'env_volume': 0.75,
                  'sfx_volume': 1,
                  'voice_volume': 1,
+                 'style': 'ilia',
                  'save_folder': 'savedata/',
                  'save_type' : '.dat',
                  'save_infotype' : '.sinf',
@@ -92,6 +94,9 @@ class _RuntimeData(object):
         
         #Current environment sound
         self.current_env = None
+        
+        #current style
+        self.current_style = None
     
     def load(self, loadedInstance):
         self.gameTextBox_properties = loadedInstance.gameTextBox_properties
@@ -104,10 +109,18 @@ class _RuntimeData(object):
         self.script_space = loadedInstance.script_space
         self.current_bgm = loadedInstance.current_bgm
         self.current_env = loadedInstance.current_env
-        
+        self.current_style = loadedInstance.current_style
         
     
 RuntimeData = _RuntimeData()
+
+def getCurrentStyle(sheet = None):
+    if RuntimeData.current_style:
+        style = color_themes.styles[RuntimeData.current_style]
+    else: style = color_themes.styles[game_settings['style']]
+    if not sheet:
+        return style
+    else: return style[sheet]
 
 def saveSettings(fileName):
     pass

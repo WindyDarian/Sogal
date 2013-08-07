@@ -206,12 +206,12 @@ class StoryManager(SogalForm):
                 self.menu.show()
                 
     def save(self):
-        self.menu.hide()
+        #self.menu.hide()
         base.saveForm.setData(self._currentDump, self._currentMessage)
         base.saveForm.show()
         
     def load(self):
-        self.menu.hide()
+        #self.menu.hide()
         base.loadForm.show()
             
     def quickSave(self):
@@ -734,9 +734,11 @@ def loadScriptData(fileName):
             return
         else:
             loaded_list.append(StoryCommand(command = _current_command, text = _current_text,index= _current_index, fileLoc= fileloc))
+            #print (_current_index,fileloc,_current_text,_current_command)
             _current_index += 1 
             _current_command = None
             _current_text = None
+            
             
     
     while True:

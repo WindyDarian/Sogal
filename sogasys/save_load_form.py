@@ -36,9 +36,10 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 
 
 from runtime_data import game_settings
-from sogal_form import SogalForm
+from sogal_form import SogalForm,SogalDialog
 from layout import HLayOut,VLayout
 import color_themes
+from sogasys.sogal_form import ConfirmDialog
 
 WHEELUP = PGButton.getReleasePrefix() + MouseButton.wheelUp().getName() + '-'
 WHEELDOWN = PGButton.getReleasePrefix() + MouseButton.wheelDown().getName() + '-'
@@ -83,7 +84,7 @@ class SaveLoadLabel(NodePath):
         self.__button.bind(WHEELLEFT, self.__rethrowEvent, ['wheel_left'])
         self.__button.bind(WHEELRIGHT, self.__rethrowEvent, ['wheel_right'])
         
-        self.__text = OnscreenText(parent = self,font = base.textFont, pos = (0.05, -0.10), align = TextNode.ALeft, **color_themes.system_text) # @UndefinedVariable
+        self.__text = OnscreenText(parent = self, pos = (0.05, -0.10), align = TextNode.ALeft, **color_themes.system_text) # @UndefinedVariable
         
         self.reload()
         
@@ -99,7 +100,11 @@ class SaveLoadLabel(NodePath):
             infostream = open(game_settings['save_folder']+ self.__fileName + game_settings['save_infotype'],'rb')
             info = pickle.load(infostream)
             infostream.close()
-            text = info.text.splitlines()[0]
+            temp = info.text.splitlines()
+            if temp:
+                text = temp[0]
+            else: text = ''
+            
             if len(text)>15:
                 text = text[0:13] + '...'
             self.__text.setText(self.__head+'\n'+info.time.strftime('%Y-%m-%d %H:%M')+'\n'+'  '+text)
@@ -128,7 +133,7 @@ class SaveForm(SogalForm):
         '''
         Constructor
         '''
-        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True)
+        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True,backgroundColor= color_themes.ilia_bgColor)
         self.reparentTo(aspect2d,sort = 100)
         self.frame = DirectScrolledFrame(parent = self, canvasSize = SAVE_CANVAS_SIZE, 
                                          frameSize = FRAMESIZE, 
@@ -168,11 +173,17 @@ class SaveForm(SogalForm):
             self.labelDict[key].reload()
     
     def save(self,i):
+        if self.labelDict['save' + str(i)].getExists():
+            ConfirmDialog(text= '要覆盖吗？不覆盖吗？', command = self.confirmedSave, extraArgs = [i])
+        else: 
+            self.confirmedSave(i)
+    
+    def confirmedSave(self,i):
         if not self.__dumped:
             return
         else:
             messenger.send('save_data',[self.__dumped,'save' + str(i),self.__message])
-            self.labels[i].reload()
+            
         
     def focused(self):
         self.accept('mouse3', self.hide)
@@ -210,7 +221,7 @@ class LoadForm(SogalForm):
         '''
         Constructor
         '''
-        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True)
+        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True,backgroundColor=color_themes.sirius_bgColor)
         self.reparentTo(aspect2d,sort = 100)
 
         self.frame = DirectScrolledFrame(parent = self, canvasSize = LOAD_CANVAS_SIZE, 
@@ -260,12 +271,24 @@ class LoadForm(SogalForm):
     def reloadMember(self,key):
         if self.labelDict.has_key(key):
             self.labelDict[key].reload()
-    
+            
     def load(self,i):
+        if base.isStarted():
+            ConfirmDialog(text= '读取进度吗？', command = self.confirmedLoad, style = 'sirius', extraArgs = [i])
+        else: 
+            self.confirmedLoad(i)
+            
+    def quickLoad(self):
+        if base.isStarted():
+            ConfirmDialog(text= '读取进度吗？', command = self.confirmedQuickLoad, style = 'sirius')
+        else: 
+            self.confirmedLoad(i)
+
+    def confirmedLoad(self,i):
         messenger.send('load_data',['save' + str(i)])  
         self.hide()
             
-    def quickLoad(self):
+    def confirmedQuickLoad(self):
         messenger.send('load_data',['quick_save'])
         self.hide()
         

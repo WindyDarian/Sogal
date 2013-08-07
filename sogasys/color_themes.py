@@ -26,10 +26,28 @@ A moudle that contains color themes
 
 import direct.gui.DirectGuiGlobals as DGG
 
+default_font = None
+
+def getDefaultFont():
+    global default_font
+    if not default_font:
+        default_font = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
+        default_font.setPixelsPerUnit(60)
+        default_font.setPageSize(512,512)
+        default_font.setLineHeight(1.2)
+        default_font.setSpaceAdvance(0.5) 
+    return default_font
+
 system_text = {'scale':0.07,
                'fg':(1,1,1,1),
                'shadow':(0.6,0.6,0.5,1),
+               #'font':default_font,
                }
+
+def _initSystemText():
+    system_text['font'] = default_font
+
+
 
 ilia_textbox = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
                 'arrow_color' : (1,1,1,1),
@@ -55,9 +73,13 @@ ilia_textbox = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
                 'large_text_wrap' : 24,
                }
 
-ilia_frame = {'frameColor': (36/255.0,195/255.0,229/255.0,0.3),
+ilia_frame = {'frameColor': (75/255.0,153/255.0,214/255.0,0.75),
               'relief': DGG.FLAT
               }
+
+ilia_hardframe = {'frameColor': (69/255.0,118/255.0,195/255.0,1),
+                  'relief': DGG.FLAT
+                  }
 
 ilia_button = {'frameColor':((42/255.0,195/255.0,239/255.0,0.75),
                              (1.0,1.0,1.0,1),
@@ -70,17 +92,52 @@ ilia_button = {'frameColor':((42/255.0,195/255.0,239/255.0,0.75),
                 
               }
 
-sirius_frame = {'frameColor': (230/255.0,194/255.0,35/255.0,0.3),
+ilia_bgColor = (69/255.0,118/255.0,195/255.0,1)
+
+ilia = {'text':system_text,
+        'button':ilia_button,
+        'frame':ilia_frame,
+        'hardframe':ilia_hardframe,
+        'textbox':ilia_textbox,
+        'bgColor':ilia_bgColor,
+        }
+
+sirius_frame = {'frameColor': (225/255.0,169/255.0,210/255.0,0.75),
+                'relief': DGG.FLAT
+              }
+
+
+sirius_hardframe = {'frameColor': (214/255.0,133/255.0,75/255.0,1),
                 'relief': DGG.FLAT
               }
 
 sirius_button = {'frameColor':((239/255.0,195/255.0,46/255.0,0.75),
-                             (1.0,1.0,1.0,1),
-                             (249/255.0,235/255.0,85/255.0,0.95),
-                             (0.5,0.5,0.5,0.75),),
+                               (1,1,1,1),
+                               (255/255.0,146/255.0,236/255.0,1),
+                               (0.5,0.5,0.5,0.75),),
                  'text_scale':0.07,
                  'text_fg':(1,1,1,1),
                  'text_shadow':(0.5,0.5,0.5,1),
                  'relief': DGG.FLAT
                 
                 }
+
+sirius_bgColor = (188/255.0,105/255.0,63/255.0,1)
+
+sirius = {'text':system_text,
+          'button':sirius_button,
+          'frame':sirius_frame,
+          'hardframe': sirius_hardframe,
+          'textbox':ilia_textbox,
+          'bgColor': sirius_bgColor
+         }
+
+styles = {'ilia':ilia,
+          'sirius':sirius,
+          }
+    
+def initStyles():
+    getDefaultFont()
+    _initSystemText()
+    ilia_button['text_font'] = default_font
+    sirius_button['text_font'] = default_font

@@ -27,14 +27,19 @@ def itemSel(arg):
  
 #create a frame
 dialog = DirectDialog(dialogName="YesNoCancelDialog", text="Please choose:",
-                     buttonTextList = ['love','HAHAHAHA','Windy Darian'], 
+                      #frameSize = (-0.5,0.5,-0.5,0.5),
+                     buttonTextList = ['love','HAHAHAHA','Windy Darian','love','HAHAHAHA','Windy Darian','love','HAHAHAHA','Windy Darian'], 
                      command=itemSel,
                      button_frameColor =((239/255.0,195/255.0,46/255.0,0.75),
                                          (1.0,1.0,1.0,1),
                                          (249/255.0,235/255.0,85/255.0,0.95),
                                          (0.5,0.5,0.5,0.75),),
+                    
                      button_relief = DGG.FLAT,
-                     relief = DGG.FLAT
+                     relief = DGG.FLAT,
+                     image = None,
+                     frameColor = (239/255.0,195/255.0,46/255.0,0.3),
+                     frameSize = ()
                      )
  
 base.camera.setPos(0,-20,0)

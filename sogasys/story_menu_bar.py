@@ -95,7 +95,7 @@ class StoryMenuBar(SogalForm):
     
     def addButton(self,**args):
         '''Add a button and return it'''
-        btn = DirectButton(parent = self.bar,**dict(color_themes.ilia_button, frameSize = BUTTON_SIZE, text_font = base.textFont,**args))  # @UndefinedVariable
+        btn = DirectButton(parent = self.bar,**dict(base.getStyle()['button'], frameSize = BUTTON_SIZE,**args))  # @UndefinedVariable
         
         self._buttonbox.append(btn)
         #self.vbox.pack(btn)

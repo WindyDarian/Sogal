@@ -25,15 +25,21 @@ The moudle implements an base class for sogal forms (in-game window)
 '''
 import operator
 
-from panda3d.core import NodePath,PGButton,MouseButton
+from panda3d.core import NodePath,PGButton,MouseButton,CardMaker,TransparencyAttrib
 from direct.showbase.DirectObject import DirectObject
 import direct.gui.DirectGuiGlobals as DGG
+from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectButton import DirectButton
-from direct.gui.DirectDialog import DirectDialog
+from direct.gui.OnscreenText import OnscreenText
 
 from direct.interval.LerpInterval import LerpFunc,LerpPosInterval
 from direct.interval.FunctionInterval import Func
-from direct.interval.IntervalGlobal import Sequence,Parallel
+from direct.interval.IntervalGlobal import Sequence,Parallel,Wait
+
+from layout import DirectHLayout, DirectVLayout
+from sogasys.layout import DirectHLayout
+from sogasys.color_themes import styles
+from direct.interval.MetaInterval import Parallel
 
 
 def _modifyAlphaScale(value,nodePath):
@@ -72,32 +78,46 @@ class SogalForm(NodePath, DirectObject):
             self.__mask = DialogMask()
             #self.__mask = DirectButton(parent = aspect2d, frameColor =(1,1,1,0.1), relief = DGG.FLAT,commandButtons = [DGG.RMB],command = self.__maskClick)
             self.__mask.hide()
+        
+        self.__backgroundImage = backgroundImage
+        self.__backgroundColor = backgroundColor
+        self.__bgPath = None
+        self.__imagePath = None
+        
+
+        
         NodePath.__init__(self,self.__class__.__name__)
         
+        if self.__backgroundColor:
+            self.__bgPath = NodePath('bgPath')
+            self.__bgPath.setTransparency(TransparencyAttrib.MAlpha)
+            cm = CardMaker('cm')
+            cm.setFrameFullscreenQuad()
+            cm.setColor(self.__backgroundColor)
+            self.__bgPath.attachNewNode(cm.generate())
+            self.__bgPath.reparentTo(aspect2d,self.getSort())
+            self.__bgPath.hide()
+            
+        #TODO: backgroundImage
+        
+        self.setTransparency(TransparencyAttrib.MAlpha)
         
         
-        #self.accept('window-event', self.windowResize)
-        
-        if backgroundImage or backgroundColor:
-            pass
-            #TODO: you know~
-        
+        self.accept('window-event', self.windowResize)
+        self.windowResize(None)
+
         NodePath.hide(self)
         self.setPos(pos)
         self.reparentTo(aspect2d)  # @UndefinedVariable
-    """
-    def __maskClick(self,button = 2):
-        '''Cuz the mask is a DirectButton it will interrupt screen mouse events so ...'''
         
-        #FIXME: make the mask accept left and middle buttons
-        if button == 0: #Left mouse button
-            messenger.send('mouse1')
-        elif button == 1: #Middle button
-            messenger.send('mouse2')
-        elif button == 2: #Right button
-            messenger.send('mouse3')
-    """ 
-        
+    def windowResize(self,arg):
+        if self.__bgPath:
+            #fill the screen
+            aspect = base.getAspectRatio()
+            if aspect > 1:
+                self.__bgPath.setScale(aspect,0,1)
+            elif aspect: 
+                self.__bgPath.setScale(1,0,1.0/aspect)
 
     
     def destroy(self):
@@ -106,15 +126,21 @@ class SogalForm(NodePath, DirectObject):
             self.__currentInterval.pause
         if self.__mask:
             self.__mask.destroy()
+        if self.__bgPath:
+            self.__bgPath.removeNode()
         self.ignoreAll()
         self.removeNode()
         self.removeFocus()
 
         
     def show(self):
-        if self.__mask:
-            self.__mask.reparentTo(aspect2d,sort = self.getSort())
-            self.__mask.show()
+        if self.__mask or self.__bgPath:
+            if self.__mask:
+                self.__mask.reparentTo(aspect2d,sort = self.getSort())
+                self.__mask.show()
+            if self.__bgPath:
+                self.__bgPath.reparentTo(aspect2d,sort = self.getSort())
+                self.__bgPath.show()
             self.reparentTo(aspect2d,sort = self.getSort())
         if not (self.__fading and self.__fadingDuration):
             NodePath.show(self)
@@ -125,13 +151,17 @@ class SogalForm(NodePath, DirectObject):
             if self.__currentInterval:
                 self.__currentInterval.pause()
             pos = tuple(map(operator.add,self.__originPos,self.__fadingPositionOffset))
-            self.__currentInterval = Sequence(Parallel(LerpFunc(_modifyAlphaScale,self.__fadingDuration,0,1,blendType = 'easeOut',extraArgs = [self]),
-                                                       LerpPosInterval(self,self.__fadingDuration,
-                                                                       self.__originPos,
-                                                                       pos,
-                                                                       blendType = 'easeOut'),
-                                              )
-                                     )
+            
+            parallel = Parallel(LerpFunc(_modifyAlphaScale,self.__fadingDuration,0,1,blendType = 'easeOut',extraArgs = [self]),
+                                LerpPosInterval(self,self.__fadingDuration,
+                                                self.__originPos,
+                                                pos,
+                                                blendType = 'easeOut')
+                                )
+            if self.__bgPath:
+                parallel.append(LerpFunc(_modifyAlphaScale,self.__fadingDuration,0,1,blendType = 'easeOut',extraArgs = [self.__bgPath]))
+            
+            self.__currentInterval = Sequence(parallel)
             self.__currentInterval.start()
             
     
@@ -139,22 +169,32 @@ class SogalForm(NodePath, DirectObject):
         if not (self.__fading and self.__fadingDuration):
             NodePath.hide(self)
             self.removeFocus()
+            if self.__mask:
+                self.__mask.hide()
+            if self.__bgPath:
+                self.__bgPath.hide()
         else:
             #self.removeFocus()
             if self.__currentInterval:
                 self.__currentInterval.pause()
             endpos = tuple(map(operator.add,self.__originPos,self.__fadingPositionOffset))
-            self.__currentInterval = Sequence(Parallel(LerpFunc(_modifyAlphaScale,self.__fadingDuration,1,0,blendType = 'easeIn',extraArgs = [self]),
-                                                      LerpPosInterval(self,self.__fadingDuration,
-                                                                      endpos,
-                                                                      self.__originPos,
-                                                                      blendType = 'easeIn'),
-                                                     ),
+            parallel = Parallel(LerpFunc(_modifyAlphaScale,self.__fadingDuration,1,0,blendType = 'easeIn',extraArgs = [self]),
+                                LerpPosInterval(self,self.__fadingDuration,
+                                                endpos,
+                                                self.__originPos,
+                                                blendType = 'easeIn'),
+                                )
+            if self.__bgPath:
+                parallel.append(LerpFunc(_modifyAlphaScale,self.__fadingDuration,1,0,blendType = 'easeIn',extraArgs = [self.__bgPath]))
+            
+            self.__currentInterval = Sequence(parallel,
                                               Func(NodePath.hide,self),
                                               Func(self.removeFocus),
                                              )
             if self.__mask:
                 self.__currentInterval.append(Func(self.__mask.hide))
+            if self.__bgPath:
+                self.__currentInterval.append(Func(self.__bgPath.hide))
             self.__currentInterval.start()
             
     def setPos(self, *args, **kwargs):
@@ -181,8 +221,11 @@ class SogalForm(NodePath, DirectObject):
         '''Define what to do when a subclass object loses focus here'''
         pass        
     
+    def _getFadingDuration(self):
+        return self.__fadingDuration
 
-
+    def _getFading(self):
+        return self.__fading
 
 
 class DialogMask(DirectButton):
@@ -245,30 +288,109 @@ class DialogMask(DirectButton):
                 
     def destroy(self):
         self.ignoreAll()
-        
+        DirectButton.destroy(self)
     
+BUTTON_SIZE = (-0.2,0.2,-0.03,0.07)
     
 class SogalDialog(SogalForm):
     '''
     A dialog that derived from SogalForm
     (Which contains a DirectDialog)
     '''
-    def __init__(self,pos = (0,0,0),
-                      fading = False,
-                      fading_position_offset = (0,0,0),
-                      fading_duration = 0.5, 
-                      backgroundImage = None, 
-                      backgroundColor = None,
-                      enableMask = True, #NOTE THAT IT IS TRUE BY DEFAULT
-                      ):
-        SogalForm.__init__(self,
-                           pos= pos, 
-                           fading= fading, 
-                           fading_position_offset= fading_position_offset, 
-                           fading_duration= fading_duration,
-                           backgroundImage= backgroundImage,
-                           backgroundColor= backgroundColor,
-                           enableMask = enableMask
+    def __init__(self,
+                 enableMask = True, #NOTE THAT IT IS TRUE BY DEFAULT
+                 autoDestroy = True,
+                 sortType = 0, #0 for horizontal, 1 for vertical
+                 margin = 0.2,
+                 textList = ['OK','Cancel'],
+                 command = None,
+                 frameSize = (-0.6,0.6,-0.45,0.45),
+                 buttonSize = BUTTON_SIZE,
+                 text = '',
+                 textPos = (0,0,0.2),
+                 startPos = (-0.4,0,-0.2),
+                 extraArgs = [],
+                 style = None,
+                 fadeScreen = 0.5,
+                 *args,
+                 **kwargs):
+        SogalForm.__init__(self,enableMask = enableMask,backgroundColor=(0,0,0,fadeScreen), *args,**kwargs)
+        self.reparentTo(aspect2d, sort = 1000)
+        if not style:
+            self.__style = base.getStyle()
+        else:
+            self.__style = styles[style]
+        
+        self.__frame = DirectFrame(parent = self,frameSize = frameSize,**self.__style['hardframe'])
+        self.__buttonList = []#DirectButton(parent = self, s)
+        self.__text = OnscreenText(parent = self,text = text ,pos = textPos, **self.__style['text'])
+        self.__command = command
+        self.__autoDestroy = autoDestroy
+        self._extraArgs = extraArgs
+        
+        if sortType == 0:
+            self.__box = DirectHLayout(margin = margin)
+        else: self.__box = DirectVLayout(margin = margin)
+        self.__box.reparentTo(self)
+        self.__box.setPos(startPos)
+        
+        for i in range(len(textList)):
+            btn = DirectButton(text = textList[i], command = self.buttonCommand(i),frameSize = buttonSize, **self.__style['button'])
+            self.__buttonList.append(btn)
+            self.__box.append(btn)
+            
+        self.show()
+        
+    def buttonCommand(self, i):
+        commandindex = i
+        def process():
+            if self.__command:
+                self.__command(commandindex, *self._extraArgs)
+            if self.__autoDestroy:
+                self.close()
+        return process
+
+    def close(self):
+        for btn in self.__buttonList:
+            btn['state'] = DGG.DISABLED
+        if self._getFading():
+            seq = Sequence(Func(self.hide),
+                           Wait(self._getFadingDuration()+2),
+                           Func(self.destroy),
                            )
+            seq.start()
+        else: self.destroy()        
+    
+            
+    def destroy(self):
+        for btn in self.__buttonList:
+            btn.destroy()
+        self.__frame.destroy()
+        self.__box.removeNode()
+        SogalForm.destroy(self)
         
         
+class ConfirmDialog(SogalDialog):
+    '''A continue-or-cancel dialog'''
+    def __init__(self, 
+                 command = None,
+                 textList = ['继续','取消'],
+                 margin = 0.2,
+                 frameSize = (-0.6,0.6,-0.3,0.3),
+                 buttonSize = BUTTON_SIZE,
+                 textPos = (0,0.05),
+                 startPos = (-0.5,0,-0.15) ,
+                 *args,
+                 **kwargs):
+        self.__command = command
+        SogalDialog.__init__(self,textList= textList,frameSize = frameSize,buttonSize = buttonSize, textPos = textPos, startPos = startPos,
+                             command = self.confirm,*args,**kwargs)
+        
+    def focused(self):
+        self.accept('escape', self.close)
+        self.accept('mouse3', self.close)
+        self.accept('enter', self.buttonCommand(0))
+        
+    def confirm(self,choice,*args,**kwargs):
+        if choice == 0:    #if confirmed
+            self.__command(*args,**kwargs)

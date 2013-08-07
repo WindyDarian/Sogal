@@ -37,9 +37,10 @@ from direct.stdpy import threading
 from direct.stdpy import pickle
 
 from story_manager import StoryManager
-from runtime_data import game_settings,loadDefaultSettings,restoreRuntimeData
+from runtime_data import game_settings,loadDefaultSettings,restoreRuntimeData, getCurrentStyle as rgetStyle
 from audio_player import AudioPlayer
 from save_load_form import SaveForm,SavingInfo,LoadForm
+import color_themes
  
 class SogalBase(ShowBase): 
     "The ShowBase of the sogal"
@@ -52,6 +53,8 @@ class SogalBase(ShowBase):
         
         #构造Panda3D的ShowBase
         ShowBase.__init__(self)
+        
+        color_themes.initStyles()
         
         props = WindowProperties( self.win.getProperties() )
         props.setSize(int(game_settings['screen_resolution'][0]),int(game_settings['screen_resolution'][1]))
@@ -78,11 +81,7 @@ class SogalBase(ShowBase):
         self.accept('remove_focus', self.cancelFocus)
         
         #Font setting
-        self.textFont = loader.loadFont('fonts/DroidSansFallbackFull.ttf') # @UndefinedVariable
-        self.textFont.setPixelsPerUnit(60)
-        self.textFont.setPageSize(512,512)
-        self.textFont.setLineHeight(1.2)
-        self.textFont.setSpaceAdvance(0.5)
+        self.textFont = color_themes.default_font
         
         #背景设置
         self.setBackgroundColor(0,0,0,1); 
@@ -93,7 +92,9 @@ class SogalBase(ShowBase):
         
         self.storyManager = StoryManager()
     
-        
+    
+    def isStarted(self):
+        return bool(self.storyManager)
 
         
     def getCurrentFocus(self):
@@ -158,11 +159,9 @@ class SogalBase(ShowBase):
         self.audioPlayer.reload()
         self.storyManager = StoryManager()
         
-        #self.storyManager.reload()
         
-        
-    #def loadData(self,fileName):
-        
+    def getStyle(self, sheet = None):
+        return rgetStyle(sheet)
     
     def toggleFullScreen(self):
         props = WindowProperties( self.win.getProperties() )
@@ -173,6 +172,3 @@ class SogalBase(ShowBase):
             props.setFullscreen(False)
         self.win.requestProperties(props)
     
-    
-if __name__ == '__main__':
-    SogalBase().run()

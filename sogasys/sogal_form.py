@@ -52,6 +52,7 @@ class SogalForm(NodePath, DirectObject):
     '''
     
     def __init__(self,
+                 parent = None,
                  pos = (0,0,0),
                  fading = False,
                  fading_position_offset = (0,0,0),
@@ -59,12 +60,18 @@ class SogalForm(NodePath, DirectObject):
                  backgroundImage = None, 
                  backgroundColor = None,
                  enableMask = False,
+                 noFocus = False,
+                 onShowing = None,
+                 onHiding = None,
+                 onEventExtraArgs = [],
                  ):
         '''if fading enabled, it will apply a fading effect on show()&hide()
         Important Attributes:
         enableMask: This creates a big transparent plane (DirectButton) off screen so the directGui below won't be
-        clicked (However due to this trick we won't be able to accept mouse events (I have paid back 'mouse3' by 
-        self.__maskClick))
+                    clicked (However due to this trick we won't be able to accept mouse events (I have paid back 'mouse3' by 
+                    self.__maskClick))
+        noFocus: if it is true, it doesn't need SogalBase to manage its focus state (it will not affect
+                 other Sogalforms' focus state
         '''
         self.__fading = fading
         self.__fadingPositionOffset = fading_position_offset
@@ -72,6 +79,11 @@ class SogalForm(NodePath, DirectObject):
         self.__originPos = pos
         self.__currentInterval = None
         self.__maskEnabled = enableMask
+        self.__noFocus = noFocus
+        
+        self.__onShowing = onShowing
+        self.__onHiding = onHiding
+        self.__onEventExtraArgs = onEventExtraArgs
         
         self.__mask = None
         if self.__maskEnabled:
@@ -87,6 +99,9 @@ class SogalForm(NodePath, DirectObject):
 
         
         NodePath.__init__(self,self.__class__.__name__)
+        if not parent:
+            self.reparentTo(aspect2d)
+        else: self.reparentTo(parent)
         
         if self.__backgroundColor:
             self.__bgPath = NodePath('bgPath')
@@ -122,6 +137,7 @@ class SogalForm(NodePath, DirectObject):
     
     def destroy(self):
         '''Call this method to destroy the form'''
+        
         if self.__currentInterval:
             self.__currentInterval.pause
         if self.__mask:
@@ -129,11 +145,14 @@ class SogalForm(NodePath, DirectObject):
         if self.__bgPath:
             self.__bgPath.removeNode()
         self.ignoreAll()
-        self.removeNode()
         self.removeFocus()
+        self.removeNode()
 
         
     def show(self):
+        if self.__onShowing:
+            self.__onShowing(*self.__onEventExtraArgs)
+        
         if self.__mask or self.__bgPath:
             if self.__mask:
                 self.__mask.reparentTo(aspect2d,sort = self.getSort())
@@ -141,7 +160,7 @@ class SogalForm(NodePath, DirectObject):
             if self.__bgPath:
                 self.__bgPath.reparentTo(aspect2d,sort = self.getSort())
                 self.__bgPath.show()
-            self.reparentTo(aspect2d,sort = self.getSort())
+        self.reparentTo(self.getParent(),sort = self.getSort())
         if not (self.__fading and self.__fadingDuration):
             NodePath.show(self)
             self.requestFocus()
@@ -166,6 +185,9 @@ class SogalForm(NodePath, DirectObject):
             
     
     def hide(self):
+        if self.__onHiding:
+            self.__onHiding(*self.__onEventExtraArgs)
+        
         if not (self.__fading and self.__fadingDuration):
             NodePath.hide(self)
             self.removeFocus()
@@ -204,11 +226,17 @@ class SogalForm(NodePath, DirectObject):
         
     def requestFocus(self):
         '''let the game know this form want focus'''
-        messenger.send('request_focus',[self])  # @UndefinedVariable
+        if not self.__noFocus:
+            messenger.send('request_focus',[self])  # @UndefinedVariable
+        else:
+            self.focused()
         
     def removeFocus(self):
         '''let the game know this form want to remove focus'''
-        messenger.send('remove_focus',[self])  # @UndefinedVariable
+        if not self.__noFocus:
+            messenger.send('remove_focus',[self])  # @UndefinedVariable
+        else:
+            self.defocused()
         
     def hasFocus(self):
         return base.hasFocus(self)  # @UndefinedVariable
@@ -303,19 +331,28 @@ class SogalDialog(SogalForm):
                  sortType = 0, #0 for horizontal, 1 for vertical
                  margin = 0.2,
                  textList = ['OK','Cancel'],
+                 enablesList = None,
                  command = None,
                  frameSize = (-0.6,0.6,-0.45,0.45),
                  buttonSize = BUTTON_SIZE,
                  text = '',
-                 textPos = (0,0,0.2),
+                 textPos = (0,0.2),
                  startPos = (-0.4,0,-0.2),
                  extraArgs = [],
                  style = None,
                  fadeScreen = 0.5,
-                 *args,
+                 backgroundColor = None,
                  **kwargs):
-        SogalForm.__init__(self,enableMask = enableMask,backgroundColor=(0,0,0,fadeScreen), *args,**kwargs)
-        self.reparentTo(aspect2d, sort = 1000)
+        if backgroundColor:
+            bgColor = backgroundColor
+        elif fadeScreen is not None:
+            bgColor = (0,0,0,fadeScreen)
+        else:
+            bgColor = None
+        
+        SogalForm.__init__(self,enableMask = enableMask,backgroundColor=bgColor, **kwargs)
+        if enableMask:
+            self.reparentTo(aspect2d, sort = 1000)
         if not style:
             self.__style = base.getStyle()
         else:
@@ -339,6 +376,14 @@ class SogalDialog(SogalForm):
             self.__buttonList.append(btn)
             self.__box.append(btn)
             
+        if enablesList:
+            for i in range(len(enablesList)):
+                if i >= len(self.__buttonList):
+                    break
+                if enablesList[i]:
+                    self.__buttonList[i]['state'] = DGG.NORMAL
+                else: self.__buttonList[i]['state'] = DGG.DISABLED
+                
         self.show()
         
     def buttonCommand(self, i):
@@ -368,6 +413,8 @@ class SogalDialog(SogalForm):
         self.__frame.destroy()
         self.__box.removeNode()
         SogalForm.destroy(self)
+        
+
         
         
 class ConfirmDialog(SogalDialog):

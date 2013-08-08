@@ -83,6 +83,8 @@ class SaveLoadLabel(NodePath):
         self.__button.bind(WHEELDOWN, self.__rethrowEvent, ['wheel_down'])
         self.__button.bind(WHEELLEFT, self.__rethrowEvent, ['wheel_left'])
         self.__button.bind(WHEELRIGHT, self.__rethrowEvent, ['wheel_right'])
+        self.__button.bind(DGG.B2PRESS, self.__rethrowEvent, ['mouse2'])
+        self.__button.bind(DGG.B3PRESS, self.__rethrowEvent, ['mouse3'])
         
         self.__text = OnscreenText(parent = self, pos = (0.05, -0.10), align = TextNode.ALeft, **color_themes.system_text) # @UndefinedVariable
         
@@ -187,6 +189,7 @@ class SaveForm(SogalForm):
         
     def focused(self):
         self.accept('mouse3', self.hide)
+        self.accept('escape', self.hide)
         self.accept('wheel_up', self.roll, [-0.04])
         self.accept('wheel_down', self.roll, [0.04])
         self.accept('arrow_up-repeat', self.roll, [-0.04])
@@ -200,6 +203,7 @@ class SaveForm(SogalForm):
         
     def defocused(self):
         self.ignore('mouse3')
+        self.ignore('escape')
         self.ignore('wheel_up')
         self.ignore('wheel_down')
         self.ignore('arrow_up-repeat')

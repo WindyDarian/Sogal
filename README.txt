@@ -182,6 +182,16 @@ script -FileName 运行python脚本文件
 会保存到存档文件中（但本地命名空间能保存和在下一段脚本中继承）所以使用global时要注意
 ——但，你可以把本地空间当成全局空间用……
 
+choice 表示选择命令
+头部有choice后，接下来的文本段每行是一个选择。
+选择的结果会写入到脚本空间（本地）的last_choice变量中
+第一个选项为0 第二个选项为1 以此类推
+如果行开头是--则表示该选项不可用
+另外select -text 可以为这个选项进行描述
+
+jump -FileName 读取sogal场景脚本并跳转
+expand -FileName 将sogal场景脚本展开到当前脚本中的下一句
+
 
 未实现（加#表示暂不忙实现）：
 
@@ -191,8 +201,7 @@ script -FileName 运行python脚本文件
 
 time -time 表示在玩家不操作的情况下需要等待time秒才会进入下一行
 wait 表示当前需要玩家输入才能继续
-jump -FileName 读取sogal场景脚本并跳转
-expand -FileName 将sogal场景脚本展开到当前脚本中的下一句
+
 if: condition 条件判断，单独占一行命令
 while: condition
 

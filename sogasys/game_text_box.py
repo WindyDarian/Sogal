@@ -253,7 +253,10 @@ class GameTextBox(DirectObject, NodePath):
         
         #FIXME: There is a performance issue, and it is hard to apply any gradient effect
         #Maybe we can create a NodePath class to group up TextNodes to fix this issue.
-        text = self.existingText + self.newText[0:int(math.floor((len(self.newText)-1)*lerp_value))]
+        if lerp_value<1:
+            text = self.existingText + self.newText[0:int(math.floor((len(self.newText)-1)*lerp_value))]
+        else:
+            text = self.existingText + self.newText
         self.currentTextLabel.setText(text)
             
     
@@ -401,8 +404,8 @@ class GameTextBox(DirectObject, NodePath):
             
 
     def paragraphSparator(self):
-        if self._currentStyle == GameTextBoxStyle.Large:
-            self.clearText()
+        #if self._currentStyle == GameTextBoxStyle.Large:
+        self.clearText()
 
     def setTextBoxProperty(self, propname, value):
         runtime_data.RuntimeData.gameTextBox_properties[propname] = value

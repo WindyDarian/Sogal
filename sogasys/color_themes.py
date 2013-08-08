@@ -77,7 +77,7 @@ ilia_frame = {'frameColor': (75/255.0,153/255.0,214/255.0,0.75),
               'relief': DGG.FLAT
               }
 
-ilia_hardframe = {'frameColor': (69/255.0,118/255.0,195/255.0,1),
+ilia_hardframe = {'frameColor': (69/255.0,118/255.0,195/255.0,0.75),
                   'relief': DGG.FLAT
                   }
 
@@ -107,7 +107,7 @@ sirius_frame = {'frameColor': (225/255.0,169/255.0,210/255.0,0.75),
               }
 
 
-sirius_hardframe = {'frameColor': (214/255.0,133/255.0,75/255.0,1),
+sirius_hardframe = {'frameColor': (214/255.0,133/255.0,75/255.0,0.75),
                 'relief': DGG.FLAT
               }
 

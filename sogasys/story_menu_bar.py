@@ -53,8 +53,10 @@ class StoryMenuBar(SogalForm):
         SogalForm.__init__(self,
                            fading = True, 
                            fading_position_offset = (0.5,0,0),
-                           fading_duration = 0.3)
-        
+                           fading_duration = 0.3,
+                           enableMask = True,
+                           backgroundColor = (0,0,0,0.25))
+        self.reparentTo(aspect2d,sort = 99)
         self._buttonbox = DirectVLayout(parent = self,margin = 0.05)
         self._currentInterval = None
         
@@ -67,10 +69,12 @@ class StoryMenuBar(SogalForm):
     
     def focused(self):
         self.accept('mouse3', self.hide)
+        self.accept('escape', self.hide)
         SogalForm.focused(self)
     
     def defocused(self):
         self.ignore('mouse3')
+        self.ignore('escape')
         SogalForm.defocused(self)
         
     def resetPos(self,arg = None):

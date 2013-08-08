@@ -42,10 +42,9 @@ import direct.gui.DirectGuiGlobals as DGG
 from game_text_box import GameTextBox
 from story_view import StoryView,StoryViewItemEntry,SVIC
 from story_menu_bar import StoryMenuBar
-from sogal_form import SogalForm
-
+from sogal_form import SogalForm, ConfirmDialog, SogalDialog
 import runtime_data
-from sogasys.save_load_form import SaveForm
+from save_load_form import SaveForm
 from cgitb import text
 
 
@@ -72,7 +71,7 @@ class StoryManager(SogalForm):
         self.step = 0    #shows how many commands line it had run, used to sync data dumps
         self.scrStack = []
         self.commandList = []
-        
+
         
         if not runtime_data.RuntimeData.command_ptr:
             self.scrPtr = 0
@@ -98,30 +97,35 @@ class StoryManager(SogalForm):
         self.menu = StoryMenuBar()
         self.gameTextBox = GameTextBox()
         
+        
         self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED, command = self.save)
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.load)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
+        self.button_lastchoice = self.menu.addButton(text = 'Last Choice',state = DGG.DISABLED,command = self.lastChoice)
         
         self._inputReady = True
         self.__arrow_shown = False
-        
+        self._choiceReady = True
         self._currentMessage = ''
+        self.__currentSelection = None
         
         self.mapScriptSpace()
         SogalForm.__init__(self)
         self.show()
         taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
-
+        
         
     def focused(self):
         self.accept('mouse1', self.clicked, [1])
         self.accept('mouse3', self.clicked, [3])
+        self.accept('escape', self.showMenu)
         SogalForm.focused(self)
         
     def defocused(self):
         self.ignore('mouse1')
         self.ignore('mouse3')
+        self.ignore('escape')
         SogalForm.defocused(self)
         self.__arrow_shown = False
         self.gameTextBox.hideArrow()
@@ -133,7 +137,9 @@ class StoryManager(SogalForm):
         if self._frame:
             self._frame.destroy()
             self._frame = None
-            
+        
+        if self.__currentSelection:
+            self.__currentSelection.destroy()
         self.gameTextBox.destroy()
         self.storyView.destroy()
         self.menu.destroy()
@@ -199,19 +205,24 @@ class StoryManager(SogalForm):
             if not self.getSceneReady():
                 self.quickfinish()
             else:
-                self.setInputReady(True)
+                self.setTextInputReady(True)
         elif key == 3:
             self.quickfinish()
             if self.getSceneReady():
                 self.menu.show()
                 
+    def showMenu(self):
+        self.quickfinish()
+        if self.getSceneReady():
+            self.menu.show()        
+                
     def save(self):
-        #self.menu.hide()
+        self.menu.hide()
         base.saveForm.setData(self._currentDump, self._currentMessage)
         base.saveForm.show()
         
     def load(self):
-        #self.menu.hide()
+        self.menu.hide()
         base.loadForm.show()
             
     def quickSave(self):
@@ -223,10 +234,19 @@ class StoryManager(SogalForm):
             messenger.send('save_data',[self._currentDump,'quick_save',self._currentMessage])  # @UndefinedVariable
             
     def quickLoad(self):
-        if exists(runtime_data.game_settings['save_folder'] + 'quick_save' + runtime_data.game_settings['save_type'] ):
-            messenger.send('load_data',['quick_save'])  # @UndefinedVariable
+        ConfirmDialog(text= '要读取吗？',command= self.__confirmedQuickLoad)
         
-                
+    def lastChoice(self):
+        ConfirmDialog(text= '要回到上一个选择枝吗？',command= self.__confirmedLastChoice)
+        
+    def __confirmedQuickLoad(self):
+        if exists(runtime_data.game_settings['save_folder'] + 'quick_save' + runtime_data.game_settings['save_type'] ):
+            messenger.send('load_data',['quick_save'])  # @UndefinedVariable        
+    
+    def __confirmedLastChoice(self):
+        if runtime_data.RuntimeData.last_choice:
+            messenger.send('load_memory',[runtime_data.RuntimeData.last_choice])            # @UndefinedVariable
+    
     def getSceneReady(self):
         '''Get if the scene is ready'''
         textbox_ready = False
@@ -238,16 +258,25 @@ class StoryManager(SogalForm):
         if not self.storyView.getIsWaiting():
             view_ready = True
             
+            
         if textbox_ready and view_ready:
             return True
         return False
     
     def getInputReady(self):
         '''define is user's 'next' command given'''
-        return self._inputReady
+        textinput_ready = self._inputReady
+        choice_ready = self.getChoiceReady()
+        
+        if textinput_ready and choice_ready:
+            return True
+        return False
     
-    def setInputReady(self, value):
+    def setTextInputReady(self, value):
         self._inputReady = value
+        
+    def getChoiceReady(self):
+        return self._choiceReady
     
 
     def forward(self,is_user = False):
@@ -280,6 +309,7 @@ class StoryManager(SogalForm):
         self.presave()
         self._currentDump = copy.deepcopy(runtime_data.RuntimeData)
         
+        if self.scrPtr < 0: self.scrPtr = 0
         
         if len(self.commandList) > self.scrPtr:
             handled = False
@@ -298,11 +328,13 @@ class StoryManager(SogalForm):
         if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
             self.button_quickload['state'] = DGG.NORMAL 
             
+        if runtime_data.RuntimeData.last_choice:
+            self.button_lastchoice['state'] = DGG.NORMAL 
+            
         if self.gameTextBox.newText:
             self._currentMessage = self.gameTextBox.newText
             
         if self._currentDump: 
-            
             self._enableSavingButton()
     
     def goto(self, target):
@@ -337,6 +369,7 @@ class StoryManager(SogalForm):
         text = ''
         continuous = False
         is_script = False
+        is_selection = False
         spaceCutter = space_cutter
         
         cleared = False
@@ -344,6 +377,7 @@ class StoryManager(SogalForm):
         voiceFlag = False                   #it will be True if voice is stopped in this line of command 
                                             #used for disable cross voice of different command lines
                                             #but enable one command line with multiple voices
+                                            
         
         #read command line
         if command.command:
@@ -571,14 +605,53 @@ class StoryManager(SogalForm):
                     
                 elif comm.startswith('script '):
                     temp = spaceCutter.split(comm , 1)
-                    self.runScriptFile(temp[1])       
-                                               
+                    self.runScriptFile(temp[1])    
+                    
+                elif comm == 'choice' or comm.startswith('choice '):
+                    '''
+                    Selection
+                    '''
+                    is_selection = True
+                    temp = spaceCutter.split(comm, 1)
+                    if len(temp) > 1:
+                        striped = temp[1].strip()
+                        if striped:
+                            self.pushText(text = striped, speaker = None, needInput = False)
+                            
+                elif comm.startswith('jump '):
+                    temp = spaceCutter.split(comm , 1)
+                    self.beginScene(temp[1].strip())
+                    
+                elif comm.startswith('expand '):
+                    temp = spaceCutter.split(comm , 1)
+                    self.expandScene(temp[1].strip())
+        
                 else: 
                     if comm:
                         print('extra command: ' + comm)
                         
         if command.text:
-            if not is_script:
+            if is_script:
+                self.runScript(command.text)
+            
+            elif is_selection:
+                '''
+                If encountered a selection
+                '''
+                choiceList = []
+                enablesList = []
+                textlines = command.text.splitlines()
+                for tl in textlines:
+                    if tl.startswith('--'):  #--means disabled
+                        text = tl[2:]
+                        enablesList.append(False)
+                    else:
+                        text = tl
+                        enablesList.append(True)
+                    choiceList.append(text)
+                self.showSelection(choiceList = choiceList, enablesList = enablesList)
+            
+            else:
                 #检查有无在文本中的name
                 #name: formation checking
                 textlines = command.text.splitlines()
@@ -603,20 +676,18 @@ class StoryManager(SogalForm):
                 for item in textlines:
                     if item:
                         text += translate(item) + '\n'
-            
-        if is_script:
-            self.runScript(command.text)
         
-        if text:
-            self.pushText(text = text, speaker = name, continuous = continuous)
+                if text:
+                    self.pushText(text = text, speaker = name, continuous = continuous)
             
         else:
             if cleared:
                 self.gameTextBox.hide()    #better to hide the textbox when 'vclear'
     
-    def pushText(self, text, speaker = None, continuous = False):
+    def pushText(self, text, speaker = None, continuous = False, needInput = True):
         self.gameTextBox.pushText(text = text, speaker = speaker, continuous = continuous)
-        self._inputReady = False
+        if needInput:
+            self._inputReady = False
         self.gameTextBox.show()        
     
     def runScript(self,pscriptText):
@@ -640,12 +711,54 @@ class StoryManager(SogalForm):
     def beginScene(self,fileName):
         '''Load target .sogal script file and go to that file.
         '''
-        self.scrPtr = 0
+        self.scrPtr = -1 #this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
         self.scrStack = []  #used for stack controller pointers
         self.commandList = loadScriptData(fileName)
         runtime_data.RuntimeData.command_stack = self.scrStack
         runtime_data.RuntimeData.command_list = self.commandList
-  
+        
+    def expandScene(self,fileName):
+        '''expand a scene, inserting another sogal file in to current point'''
+        expanding = loadScriptData(fileName)
+        if len(self.commandList)> self.scrPtr+1:
+            self.commandList = self.commandList[:self.scrPtr] + expanding + self.commandList[self.scrPtr+1:]
+        else:
+            self.commandList = self.commandList[:self.scrPtr] + expanding
+        runtime_data.RuntimeData.command_stack = self.scrStack
+        runtime_data.RuntimeData.command_list = self.commandList
+        self.scrPtr-=1    #this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
+        
+    def showSelection(self,choiceList = ['A','B'],enablesList = None):
+        '''This method shows a selection, which sets 'last_choice' in 
+        script space to player's choice. (0 is the first, 1 is the second etc.)
+        you can disable some of the selections with enablesList
+        for example for choiceList ['A','B','C'] and enablesList
+        '''
+        #Store the last selection
+        rdc = copy.deepcopy(runtime_data.RuntimeData)
+        rdc.last_choice = None
+        self.__tempDumpedLastChoice = pickle.dumps(rdc, 2)
+
+        self._choiceReady = False
+        startPos = (0,0,0.1 * len(choiceList))
+        frameSize = (-0.6,0.6,-0.05 - 0.1*len(choiceList), 0.1 + 0.1*len(choiceList))
+        buttonSize = (-0.5,0.5,-0.050,0.10)
+        margin = 0.05
+        self.__currentSelection = SogalDialog(enableMask = False, fadeScreen= None, command = self.__selected, 
+                                              textList= choiceList, enablesList= enablesList, sortType= 1,noFocus = True,
+                                              startPos = startPos,frameSize = frameSize,margin = margin,
+                                              buttonSize = buttonSize)
+        
+        
+        
+    def __selected(self,choice):
+        #Store the last selection
+        if self.__tempDumpedLastChoice:
+            runtime_data.RuntimeData.last_choice = self.__tempDumpedLastChoice 
+        
+        self.script_space['last_choice'] = choice
+        self._choiceReady = True
+          
 class StoryCommand(object):
     ''' A command (or one paragraph) of the script file
     divided into a command section (after @ in one line) and a

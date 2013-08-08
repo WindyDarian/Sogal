@@ -27,7 +27,7 @@ import os
 from StringIO import StringIO
 from datetime import datetime
 
-from panda3d.core import loadPrcFile,WindowProperties # @UnresolvedImport
+from panda3d.core import loadPrcFile,WindowProperties,loadPrcFileData# @UnresolvedImport
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.showbase.ShowBase import ShowBase
 
@@ -51,16 +51,18 @@ class SogalBase(ShowBase):
         #读取设置文件
         loadPrcFile("config/PandaConfig.prc")
         
+        loadPrcFileData('', 'win-size ' + str(game_settings['screen_resolution'][0]) + ' ' + str(game_settings['screen_resolution'][1]) )
+        
         #构造Panda3D的ShowBase
         ShowBase.__init__(self)
         
         color_themes.initStyles()
         
-        props = WindowProperties( self.win.getProperties() )
-        props.setSize(int(game_settings['screen_resolution'][0]),int(game_settings['screen_resolution'][1]))
-        if game_settings['full_screen'] and not props.getFullscreen():
-            props.setFullscreen(True)
-        self.win.requestProperties(props)
+#         props = WindowProperties( self.win.getProperties() )
+#         props.setSize(int(game_settings['screen_resolution'][0]),int(game_settings['screen_resolution'][1]))
+#         if game_settings['full_screen'] and not props.getFullscreen():
+#             props.setFullscreen(True)
+#         self.win.requestProperties(props)
         
         self.cam2dp.node().getDisplayRegion(0).setSort(-20)  #Set render2dp to background
         self.disableMouse() #Disable panda3d's default mouse control
@@ -77,6 +79,7 @@ class SogalBase(ShowBase):
         self.accept('alt-enter', self.toggleFullScreen)
         self.accept('save_data', self.save)
         self.accept('load_data', self.load)
+        self.accept('load_memory', self.loadMemory)
         self.accept('request_focus', self.grantFocus)
         self.accept('remove_focus', self.cancelFocus)
         
@@ -158,6 +161,16 @@ class SogalBase(ShowBase):
         restoreRuntimeData(savedData)
         self.audioPlayer.reload()
         self.storyManager = StoryManager()
+        
+    def loadMemory(self,dumped):
+        loaded = pickle.loads(dumped)
+        
+        
+        self.storyManager.destroy()
+        self.audioPlayer.stopAll(0.5)
+        restoreRuntimeData(loaded)
+        self.audioPlayer.reload()
+        self.storyManager = StoryManager()        
         
         
     def getStyle(self, sheet = None):

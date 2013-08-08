@@ -35,8 +35,8 @@ class SogalEntry(SogalBase):
             loadDefaultSettings('config/default.sconf')
         except Exception as exp: print(exp)
         SogalBase.__init__(self)
-        self.storyManager.beginScene('imagetest')
-        
+        self.storyManager.beginScene('selectionjumptest')
+        #self.storyManager.beginScene('textboxtest')
 
 if __name__ == '__main__':
     SogalEntry().run()

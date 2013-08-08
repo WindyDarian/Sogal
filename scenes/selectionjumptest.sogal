@@ -1,0 +1,72 @@
+#选择和跳转的测试！
+@mark:init #像汇编语言一样啊好讨厌的感觉！
+@script
+goto('start')
+
+@mark: jumppoint1
+@jump scripttest
+@script
+goto('start')
+
+@mark: jumppoint2
+@jump soundtest
+@script
+goto('start')
+
+@mark: turn1
+@expand textboxtest
+@qp luc_naked_normal -0.33 0
+D4的路西菲尔：
+「刚才……其实是因为expand继续执行所以回到开头了呢。刚才是一个文本框测试」
+@script
+goto('start')
+
+@mark: turn2
+@expand imagetest
+@qp luc_naked_normal -0.33 0
+D4的路西菲尔：
+「刚才……其实是因为expand继续执行所以回到开头了呢。刚才是一个图像测试」
+@script
+goto('start')
+
+
+@mark:start
+
+@bg testbg2,qp luc_naked_trueheart -0.33 0
+D4的路西菲尔：
+「现在是做出抉择的时间呢……」
+
+@choice 撒，做出选择吧 , qp luc_naked_trueheart -0.33 0
+上发条
+--不上发条
+选你妹啊！
+--啊哈！？
+
+@script
+if last_choice != 0:
+    goto('start')
+    
+@qp luc_naked_desire 0.33 0
+D4的路西菲尔：
+「从这里跳转到各种测试试试？」
+
+@choice
+图像测试(jump)
+脚本测试(jump)
+音效测试(jump)
+文本框测试(expand)
+图像测试(expand)
+
+@script
+if last_choice == 0:
+    story_manager.beginScene('imagetest')
+elif last_choice == 1:
+    goto('jumppoint1')
+elif last_choice == 2:
+    goto('jumppoint2')
+elif last_choice == 3:
+    goto('turn1')
+else:
+    goto('turn2')
+
+

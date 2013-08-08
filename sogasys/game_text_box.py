@@ -214,6 +214,7 @@ class GameTextBox(DirectObject, NodePath):
 
         if continuous:    #When continuous, ignore the speaker
             speaker = None  
+            #self.currentSpeaker = ''
         else:
             self.currentSpeaker = speaker
         
@@ -223,7 +224,7 @@ class GameTextBox(DirectObject, NodePath):
             if speaker:
                 self._normal_speakerLabel.setText(self.currentSpeaker)
             else:
-                self._normal_speakerLabel.setText('')
+                self._normal_speakerLabel.setText(' ')
         elif self._currentStyle == GameTextBoxStyle.Large:
             if speaker:
                 self.currentText += '\1name\1' + self.currentSpeaker + '\n\2'

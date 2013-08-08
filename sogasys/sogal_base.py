@@ -163,8 +163,11 @@ class SogalBase(ShowBase):
         self.storyManager = StoryManager()
         
     def loadMemory(self,dumped):
-        loaded = pickle.loads(dumped)
-        
+        try:
+            loaded = pickle.loads(dumped)
+        except Exception as exp: 
+            print(exp)
+            return
         
         self.storyManager.destroy()
         self.audioPlayer.stopAll(0.5)

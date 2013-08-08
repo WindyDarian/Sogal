@@ -44,8 +44,6 @@ from story_view import StoryView,StoryViewItemEntry,SVIC
 from story_menu_bar import StoryMenuBar
 from sogal_form import SogalForm, ConfirmDialog, SogalDialog
 import runtime_data
-from save_load_form import SaveForm
-from cgitb import text
 
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
@@ -332,7 +330,10 @@ class StoryManager(SogalForm):
             self.button_lastchoice['state'] = DGG.NORMAL 
             
         if self.gameTextBox.newText:
-            self._currentMessage = self.gameTextBox.newText
+            runtime_data.RuntimeData.latest_text = self.gameTextBox.newText
+        if runtime_data.RuntimeData.latest_text:
+            self._currentMessage = runtime_data.RuntimeData.latest_text
+            
             
         if self._currentDump: 
             self._enableSavingButton()
@@ -354,19 +355,12 @@ class StoryManager(SogalForm):
         @param command: The StoryCommand to deal with
         '''    
         
-        def translate(t):
-            '''
-            ,实现通配，__代替空行已经在一开始实现
-            '''
-            return t.replace(ur'\:', ur':').replace(ur'\：',ur'：').replace(ur'\#',ur'#')
-        
         def seval(str):
             return eval(str,script_global,runtime_data.RuntimeData.script_space)
         
         self.storyView.clearQuickItems()  #clear out quick items
         
         name = ''
-        text = ''
         continuous = False
         is_script = False
         is_selection = False
@@ -652,40 +646,50 @@ class StoryManager(SogalForm):
                 self.showSelection(choiceList = choiceList, enablesList = enablesList)
             
             else:
-                #检查有无在文本中的name
-                #name: formation checking
-                textlines = command.text.splitlines()
-                first_line = unicode(textlines[0])
-                
-                #匹配第一行中是否有表示name的冒号，正则表达式表示前面不是\的冒号（@name 命令行的简写形式判断）
-                pattern = re.compile(ur'(?<!\\)[:(：)]',re.UNICODE)  
-                
-                splited = pattern.split(first_line,maxsplit = 1)
-                #print(splited)    #测试用，废弃
-                
-                #如果存在name即分割成功
-                if len(splited)>1:
-                    name = translate(splited[0])
-                    if splited[1].strip():
-                        textlines[0] = splited[1]
-                    else:
-                        textlines[0] = ''
-
-                #生成文本并解决转义符
-                #Generate the final text
-                for item in textlines:
-                    if item:
-                        text += translate(item) + '\n'
-        
-                if text:
-                    self.pushText(text = text, speaker = name, continuous = continuous)
+                self.pushText(text = command.text, speaker = name, continuous = continuous)
             
         else:
             if cleared:
                 self.gameTextBox.hide()    #better to hide the textbox when 'vclear'
     
     def pushText(self, text, speaker = None, continuous = False, needInput = True):
-        self.gameTextBox.pushText(text = text, speaker = speaker, continuous = continuous)
+        
+        def translate(t):
+            '''
+            ,实现通配，__代替空行已经在一开始实现
+            '''
+            return t.replace(ur'\:', ur':').replace(ur'\：',ur'：').replace(ur'\#',ur'#')
+        #检查有无在文本中的name
+        #name: formation checking
+        textlines = text.splitlines()
+        first_line = unicode(textlines[0])
+        
+        #匹配第一行中是否有表示name的冒号，正则表达式表示前面不是\的冒号（@name 命令行的简写形式判断）
+        pattern = re.compile(ur'(?<!\\)[:(：)]',re.UNICODE)  
+        
+        splited = pattern.split(first_line,maxsplit = 1)
+        #print(splited)    #测试用，废弃
+        
+        #如果存在name即分割成功
+        if len(splited)>1:
+            speaker = translate(splited[0])
+            if splited[1].strip():
+                textlines[0] = splited[1]
+            else:
+                textlines[0] = ''
+                
+        final_text = ''
+
+        #生成文本并解决转义符
+        #Generate the final text
+        for item in textlines:
+            if item:
+                final_text += translate(item) + '\n'
+        
+        
+        
+        
+        self.gameTextBox.pushText(text = final_text, speaker = speaker, continuous = continuous)
         if needInput:
             self._inputReady = False
         self.gameTextBox.show()        
@@ -735,7 +739,7 @@ class StoryManager(SogalForm):
         for example for choiceList ['A','B','C'] and enablesList
         '''
         #Store the last selection
-        rdc = copy.deepcopy(runtime_data.RuntimeData)
+        rdc = copy.deepcopy(self._currentDump)
         rdc.last_choice = None
         self.__tempDumpedLastChoice = pickle.dumps(rdc, 2)
 

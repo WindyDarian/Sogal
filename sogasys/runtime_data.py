@@ -100,6 +100,9 @@ class _RuntimeData(object):
         
         #store the copy of last choice
         self.last_choice = None
+        
+        #the latest text
+        self.latest_text = ''
     
     def load(self, loadedInstance):
         self.gameTextBox_properties = loadedInstance.gameTextBox_properties
@@ -114,7 +117,7 @@ class _RuntimeData(object):
         self.current_env = loadedInstance.current_env
         self.current_style = loadedInstance.current_style
         self.last_choice = loadedInstance.last_choice
-        
+        self.latest_text = loadedInstance.latest_text
     
 RuntimeData = _RuntimeData()
 

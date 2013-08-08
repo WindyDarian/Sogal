@@ -175,10 +175,8 @@ class StoryView(DirectObject, NodePath):
     def newItem(self, entry):
         '''Create an item according to given item entry and add it to itemEntries'''
 
-       
         if entry.quickitem:
             entry.key += '__qi__' + str(len(self._quickitems))
-            self._quickitems.append(entry.key)
         self.itemEntries[entry.key] = entry
         self._createItem(entry)
         
@@ -206,7 +204,6 @@ class StoryView(DirectObject, NodePath):
             
     def _createItem(self, entry, ignore_fadein = False):
         '''Create an item(not including adding this to itemEntries)'''
-        
         imagepathes = runtime_data.game_settings['imagepathes']
         imagetypes = runtime_data.game_settings['imagetypes']
         modelpathes = runtime_data.game_settings['modelpathes']
@@ -291,7 +288,9 @@ class StoryView(DirectObject, NodePath):
   
         if item:
             self._sceneItems[entry.key] = item
-    
+            if entry.quickitem:
+                self._quickitems.append(entry.key) 
+
     
     def _adjustAspectRatio(self,arg):
         if self.camera:
@@ -447,7 +446,8 @@ class StoryView(DirectObject, NodePath):
     def clearQuickItems(self):
         '''quick item can be cleared out automatically, called by StoryManager'''
         for qe in self._quickitems:
-            self.deleteItem(qe)
+            if self.itemEntries.has_key(qe):
+                self.deleteItem(qe)
         self._quickitems[:] = []
     
     def quickfinish(self):

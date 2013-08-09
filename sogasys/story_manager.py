@@ -312,9 +312,72 @@ class StoryManager(SogalForm):
         if len(self.commandList) > self.scrPtr:
             handled = False
             if self.commandList[self.scrPtr].command:
-                temp = self.commandList[self.scrPtr].command.strip()
-                if temp.startswith('mark ')or temp.startswith('mark:'):
+                comline = self.commandList[self.scrPtr].command.strip()
+                if comline.startswith('mark ')or comline.startswith('mark:'):
                     handled = True
+                    
+                # 条件判断处理 If condition
+                elif comline.startswith('if '):
+                    splited = space_cutter.split(comline, 1)
+                    if len(splited)<2:
+                        raise Exception('没条件玩毛线')
+                    if self.scriptEval(splited[1]):
+                        handled = True
+                        
+                    else:
+                        relative_depth = 0
+                        #if not match the condition, try to jump to elif or else
+                        for i in range(self.scrPtr+1,len(self.commandList)):
+                            cli = self.commandList[i]
+                            if cli.command:
+                                cl = cli.command.strip()
+                                #一个嵌套循环的情况！ A inner if
+                                if cl.startswith('if '):
+                                    relative_depth += 1
+                                    continue
+                                elif relative_depth == 0 and cl.startswith('elif '):
+                                    splited = space_cutter.split(cl, 1)
+                                    if len(splited)<2:
+                                        raise Exception('没条件玩毛线')
+                                    if self.scriptEval(splited[1]):
+                                        self.scrPtr = i # next command is i+1
+                                        handled = True
+                                        break
+                                    else: continue
+                                elif relative_depth == 0 and cl == 'else':
+                                    self.scrPtr = i
+                                    handled = True
+                                    break
+                                elif cl == 'end' or cl.startswith('end '):
+                                    if relative_depth == 0:
+                                        self.scrPtr = i
+                                        handled = True
+                                        break
+                                    else: 
+                                        relative_depth -= 1
+                                        continue
+                                    
+                #if we meet else or elif then jump to end
+                elif comline.startswith('elif ') or comline == 'else':
+                    relative_depth = 0
+                    for i in range(self.scrPtr+1,len(self.commandList)):
+                        if cl.startswith('if '):
+                            relative_depth += 1
+                            continue
+                        elif cl == 'end' or cl.startswith('end '):
+                            if relative_depth == 0:
+                                self.scrPtr = i
+                                handled = True
+                                break
+                            else: 
+                                relative_depth -= 1
+                                continue                        
+                
+                #ignore end
+                elif comline == 'end' and comline.startswith('end '):
+                    handled = True
+                
+                                     
             
             if not handled:
                 self.processCommand(self.commandList[self.scrPtr])
@@ -346,7 +409,7 @@ class StoryManager(SogalForm):
                 if len(mark) > 1:
                     markText = mark[1].strip()
                     if markText == target:
-                        self.scrPtr = i
+                        self.scrPtr = i-1    #this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
                         return
         print 'unable to find mark'
 
@@ -355,8 +418,8 @@ class StoryManager(SogalForm):
         @param command: The StoryCommand to deal with
         '''    
         
-        def seval(str):
-            return eval(str,script_global,runtime_data.RuntimeData.script_space)
+        def seval(strs):
+            return self.scriptEval(strs)
         
         self.storyView.clearQuickItems()  #clear out quick items
         
@@ -619,6 +682,10 @@ class StoryManager(SogalForm):
                 elif comm.startswith('expand '):
                     temp = spaceCutter.split(comm , 1)
                     self.expandScene(temp[1].strip())
+                    
+                elif comm.startswith('goto '):
+                    temp = spaceCutter.split(comm , 1)
+                    self.goto(temp[1].strip())                    
         
                 else: 
                     if comm:
@@ -762,6 +829,9 @@ class StoryManager(SogalForm):
         
         self.script_space['last_choice'] = choice
         self._choiceReady = True
+        
+    def scriptEval(self,str):
+        return eval(str,script_global,runtime_data.RuntimeData.script_space)
           
 class StoryCommand(object):
     ''' A command (or one paragraph) of the script file
@@ -837,7 +907,7 @@ def loadScriptData(fileName):
     _current_command = None   #当前的命令文字
     global _current_text
     _current_text = None    #当前的文本
-    controlAttribs_startswith = ['if ','while ','elif ']
+    controlAttribs_startswith = ['if ','while ','elif ','end ','mark ','mark:']
     controlAttribs_equal = ['else','end']
     
     def push_current():
@@ -878,13 +948,14 @@ def loadScriptData(fileName):
                     #如果在一个命令列前面已经有了内容，则前面已经是完整的一段，所以推入列表
                     push_current() 
                 _current_command = line.lstrip('@')
+                _stripedcc = _current_command.strip()
                 
                 #There should be no text in control parts so it it is an control part then push
                 for attr in controlAttribs_startswith:
-                    if _current_command.startswith(attr):
+                    if _stripedcc.startswith(attr):
                         push_current()
                 for attr in controlAttribs_equal:
-                    if _current_command == attr:
+                    if _stripedcc == attr:
                         push_current()
                 
                 

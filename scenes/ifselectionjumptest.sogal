@@ -1,0 +1,59 @@
+#这个应该和selectionjumptest效果一样 不过引入了if!
+#不再像汇编语言一样讨厌了！
+@mark:start
+@bg testbg2,qp luc_naked_trueheart -0.33 0
+D4的路西菲尔：
+「现在是做出抉择的时间呢……」
+
+@choice D4的路西菲尔：撒，做出选择吧 , qp luc_naked_trueheart -0.33 0
+上发条
+--不上发条
+选你妹啊！
+--啊哈！？
+
+@if last_choice == 0
+    
+    @qp luc_naked_desire 0.33 0
+D4的路西菲尔：
+「从这里跳转到各种测试试试？」
+
+    @choice
+图像测试(jump)
+脚本测试(jump)
+音效测试(jump)
+文本框测试(expand)
+图像测试(expand)
+
+    @if  last_choice == 0
+    @script
+story_manager.beginScene('imagetest')
+    @elif last_choice == 1
+    @jump scripttest
+    
+温蒂达莉安：
+「这条语句不会出现！」
+    @elif  last_choice == 2
+    @jump soundtest
+    
+温蒂达莉安：
+「这条语句也不会出现！」
+    @elif last_choice == 3
+        @expand textboxtest  #嘛虽然没必要缩进
+        @qp luc_naked_normal -0.33 0
+D4的路西菲尔：
+「刚才发生了什么……现在因为expand继续执行了呢。刚才是一个文本框测试」
+        @goto start
+    @elif last_choice == 4
+        @expand imagetest
+        @qp luc_naked_normal -0.33 0
+D4的路西菲尔：
+「刚才发生了什么……现在因为expand继续执行了呢。刚才是一个图像测试」
+        @goto start
+    @end
+
+@elif last_choice == 2
+谜の音：选这个是不行的哦，回到开头吧
+    @goto start
+
+@end
+

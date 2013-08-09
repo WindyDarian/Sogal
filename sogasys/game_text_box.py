@@ -254,10 +254,8 @@ class GameTextBox(DirectObject, NodePath):
         
         #FIXME: There is a performance issue, and it is hard to apply any gradient effect
         #Maybe we can create a NodePath class to group up TextNodes to fix this issue.
-        if lerp_value<1:
-            text = self.existingText + self.newText[0:int(math.floor((len(self.newText)-1)*lerp_value))]
-        else:
-            text = self.existingText + self.newText
+
+        text = self.existingText + self.newText[0:int(math.floor((len(self.newText))*lerp_value))]
         self.currentTextLabel.setText(text)
             
     

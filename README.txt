@@ -189,8 +189,15 @@ choice 表示选择命令
 如果行开头是--则表示该选项不可用
 另外select -text 可以为这个选项进行描述
 
-jump -FileName 读取sogal场景脚本并跳转
-expand -FileName 将sogal场景脚本展开到当前脚本中的下一句
+goto -mark  跳转到标记
+jump -FileName 读取sogal场景脚本并跳转（删除当前脚本队列）
+expand -FileName 将sogal场景脚本展开到当前脚本（插入到当前脚本队列） expand命令语句只执行一次，将目标脚本插入到
+当前队列后，自身也会消失
+
+if condition 条件判断，单独占一行命令，注意冒号后接条件表达式（大概是为了以示区别吧 注意没有冒号
+elif condition     你懂得，单独占一行命令
+else          你懂得，单独占一行命令
+end 结束当前if块 单独占一行命令
 
 
 未实现（加#表示暂不忙实现）：
@@ -202,7 +209,6 @@ expand -FileName 将sogal场景脚本展开到当前脚本中的下一句
 time -time 表示在玩家不操作的情况下需要等待time秒才会进入下一行
 wait 表示当前需要玩家输入才能继续
 
-if: condition 条件判断，单独占一行命令
 while: condition
 
 选择

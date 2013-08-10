@@ -70,10 +70,10 @@ class StoryManager(SogalForm):
         self.scrStack = []
         self.commandList = []
 
-        
+        self.__currentPtr = None
         if not runtime_data.RuntimeData.command_ptr:
-            self.scrPtr = 0
-        else: self.scrPtr = runtime_data.RuntimeData.command_ptr
+            self.nextPtr = 0
+        else: self.nextPtr = runtime_data.RuntimeData.command_ptr
         
         if not runtime_data.RuntimeData.command_stack:
             runtime_data.RuntimeData.command_stack = self.scrStack
@@ -165,15 +165,15 @@ class StoryManager(SogalForm):
     
         
     def presave(self):
-        if self.scrPtr:
-            runtime_data.RuntimeData.command_ptr = self.scrPtr
+        if self.nextPtr is not None:
+            runtime_data.RuntimeData.command_ptr = self.nextPtr
         self.gameTextBox.presave()
         self.storyView.presave()
         self.audioPlayer.presave()
         
     def reload(self):
         taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
-        self.scrPtr = runtime_data.RuntimeData.command_ptr
+        self.nextPtr = runtime_data.RuntimeData.command_ptr
         self.mapScriptSpace()
         self.gameTextBox.reload()
         self.storyView.reload()
@@ -307,12 +307,14 @@ class StoryManager(SogalForm):
         self.presave()
         self._currentDump = copy.deepcopy(runtime_data.RuntimeData)
         
-        if self.scrPtr < 0: self.scrPtr = 0
+        if self.nextPtr < 0: self.nextPtr = 0
+        self.__currentPtr = self.nextPtr
+        self.nextPtr += 1
         
-        if len(self.commandList) > self.scrPtr:
+        if len(self.commandList) > self.__currentPtr:
             handled = False
-            if self.commandList[self.scrPtr].command:
-                comline = self.commandList[self.scrPtr].command.strip()
+            if self.commandList[self.__currentPtr].command:
+                comline = self.commandList[self.__currentPtr].command.strip()
                 if comline.startswith('mark ')or comline.startswith('mark:'):
                     handled = True
                     
@@ -327,7 +329,7 @@ class StoryManager(SogalForm):
                     else:
                         relative_depth = 0
                         #if not match the condition, try to jump to elif or else
-                        for i in range(self.scrPtr+1,len(self.commandList)):
+                        for i in range(self.__currentPtr+1,len(self.commandList)):
                             cli = self.commandList[i]
                             if cli.command:
                                 cl = cli.command.strip()
@@ -340,17 +342,17 @@ class StoryManager(SogalForm):
                                     if len(splited)<2:
                                         raise Exception('没条件玩毛线')
                                     if self.scriptEval(splited[1]):
-                                        self.scrPtr = i # next command is i+1
+                                        self.nextPtr = i + 1
                                         handled = True
                                         break
                                     else: continue
                                 elif relative_depth == 0 and cl == 'else':
-                                    self.scrPtr = i
+                                    self.nextPtr = i + 1
                                     handled = True
                                     break
                                 elif cl == 'end' or cl.startswith('end '):
                                     if relative_depth == 0:
-                                        self.scrPtr = i
+                                        self.nextPtr = i + 1
                                         handled = True
                                         break
                                     else: 
@@ -360,13 +362,13 @@ class StoryManager(SogalForm):
                 #if we meet else or elif then jump to end
                 elif comline.startswith('elif ') or comline == 'else':
                     relative_depth = 0
-                    for i in range(self.scrPtr+1,len(self.commandList)):
+                    for i in range(self.__currentPtr+1,len(self.commandList)):
                         if cl.startswith('if '):
                             relative_depth += 1
                             continue
                         elif cl == 'end' or cl.startswith('end '):
                             if relative_depth == 0:
-                                self.scrPtr = i
+                                self.nextPtr = i + 1
                                 handled = True
                                 break
                             else: 
@@ -380,10 +382,10 @@ class StoryManager(SogalForm):
                                      
             
             if not handled:
-                self.processCommand(self.commandList[self.scrPtr])
+                self.processCommand(self.commandList[self.__currentPtr])
             
-            self.scrPtr = self.scrPtr + 1
-            runtime_data.RuntimeData.command_ptr = self.scrPtr
+            #self.scrPtr = self.scrPtr + 1
+            #runtime_data.RuntimeData.command_ptr = self.scrPtr
         
         
         if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
@@ -409,7 +411,7 @@ class StoryManager(SogalForm):
                 if len(mark) > 1:
                     markText = mark[1].strip()
                     if markText == target:
-                        self.scrPtr = i-1    #this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
+                        self.nextPtr = i    #Solved: #this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
                         return
         print 'unable to find mark'
 
@@ -782,7 +784,7 @@ class StoryManager(SogalForm):
     def beginScene(self,fileName):
         '''Load target .sogal script file and go to that file.
         '''
-        self.scrPtr = -1 #this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
+        self.nextPtr = 0 
         self.scrStack = []  #used for stack controller pointers
         self.commandList = loadScriptData(fileName)
         runtime_data.RuntimeData.command_stack = self.scrStack
@@ -791,13 +793,13 @@ class StoryManager(SogalForm):
     def expandScene(self,fileName):
         '''expand a scene, inserting another sogal file in to current point'''
         expanding = loadScriptData(fileName)
-        if len(self.commandList)> self.scrPtr+1:
-            self.commandList = self.commandList[:self.scrPtr] + expanding + self.commandList[self.scrPtr+1:]
+        if len(self.commandList)> self.__currentPtr+1:
+            self.commandList = self.commandList[:self.__currentPtr] + expanding + self.commandList[self.__currentPtr+1:]
         else:
-            self.commandList = self.commandList[:self.scrPtr] + expanding
+            self.commandList = self.commandList[:self.__currentPtr] + expanding
         runtime_data.RuntimeData.command_stack = self.scrStack
         runtime_data.RuntimeData.command_list = self.commandList
-        self.scrPtr-=1    #this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
+        self.nextPtr = self.__currentPtr    #Solved: # this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
         
     def showSelection(self,choiceList = ['A','B'],enablesList = None):
         '''This method shows a selection, which sets 'last_choice' in 

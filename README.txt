@@ -187,7 +187,7 @@ choice 表示选择命令
 选择的结果会写入到脚本空间（本地）的last_choice变量中
 第一个选项为0 第二个选项为1 以此类推
 如果行开头是--则表示该选项不可用
-另外select -text 可以为这个选项进行描述
+另外choice -text 可以为这个选项进行描述
 
 goto -mark  跳转到标记
 jump -FileName 读取sogal场景脚本并跳转（删除当前脚本队列）

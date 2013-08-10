@@ -36,9 +36,16 @@ class SogalText(NodePath):
     '''
     A text label, contains many TextLines
     '''
-
-
-    def __init__(self,parent = None,text = '',font = None, wordwrap = None):
+    def __init__(self,
+                 parent = None,
+                 text = u'',
+                 font = None,
+                 fg = (1,1,1,1),
+                 scale = 0.07, 
+                 wordwrap = None, 
+                 maxRows = None, 
+                 spacing = 0,
+                 lineSpacing = 0):
         '''
         Constructor
         :param parent: parent NodePath
@@ -47,17 +54,65 @@ class SogalText(NodePath):
         :param wordwrap: set the width when wraping the word (note that )
         '''
         
-        self.parent = parent or aspect2d
+        self.__parent = parent or aspect2d
         
-        self.font = font
+        self.__font = font
         self.wordwrap = wordwrap
-        self.textlines = []
+        self.lines = []
+        self.spacing = spacing
+        self.lineSpacing = lineSpacing
+        
+        self.maxRows = maxRows
         
         
-        NodePath.__init__('')
+        NodePath.__init__(self,'')
+        self.setScale(scale)
         
-        self.reparentTo(self.parent)  # @UndefinedVariable
         
+        self.reparentTo(self.__parent)  # @UndefinedVariable
+        
+        self.textMaker = TextNode('textMaker')
+        if font:
+            self.textMaker.setFont(font)
+        self.textMaker.setTextColor(fg[0],fg[1],fg[2],fg[3])
+        self.textMaker.setAlign(TextNode.ALeft)
+        self.appendText(text)
+        
+    def appendText(self, text, newLine = False):
+        if newLine or not self.lines:
+            self.startLine()
+        
+        active_line = self.lines[-1] 
+            
+        #TODO typer effect
+        for word in text:
+            self.textMaker.setText(word)
+            width = self.textMaker.getWidth()
+            #print 'w=' + str(width)
+            height = self.textMaker.getHeight()
+            #print 'h=' + str(height)
+            node = self.textMaker.generate()
+            textpath = NodePath('text_path')
+            textpath.attachNewNode(node)
+            if self.wordwrap:
+                if active_line.getTotalWidth() + width > self.wordwrap:
+                    self.startLine()
+                    active_line = self.lines[-1]
+            
+            active_line.append(textpath, width, height,self.spacing)
+            
+    def startLine(self):
+        h = 0
+        for l in self.lines:
+            h += l.getLineHeight() + self.lineSpacing
+        line = TextLine(parent = self)
+        line.setPos(0,0,-h)
+        self.lines.append(line)
+    
+    def removeNode(self, *args, **kwargs):
+        return NodePath.removeNode(self, *args, **kwargs)
+            
+            
             
 class TextLine(NodePath):
     '''
@@ -67,13 +122,40 @@ class TextLine(NodePath):
     def __init__(self,parent = None):
         self.parent = parent or aspect2d
         
-        NodePath.__init__('line')
+        NodePath.__init__(self,'line')
         self.reparentTo(self.parent)
         
-    def appendWord(self,text):
-        pass
-                    
+        self.currentPtr = (0,0,0)
+        self.lineHeight = 0
+        self.lineWidth = 0
+        
+        self.items = [] #each word/character is a NodePath
+        
+    def removeNode(self, *args, **kwargs):
+        del self.items
+        return NodePath.removeNode(self, *args, **kwargs)
+        
+    def append(self,text,width,height,spacing = 0):
+        '''Add a NodePath that contains a generated text geom
+        This method is called by SogalText
+        '''
+        self.items.append(text)
+        text.reparentTo(self)
+        text.setPos(self.currentPtr)
+        self.lineWidth = self.currentPtr[0] + width
+        self.lineHeight = max(height, self.lineHeight)
+        self.currentPtr = (self.lineWidth + spacing, 0, 0)
+        
+    def getLineWidth(self):
+        return self.lineWidth
+    
+    def getLineHeight(self):
+        return self.lineHeight
+    
+    def getTotalWidth(self):
+        return self.currentPtr[0]
             
+"""          
 class Word(object):
     '''
     Entry of a single word added in to the SogalText
@@ -81,3 +163,4 @@ class Word(object):
     def __init__(self,text,prop):
         self.text = text
         self.prop = prop
+"""

@@ -745,7 +745,7 @@ class StoryManager(SogalForm):
             if splited[1].strip():
                 textlines[0] = splited[1]
             else:
-                textlines[0] = ''
+                textlines[0] = None
                 
         final_text = ''
 
@@ -754,9 +754,6 @@ class StoryManager(SogalForm):
         for item in textlines:
             if item:
                 final_text += translate(item) + '\n'
-        
-        
-        
         
         self.gameTextBox.pushText(text = final_text, speaker = speaker, continuous = continuous)
         if needInput:

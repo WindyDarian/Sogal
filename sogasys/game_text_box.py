@@ -32,8 +32,10 @@ from direct.gui.DirectFrame import DirectFrame
 from direct.gui.OnscreenText import OnscreenText
 from direct.interval.LerpInterval import LerpFunc
 
+
 import runtime_data 
 import color_themes
+from sogal_text import SogalText
     
 class GameTextBoxStyle(object):
     '''表示对话框种类的枚举集合
@@ -59,7 +61,7 @@ class GameTextBox(DirectObject, NodePath):
     '''游戏文本显示器类  Main displayer of current game text.
         继承自Panda3D的DirectFram
     Attributes:
-        currentText: A string that includes current game text
+        currentText: A list that includes current game text (see sogal_text's recordedText)
         currentSpeaker: A string that represents the speaker
         textFont: The font of the text
         properties: Properties of the text box. 
@@ -71,10 +73,9 @@ class GameTextBox(DirectObject, NodePath):
         '''
         Constructor
         '''
-        self.currentText = "" 
+        self.currentText = []
         self.currentSpeaker = ""
         self.newText = None
-        self.existingText = None
         self.textfont = None
         self.properties = copy.deepcopy(color_themes.ilia_textbox)
         self._normal_speakerLabel = None
@@ -83,6 +84,7 @@ class GameTextBox(DirectObject, NodePath):
         self._frame = None
         self._textArrow = None
         self._typerLerpInterval = None
+        self.__namescale = None
         
         NodePath.__init__(self, 'GameTextBox')
         self.reparentTo(aspect2d)
@@ -100,10 +102,9 @@ class GameTextBox(DirectObject, NodePath):
         
         if runtime_data.RuntimeData.current_text:
             if runtime_data.RuntimeData.current_text[0]:
-                self.existingText = runtime_data.RuntimeData.current_text[0]
-                self.currentText = runtime_data.RuntimeData.current_text[0]
+                self.currentText = copy.copy(runtime_data.RuntimeData.current_text[0]) 
                 if self.currentTextLabel:
-                    self.currentTextLabel.setText(runtime_data.RuntimeData.current_text[0])
+                    self.currentTextLabel.loadRecordedText(runtime_data.RuntimeData.current_text[0])
             if runtime_data.RuntimeData.current_text[1]:
                 self.currentSpeaker = runtime_data.RuntimeData.current_text[1]
                 if self._normal_speakerLabel:
@@ -112,9 +113,16 @@ class GameTextBox(DirectObject, NodePath):
     def showArrow(self):
         if self._textArrow: 
             if self.currentTextLabel:
+                '''
                 self._textArrow.setPos(self._frame.getWidth()/2-self.properties['arrow_rightspace'],
                              0,
                              self.currentTextLabel.textNode.getLowerRight3d()[2]-0.03)
+                '''
+                apos = self._frame.getRelativePoint(self.currentTextLabel, self.currentTextLabel.getEndPos())
+                apos = (self._frame.getWidth()/2-self.properties['arrow_rightspace'],
+                        0,
+                        apos[2])
+                self._textArrow.setPos(apos)
             else: self._textArrow.setPos(0,0,0)
             self._textArrow.show()
             
@@ -130,8 +138,7 @@ class GameTextBox(DirectObject, NodePath):
             self._typerLerpInterval.finish()
 
     def destroyElements(self):
-        self.currentText = ''
-        self.existingText = ''
+        self.currentText = []
         self.currentSpeaker = None
         self.newText = ''
         if self._typerLerpInterval:
@@ -172,13 +179,12 @@ class GameTextBox(DirectObject, NodePath):
         if self._typerLerpInterval:
             if not self._typerLerpInterval.isStopped():
                 self._typerLerpInterval.finish()
-        self.currentText = ''
-        self.existingText = ''
+        self.currentText = []
         self.currentSpeaker = None
         self.newText = ''
         
         if self.currentTextLabel:
-            self.currentTextLabel.setText('')
+            self.currentTextLabel.clear()
         if self._currentStyle == GameTextBoxStyle.Normal and self._normal_speakerLabel:
             self._normal_speakerLabel.setText('')
             
@@ -195,21 +201,17 @@ class GameTextBox(DirectObject, NodePath):
         if not text:
             return
         
+        text = text.rstrip('\n')
+        
         if not text_speed:
             text_speed = runtime_data.game_settings['text_speed']
         
         if self._currentStyle == GameTextBoxStyle.Normal:
             if not continuous:
-                self.currentText = ""
-            else:
-                self.currentText = self.currentText.rstrip('\n')
+                self.currentTextLabel.clear()
         elif self._currentStyle == GameTextBoxStyle.Large:
-            if not continuous:
-                if self.currentText:
-                    self.currentText += '\n'
-            else:
-                self.currentText = self.currentText.rstrip('\n')
-            
+            if not continuous and self.currentTextLabel.hasContent():
+                self.currentTextLabel.appendText('\n') #Inserting an empty line
        
 
         if continuous:    #When continuous, ignore the speaker
@@ -218,26 +220,27 @@ class GameTextBox(DirectObject, NodePath):
         else:
             self.currentSpeaker = speaker
         
-       
-        
         if self._currentStyle == GameTextBoxStyle.Normal:
             if speaker:
-                self._normal_speakerLabel.setText(self.currentSpeaker)
+                self._normal_speakerLabel.setText(self.currentSpeaker) #TODO: use SogalText
             else:
                 self._normal_speakerLabel.setText(' ')
         elif self._currentStyle == GameTextBoxStyle.Large:
             if speaker:
-                self.currentText += '\1name\1' + self.currentSpeaker + '\n\2'
+                self.currentTextLabel.appendText(self.currentSpeaker,custom = True, newLine = True, textScale = self.__namescale)
                 
-        self.existingText = self.currentText
-        
-        self.currentText += text
+
         self.newText = text
         
         #This is *very* useful
         print(self.newText)
         
-        #TODO: 渐隐效果
+        self.currentTextLabel.appendText(self.newText, newLine = (not continuous) )
+        
+        self.currentText = self.currentTextLabel.getCopiedText()
+        
+        #TODO: FADING TEXT AND TYPER AGAIN
+        """    
         if text:
             if text_speed != 0:
                 duration = float(len(self.newText))/(text_speed*rate)
@@ -245,7 +248,10 @@ class GameTextBox(DirectObject, NodePath):
         
             self._typerLerpInterval = LerpFunc(self.showTextStep,duration = duration)
             self._typerLerpInterval.start()    #原来这里还可以乘算速度的！
-    
+        """
+        
+            
+    """  
     def showTextStep(self,lerp_value):
         '''The text typer step. lerp_Value == 1 means the text is completely typed out
         '''
@@ -257,7 +263,7 @@ class GameTextBox(DirectObject, NodePath):
 
         text = self.existingText + self.newText[0:int(math.floor((len(self.newText))*lerp_value))]
         self.currentTextLabel.setText(text)
-            
+    """
     
         
         
@@ -307,8 +313,12 @@ class GameTextBox(DirectObject, NodePath):
                     frameColor  = self.properties['background_color'],
                     )
             
+            if self.currentSpeaker:
+                speaker = self.currentSpeaker
+            else: speaker = ''
+            
             self._normal_speakerLabel = OnscreenText(parent = self._frame
-                                      , text = self.currentText
+                                      , text = speaker
                                       , font = base.textFont
                                       , fg = self.properties['foreground_color']
                                       , mayChange = True  # @UndefinedVariable
@@ -316,14 +326,16 @@ class GameTextBox(DirectObject, NodePath):
                                       , scale = self.properties['normal_name_scale']
                                       )  
             
-            self._normal_textLabel = OnscreenText(parent = self._frame
-                                      , text = self.currentText
-                                      , font = base.textFont
-                                      , fg = self.properties['foreground_color']
-                                      , mayChange = True  # @UndefinedVariable
-                                      , align = TextNode.ALeft#@UndefinedVariable
-                                      , scale = self.properties['normal_text_scale']
-                                      )  
+            self._normal_textLabel = SogalText(parent = self._frame,
+                                               font = base.textFont,
+                                               fg = self.properties['foreground_color'],
+                                               scale = self.properties['normal_text_scale'],
+                                               shadow = (0.1,0.1,0.1,0.5),
+                                               pos = (-width/2.0 + self.properties['normal_text_pos'][0],
+                                                      0,
+                                                      height/2.0 + self.properties['normal_text_pos'][1]),
+                                               wordwrap = self.properties['normal_text_wrap']
+                                               )  
             
 
             self.setPos(self.properties['normal_pos'][0],0,self.properties['normal_pos'][1])
@@ -331,21 +343,16 @@ class GameTextBox(DirectObject, NodePath):
             
             self._normal_speakerLabel.setPos(-width/2.0 + self.properties['normal_name_pos'][0], 
                                           height/2.0 + self.properties['normal_name_pos'][1])
-            
-            self._normal_textLabel.setPos(-width/2.0 + self.properties['normal_text_pos'][0], 
-                                          height/2.0 + self.properties['normal_text_pos'][1])
-            
-            self._normal_textLabel.setShadow((0.1,0.1,0.1,0.5))
+    
             self._normal_speakerLabel.setShadow((0.1,0.1,0.1,0.5))
-            self._normal_textLabel.textNode.setTabWidth(1.0)
-            self._normal_textLabel.textNode.setWordwrap(self.properties['normal_text_wrap'])
+            
+            self._normal_textLabel.textMaker.setTabWidth(1.0)
             
             
         elif st == GameTextBoxStyle.Large:
             
-            nameprops = TextProperties()  # @UndefinedVariable
-            nameprops.setTextScale(self.properties['large_name_scale']/self.properties['large_text_scale'])
-            TextPropertiesManager.getGlobalPtr().setProperties("name", nameprops)  # @UndefinedVariable
+           
+            self.__namescale = self.properties['large_name_scale']/self.properties['large_text_scale']
             
             height = self.properties['large_height']
             width = self.properties['large_width']
@@ -356,26 +363,24 @@ class GameTextBox(DirectObject, NodePath):
                     frameColor  = self.properties['background_color'],
                     )
             
-            self._large_label = OnscreenText(parent = self._frame
-                                      , text = self.currentText
-                                      , font = base.textFont
-                                      , fg = self.properties['foreground_color']
-                                      , mayChange = True  # @UndefinedVariable
-                                      , align = TextNode.ALeft#@UndefinedVariable
-                                      , scale = self.properties['large_text_scale']
-                                      )  
+            self._large_label = SogalText(parent = self._frame,
+                                          font = base.textFont,
+                                          fg = self.properties['foreground_color'],
+                                          scale = self.properties['large_text_scale'],
+                                          shadow = (0.1,0.1,0.1,0.5),
+                                          pos = (-width/2.0 + self.properties['large_text_pos'][0],
+                                                 0,
+                                                 height/2.0 + self.properties['large_text_pos'][1]),
+                                          wordwrap = self.properties['large_text_wrap']
+                                           )  
             
 
             self.setPos(self.properties['large_pos'][0],0,self.properties['large_pos'][1])
             
             
+    
             
-            self._large_label.setPos(-width/2.0 + self.properties['large_text_pos'][0], 
-                                          height/2.0 + self.properties['large_text_pos'][1])
-            
-            self._large_label.setShadow((0.1,0.1,0.1,0.5))
-            self._large_label.textNode.setTabWidth(1.0)
-            self._large_label.textNode.setWordwrap(self.properties['large_text_wrap'])
+            self._large_label.textMaker.setTabWidth(1.0)
            
         #generate an arrow after text 
         arrow = loader.loadModel('models/text_arrow/text_arrow.egg')  # @UndefinedVariable
@@ -415,8 +420,8 @@ class GameTextBox(DirectObject, NodePath):
             
     def getIsWaitingForText(self):
         is_waiting = False
-        if self._typerLerpInterval and self._typerLerpInterval.isPlaying():
-            is_waiting = True
+        #if self._typerLerpInterval and self._typerLerpInterval.isPlaying():is_waiting = True
+        #TODO: typer effect!
         
         return is_waiting
     

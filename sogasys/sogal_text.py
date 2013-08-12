@@ -26,11 +26,13 @@ Arrange the text word by word, TextNode by TextNode
 '''
 #TODO: finish this moudle and add make game_text_box use this moudle
 
-import copy
+import copy,math
 
 from panda3d.core import NodePath,TextNode  # @UnresolvedImport
-
-
+from direct.stdpy.threading import Lock
+from direct.interval.LerpInterval import LerpFunc,LerpPosInterval
+from direct.interval.FunctionInterval import Func
+from direct.interval.IntervalGlobal import Sequence,Parallel,Wait
 
 class SogalText(NodePath):
     '''
@@ -69,8 +71,9 @@ class SogalText(NodePath):
         '''
         self.destroyed = False
         self.__parent = parent or aspect2d
-        
+        self.__lerpLock = Lock()
         self.__font = font
+        self.__currentLerpInterval = None
         self.wordwrap = wordwrap
         self.lines = []
         self.spacing = spacing
@@ -108,6 +111,8 @@ class SogalText(NodePath):
             self.appendText(text)
             
     def destroy(self):
+        if self.__currentLerpInterval:
+            self.__currentLerpInterval.pause()
         self.clear()
         if not self.destroyed:
             self.destroyed = True
@@ -116,6 +121,8 @@ class SogalText(NodePath):
         self.removeNode()
         
     def clear(self):
+        if self.__currentLerpInterval:
+            self.__currentLerpInterval.pause()
         self.currentHeight = 0
         for tl in self.lines:
             tl.removeNode()
@@ -154,18 +161,19 @@ class SogalText(NodePath):
         
     
     
-    def appendText(self, text, newLine = False,custom = False, font = None, textScale = 1, fg = (1,1,1,1), 
-                 shadow = None, shadowOffset = (0.04, 0.04), **kwargs):
+    def appendText(self, text,speed = 0, fadein = 0, fadeinType = 0, newLine = False,
+                   custom = False, font = None, textScale = 1, fg = (1,1,1,1), 
+                   shadow = None, shadowOffset = (0.04, 0.04), **kwargs):
         textprops = dict(text = text,newLine = newLine, custom = custom, font = font, textScale = textScale, fg = fg, 
                  shadow = shadow, shadowOffset = shadowOffset, **kwargs)
         
         self.recordedText.append(textprops)
         
-        self.appendStoredText(textprops)
+        self.appendStoredText(textprops, speed, fadein, fadeinType)
             
 
             
-    def appendStoredText(self,textprops):
+    def appendStoredText(self,textprops, speed = 0, fadein = 0, fadeinType = 0):
         #append a text stored with appendText() or by loading self.recordedText
         text = textprops['text']
         newLine = textprops['newLine']
@@ -193,12 +201,50 @@ class SogalText(NodePath):
         
         if newLine or not self.lines:
             self.startLine()
-        #TODO typer effect
-        for word in text:
-            self.appendWord(word, tm = textMaker)
+
+        if not speed:
+            for word in text:
+                self.appendWord(word, tm = textMaker, fadein = fadein, fadeinType = fadeinType)
+        #TYPER EFFECT
+        else:
+            self.__TextLerpInit()
+            self.__currentLerpInterval = LerpFunc(self._appendTextLerpFunc,extraArgs = [text,textMaker,fadein,fadeinType],
+                                                  duration = len(text)/float(speed))
+            self.__currentLerpInterval.start()
+                
+    def __TextLerpInit(self):
+        if self.__currentLerpInterval:
+            self.__currentLerpInterval.finish()
+        self.__lerpLock.acquire()
+        self.__lastTextLerpValue = 0
+        self.__lerpLock.release()
+                
+    def _appendTextLerpFunc(self, lerp, text, tm, fadein, fadeinType):
+        '''The function interval method for typer effect'''
+        self.__lerpLock.acquire()
+        tlen = len(text)
+        start = int(math.floor(self.__lastTextLerpValue * tlen))
+        end = int(math.floor(lerp * tlen))
+        if end > start:
+            appendingText = text[start:end]
+            for word in appendingText:
+                self.appendWord(word, tm, fadein = fadein, fadeinType = fadeinType)
+        self.__lastTextLerpValue = lerp
+        self.__lerpLock.release()
+        
+    def isWaiting(self):
+        if self.__currentLerpInterval:
+            return self.__currentLerpInterval.isPlaying()
+        return False
+    
+    def quickFinish(self):
+        if self.__currentLerpInterval:
+            return self.__currentLerpInterval.finish()
+        for l in self.lines:
+            l.quickFinish()       
 
             
-    def appendWord(self,word,tm = None):
+    def appendWord(self,word,tm = None, fadein = 0, fadeinType = 0):
         if word == '\n':
             self.startLine()
             return
@@ -221,7 +267,7 @@ class SogalText(NodePath):
                 self.startLine()
                 active_line = self.lines[-1]
         
-        active_line.append(textpath, width, height,self.spacing)
+        active_line.append(textpath, width, height,self.spacing, fadein = fadein, fadeinType = fadeinType)
         active_line.setPos(0,0,-(self.currentHeight + active_line.getLineHeight()) )
         #active_line.setPos(0,0,-self.currentHeight )
           
@@ -279,21 +325,47 @@ class TextLine(NodePath):
         self.lineWidth = 0
         
         self.items = [] #each word/character is a NodePath
+        self.__lerpIntervals = []
+        self.__lock = Lock()
+        
+    def quickFinish(self):
+        for l in self.__lerpIntervals:
+            l.finish()
         
     def removeNode(self, *args, **kwargs):
+        for l in self.__lerpIntervals:
+            l.pause()
         del self.items
         return NodePath.removeNode(self, *args, **kwargs)
         
-    def append(self,text,width,height,spacing = 0):
+    def append(self,text,width,height,spacing = 0, fadein = 0, fadeinType = 0):
         '''Add a NodePath that contains a generated text geom
         This method is called by SogalText
         '''
+        self.__lock.acquire()
+        
         self.items.append(text)
         text.reparentTo(self)
-        text.setPos(self.currentPtr)
+        textPos = self.currentPtr
+        text.setPos(textPos)
+        if fadein:
+            interval = Parallel()
+            if fadeinType == 0 or fadeinType == 'normal':
+                interval.append(LerpFunc(_modifyAlphaScale,fadein,0,1,blendType = 'easeOut',extraArgs = [text]))
+            if fadeinType == 1 or fadeinType == 'flyin':
+                interval.append(LerpFunc(_modifyAlphaScale,fadein,0,1,blendType = 'easeOut',extraArgs = [text]))
+                interval.append(LerpPosInterval(text,fadein,
+                                                self.currentPtr,
+                                                (self.currentPtr[0],self.currentPtr[1],self.currentPtr[2] -0.3),
+                                                blendType = 'easeOut'))            
+            interval.start()
+            self.__lerpIntervals.append(interval)
+            
         self.lineWidth = self.currentPtr[0] + width
         self.lineHeight = max(height, self.lineHeight)
         self.currentPtr = (self.lineWidth + spacing, 0, 0)
+        
+        self.__lock.release()
         
     def getLineWidth(self):
         return self.lineWidth
@@ -308,4 +380,6 @@ class TextLine(NodePath):
         return self.currentPtr
     
 
-            
+def _modifyAlphaScale(value,nodePath):
+    '''used in fadeing style'''
+    nodePath.setAlphaScale(value)            

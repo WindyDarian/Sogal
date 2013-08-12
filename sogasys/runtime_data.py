@@ -32,7 +32,7 @@ from direct.stdpy import pickle
 import color_themes
 
 #game settings, this saves in a sconf file
-game_settings = {'text_speed': 20, #文字速度
+game_settings = {'text_speed': 30, #文字速度
                  'full_screen': True, 
                  'screen_resolution': (1280,720),  
                  'music_volume': 0.75,
@@ -40,6 +40,7 @@ game_settings = {'text_speed': 20, #文字速度
                  'sfx_volume': 1,
                  'voice_volume': 1,
                  'style': 'ilia',
+                 'jump_span': 0.1, #jump span for readed text and control force-jump
                  'save_folder': 'savedata/',
                  'save_type' : '.dat',
                  'save_infotype' : '.sinf',

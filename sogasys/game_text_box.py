@@ -30,7 +30,7 @@ from panda3d.core import *
 from direct.showbase.DirectObject import DirectObject
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.OnscreenText import OnscreenText
-from direct.interval.LerpInterval import LerpFunc
+
 
 
 import runtime_data 
@@ -83,7 +83,6 @@ class GameTextBox(DirectObject, NodePath):
         self._large_label = None
         self._frame = None
         self._textArrow = None
-        self._typerLerpInterval = None
         self.__namescale = None
         
         NodePath.__init__(self, 'GameTextBox')
@@ -134,16 +133,14 @@ class GameTextBox(DirectObject, NodePath):
     def quickFinish(self):
         '''Finish the current text typer quickly
         '''
-        if self._typerLerpInterval:
-            self._typerLerpInterval.finish()
+        if self.currentTextLabel:
+            self.currentTextLabel.quickFinish()
 
     def destroyElements(self):
         self.currentText = []
         self.currentSpeaker = None
         self.newText = ''
-        if self._typerLerpInterval:
-            if not self._typerLerpInterval.isStopped():
-                self._typerLerpInterval.finish()
+
         
         if self._textArrow:
             self._textArrow.removeNode()
@@ -168,17 +165,15 @@ class GameTextBox(DirectObject, NodePath):
 
         
     def destroy(self, *args, **kwargs):
-        if self._typerLerpInterval:
-            self._typerLerpInterval.pause()
+        if self.currentTextLabel:
+            self.currentTextLabel.destroy
         if self._frame:
             self._frame.destroy()
             self._frame = None
  
     def clearText(self):
         '''make current text empty'''
-        if self._typerLerpInterval:
-            if not self._typerLerpInterval.isStopped():
-                self._typerLerpInterval.finish()
+
         self.currentText = []
         self.currentSpeaker = None
         self.newText = ''
@@ -190,12 +185,14 @@ class GameTextBox(DirectObject, NodePath):
             
         
     
-    def pushText(self, text, speaker = None, continuous = False, text_speed = None, rate = 1.0):
+    def pushText(self, text, speaker = None, continuous = False, text_speed = None, fadein = None, rate = 1.0):
         '''添加文字
         进行判断并改变文字
         parameters:
             speaker: A string contains the speaker's name. (None means no speaker)
         '''
+        if self.currentTextLabel and self.currentTextLabel.isWaiting():
+            self.currentTextLabel.quickFinish()
         
         #The text is necessary
         if not text:
@@ -203,8 +200,10 @@ class GameTextBox(DirectObject, NodePath):
         
         text = text.rstrip('\n')
         
-        if not text_speed:
-            text_speed = runtime_data.game_settings['text_speed']
+        text_speed = (text_speed or base.getStyle('textbox')['text_speed'] or runtime_data.game_settings['text_speed']) * rate
+        if fadein is None:
+            fadein = base.getStyle('textbox')['text_fadein_duration']
+        fadein_style = base.getStyle('textbox')['text_fadein_style']
         
         if self._currentStyle == GameTextBoxStyle.Normal:
             if not continuous:
@@ -227,7 +226,8 @@ class GameTextBox(DirectObject, NodePath):
                 self._normal_speakerLabel.setText(' ')
         elif self._currentStyle == GameTextBoxStyle.Large:
             if speaker:
-                self.currentTextLabel.appendText(self.currentSpeaker,custom = True, newLine = True, textScale = self.__namescale)
+                self.currentTextLabel.appendText(self.currentSpeaker,custom = True, newLine = True, 
+                                                 textScale = self.__namescale)
                 
 
         self.newText = text
@@ -235,39 +235,13 @@ class GameTextBox(DirectObject, NodePath):
         #This is *very* useful
         print(self.newText)
         
-        self.currentTextLabel.appendText(self.newText, newLine = (not continuous) )
+        self.currentTextLabel.appendText(self.newText, speed = text_speed , newLine = (not continuous) , fadein = fadein, 
+                                                 fadeinType = fadein_style)
         
         self.currentText = self.currentTextLabel.getCopiedText()
         
         #TODO: FADING TEXT AND TYPER AGAIN
-        """    
-        if text:
-            if text_speed != 0:
-                duration = float(len(self.newText))/(text_speed*rate)
-            else: duration = 0.0
-        
-            self._typerLerpInterval = LerpFunc(self.showTextStep,duration = duration)
-            self._typerLerpInterval.start()    #原来这里还可以乘算速度的！
-        """
-        
-            
-    """  
-    def showTextStep(self,lerp_value):
-        '''The text typer step. lerp_Value == 1 means the text is completely typed out
-        '''
-        if not self.currentTextLabel:
-            return
-        
-        #FIXME: There is a performance issue, and it is hard to apply any gradient effect
-        #Maybe we can create a NodePath class to group up TextNodes to fix this issue.
 
-        text = self.existingText + self.newText[0:int(math.floor((len(self.newText))*lerp_value))]
-        self.currentTextLabel.setText(text)
-    """
-    
-        
-        
-    #properties
     
     _currentStyle = None
     @property
@@ -372,7 +346,7 @@ class GameTextBox(DirectObject, NodePath):
                                                  0,
                                                  height/2.0 + self.properties['large_text_pos'][1]),
                                           wordwrap = self.properties['large_text_wrap']
-                                           )  
+                                         )  
             
 
             self.setPos(self.properties['large_pos'][0],0,self.properties['large_pos'][1])
@@ -420,8 +394,9 @@ class GameTextBox(DirectObject, NodePath):
             
     def getIsWaitingForText(self):
         is_waiting = False
-        #if self._typerLerpInterval and self._typerLerpInterval.isPlaying():is_waiting = True
-        #TODO: typer effect!
+        
+        if self.currentTextLabel:
+            is_waiting = self.currentTextLabel.isWaiting()
         
         return is_waiting
     

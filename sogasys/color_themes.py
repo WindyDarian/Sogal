@@ -72,6 +72,9 @@ ilia_textbox = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
                 'large_text_scale' : 0.08,
                 'large_name_scale' : 0.06,
                 'large_text_wrap' : 24,
+                'text_speed': None, #use global text speed setting
+                'text_fadein_duration': 0.3,
+                'text_fadein_style': 'normal',
                }
 
 ilia_frame = {'frameColor': (75/255.0,153/255.0,214/255.0,0.75),

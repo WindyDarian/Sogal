@@ -33,7 +33,7 @@ from panda3d.core import TransparencyAttrib  # @UnresolvedImport
 
 #from direct.gui.DirectButton import DirectButton
 from direct.stdpy.file import open,exists
-from direct.stdpy import threading
+from direct.stdpy.threading import Lock
 from direct.stdpy import pickle
 from direct.task import Task
 from direct.gui.DirectFrame import DirectFrame
@@ -69,7 +69,7 @@ class StoryManager(SogalForm):
         self.step = 0    #shows how many commands line it had run, used to sync data dumps
         self.scrStack = []
         self.commandList = []
-
+        
         self.__currentPtr = None
         if not runtime_data.RuntimeData.command_ptr:
             self.nextPtr = 0
@@ -107,31 +107,49 @@ class StoryManager(SogalForm):
         self._choiceReady = True
         self._currentMessage = ''
         self.__currentSelection = None
+        self.__finishing = False
+        self.__lock = Lock()
+        self.forcejump = False
+        self.__forcejumpInput = False
+        self.__focused = False
+        
         
         self.mapScriptSpace()
         SogalForm.__init__(self)
         self.show()
-        taskMgr.add(self.loopTask,'storyManagerLoop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
-        
+        taskMgr.add(self.loopTask,'story_manager_loop',sort = 2,priority = 1)  # @UndefinedVariable 傲娇的pydev……因为panda3D的"黑魔法"……
+      
+        taskMgr.doMethodLater(runtime_data.game_settings['jump_span'],self.__jumpCheck,'story_jump_check', sort = 5, priority = 1)  # @UndefinedVariable
         
     def focused(self):
-        self.accept('mouse1', self.clicked, [1])
-        self.accept('mouse3', self.clicked, [3])
-        self.accept('escape', self.showMenu)
-        SogalForm.focused(self)
-        
+        if not self.__focused:
+            self.accept('mouse1', self.clicked, [1])
+            self.accept('mouse3', self.clicked, [3])
+            self.accept('escape', self.showMenu)
+            self.accept('control',self.setForceJump, [True])
+            self.accept('control-up',self.setForceJump, [False])
+            SogalForm.focused(self)
+            self.__focused = True
+    
+    
     def defocused(self):
-        self.ignore('mouse1')
-        self.ignore('mouse3')
-        self.ignore('escape')
-        SogalForm.defocused(self)
-        self.__arrow_shown = False
-        self.gameTextBox.hideArrow()
+        if self.__focused:
+            self.ignore('mouse1')
+            self.ignore('mouse3')
+            self.ignore('escape')
+            self.ignore('control')
+            self.ignore('control-up')
+            self.setForceJump(False)
+            SogalForm.defocused(self)
+            self.__arrow_shown = False
+            self.gameTextBox.hideArrow()
+            self.__focused = False
    
         
     def destroy(self):
         self.__destroyed = True
-        taskMgr.remove('storyManagerLoop')  # @UndefinedVariable
+        taskMgr.remove('story_manager_loop')  # @UndefinedVariable
+        taskMgr.remove('story_jump_check')  # @UndefinedVariable
         if self._frame:
             self._frame.destroy()
             self._frame = None
@@ -192,8 +210,12 @@ class StoryManager(SogalForm):
         script_global['audio_player'] = self.audioPlayer
         
     def quickfinish(self):
-        self.storyView.quickfinish()
-        self.gameTextBox.quickFinish()        
+        self.__lock.acquire()
+        if not self.__finishing:
+            self.__finishing = True
+            self.storyView.quickfinish()
+            self.gameTextBox.quickFinish()
+        self.__lock.release()
     
     def clicked(self,key = 1):
         if not self.hasFocus():
@@ -263,8 +285,11 @@ class StoryManager(SogalForm):
     
     def getInputReady(self):
         '''define is user's 'next' command given'''
-        textinput_ready = self._inputReady
+        textinput_ready = self._inputReady or self.__forcejumpInput
         choice_ready = self.getChoiceReady()
+        
+        if self.__forcejumpInput:
+            self.__forcejumpInput = False
         
         if textinput_ready and choice_ready:
             return True
@@ -289,12 +314,16 @@ class StoryManager(SogalForm):
         
         if scene_ready and self.getInputReady():
             self.nextCommand()
+            
+        if self.forcejump:
+            self.quickfinish()
         
     def nextCommand(self):
         '''Process the next command in the non-processed queue
         '''
         #TODO: 还要添加循环的支持，用到runtime_data.command_stack来暂存需要回跳的命令组和回跳节点
         #TODO：添加对条件和选择的支持
+        self.__finishing = False
         
         self.__arrow_shown = False
         self.gameTextBox.hideArrow()
@@ -741,7 +770,7 @@ class StoryManager(SogalForm):
         
         #如果存在name即分割成功
         if len(splited)>1:
-            speaker = translate(splited[0])
+            speaker = translate(splited[0]).strip()
             if splited[1].strip():
                 textlines[0] = splited[1]
             else:
@@ -831,6 +860,20 @@ class StoryManager(SogalForm):
         
     def scriptEval(self,str):
         return eval(str,script_global,runtime_data.RuntimeData.script_space)
+    
+    def setForceJump(self,forcejump):
+        if forcejump:
+            self.forcejump = True
+        else:
+            self.forcejump = False
+            
+    def __jumpCheck(self,task):
+        if self.hasFocus():
+            if self.forcejump:
+                self.__forcejumpInput = True
+        return task.again
+        
+        
           
 class StoryCommand(object):
     ''' A command (or one paragraph) of the script file

@@ -26,7 +26,7 @@ Arrange the text word by word, TextNode by TextNode
 '''
 #TODO: finish this moudle and add make game_text_box use this moudle
 
-import copy,math
+import copy,math,types
 
 from panda3d.core import NodePath,TextNode  # @UnresolvedImport
 from direct.stdpy.threading import Lock
@@ -254,7 +254,13 @@ class SogalText(NodePath):
             self.startLine()
         
         active_line = self.lines[-1] 
-        textMaker.setText(word)
+        
+        unicodeText = isinstance(word, types.UnicodeType)
+        if unicodeText:
+            textMaker.setWtext(word)
+        else:
+            textMaker.setText(word)
+            
         width = textMaker.getWidth()
         #print 'w=' + str(width)
         height = textMaker.getHeight()

@@ -44,8 +44,15 @@ system_text = {'scale':0.07,
                #'font':default_font,
                }
 
+history_text =  {'scale':0.07,
+               'fg':(1,1,1,1),
+               'shadow':(0.4,0.4,0.4,1),
+               #'font':default_font,
+               }
+
 def _initSystemText():
     system_text['font'] = default_font
+    history_text['font'] = default_font
 
 
 
@@ -98,13 +105,7 @@ ilia_button = {'frameColor':((42/255.0,195/255.0,239/255.0,0.75),
 
 ilia_bgColor = (69/255.0,118/255.0,195/255.0,1)
 
-ilia = {'text':system_text,
-        'button':ilia_button,
-        'frame':ilia_frame,
-        'hardframe':ilia_hardframe,
-        'textbox':ilia_textbox,
-        'bgColor':ilia_bgColor,
-        }
+
 
 sirius_frame = {'frameColor': (225/255.0,169/255.0,210/255.0,0.75),
                 'relief': DGG.FLAT
@@ -128,7 +129,19 @@ sirius_button = {'frameColor':((239/255.0,195/255.0,46/255.0,0.75),
 
 sirius_bgColor = (188/255.0,105/255.0,63/255.0,1)
 
+
+
+ilia = {'text':system_text,
+        'historytext': history_text,
+        'button':ilia_button,
+        'frame':ilia_frame,
+        'hardframe':ilia_hardframe,
+        'textbox':ilia_textbox,
+        'bgColor':ilia_bgColor,
+        }
+
 sirius = {'text':system_text,
+          'historytext': history_text,
           'button':sirius_button,
           'frame':sirius_frame,
           'hardframe': sirius_hardframe,

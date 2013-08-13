@@ -43,6 +43,7 @@ from game_text_box import GameTextBox
 from story_view import StoryView,StoryViewItemEntry,SVIC
 from story_menu_bar import StoryMenuBar
 from sogal_form import SogalForm, ConfirmDialog, SogalDialog
+from text_history import TextHistory
 import runtime_data
 
 
@@ -94,13 +95,15 @@ class StoryManager(SogalForm):
         self.audioPlayer = base.audioPlayer  # @UndefinedVariable pydev在傲娇而已不用管
         self.menu = StoryMenuBar()
         self.gameTextBox = GameTextBox()
+        self.textHistory = TextHistory()
         
         
         self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED, command = self.save)
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.load)
+        self.button_lastchoice = self.menu.addButton(text = 'History',state = DGG.NORMAL,command = self.showTextHistoryButton)
+        self.button_lastchoice = self.menu.addButton(text = 'Last Choice',state = DGG.DISABLED,command = self.lastChoice)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
-        self.button_lastchoice = self.menu.addButton(text = 'Last Choice',state = DGG.DISABLED,command = self.lastChoice)
         
         self._inputReady = True
         self.__arrow_shown = False
@@ -125,6 +128,7 @@ class StoryManager(SogalForm):
         if not self.__focused:
             self.accept('mouse1', self.clicked, [1])
             self.accept('mouse3', self.clicked, [3])
+            self.accept('wheel_up', self.showTextHistory)
             self.accept('escape', self.showMenu)
             self.accept('control',self.setForceJump, [True])
             self.accept('control-up',self.setForceJump, [False])
@@ -136,6 +140,7 @@ class StoryManager(SogalForm):
         if self.__focused:
             self.ignore('mouse1')
             self.ignore('mouse3')
+            self.ignore('wheel_up')
             self.ignore('escape')
             self.ignore('control')
             self.ignore('control-up')
@@ -159,6 +164,7 @@ class StoryManager(SogalForm):
         self.gameTextBox.destroy()
         self.storyView.destroy()
         self.menu.destroy()
+        self.textHistory.destroy()
         SogalForm.destroy(self)
             
     def loopTask(self,task):
@@ -233,8 +239,12 @@ class StoryManager(SogalForm):
                 
     def showMenu(self):
         self.quickfinish()
-        if self.getSceneReady():
-            self.menu.show()        
+        if self.getSceneReady() and not self.forcejump:
+            self.menu.show()   
+            
+    def showTextHistory(self):
+        if self.getSceneReady() and not self.forcejump:
+            self.textHistory.show()
                 
     def save(self):
         self.menu.hide()
@@ -255,6 +265,10 @@ class StoryManager(SogalForm):
             
     def quickLoad(self):
         ConfirmDialog(text= '要读取吗？',command= self.__confirmedQuickLoad)
+        
+    def showTextHistoryButton(self):
+        self.menu.hide()
+        self.showTextHistory()
         
     def lastChoice(self):
         ConfirmDialog(text= '要回到上一个选择枝吗？',command= self.__confirmedLastChoice)
@@ -783,6 +797,9 @@ class StoryManager(SogalForm):
         for item in textlines:
             if item:
                 final_text += translate(item) + '\n'
+                
+        if final_text:
+            self.textHistory.append(final_text, speaker, None)
         
         self.gameTextBox.pushText(text = final_text, speaker = speaker, continuous = continuous)
         if needInput:
@@ -862,8 +879,11 @@ class StoryManager(SogalForm):
         return eval(str,script_global,runtime_data.RuntimeData.script_space)
     
     def setForceJump(self,forcejump):
+        
         if forcejump:
-            self.forcejump = True
+            if not self.forcejump:
+                self.forcejump = True
+                self.setTextInputReady(True)
         else:
             self.forcejump = False
             

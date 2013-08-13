@@ -136,7 +136,7 @@ class SaveForm(SogalForm):
         Constructor
         '''
         SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True,backgroundColor= color_themes.ilia_bgColor)
-        self.reparentTo(aspect2d,sort = 100)
+        self.reparentTo(aspect2d,sort = 102)
         self.frame = DirectScrolledFrame(parent = self, canvasSize = SAVE_CANVAS_SIZE, 
                                          frameSize = FRAMESIZE, 
                                          autoHideScrollBars = AUTO_HIDE_SCROLLBARS,
@@ -226,7 +226,7 @@ class LoadForm(SogalForm):
         Constructor
         '''
         SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True,backgroundColor=color_themes.sirius_bgColor)
-        self.reparentTo(aspect2d,sort = 100)
+        self.reparentTo(aspect2d,sort = 102)
 
         self.frame = DirectScrolledFrame(parent = self, canvasSize = LOAD_CANVAS_SIZE, 
                                          frameSize = FRAMESIZE, 
@@ -239,7 +239,7 @@ class LoadForm(SogalForm):
         
         hbox = None
         self.__dumped = None
-        for i in range(1,201):
+        for i in range(1, 201):
             label = SaveLoadLabel(command = self.load, always_enable = False,
                                   fileName = 'save' + str(i), head = str(i),extraArgs = [i],style = color_themes.sirius_button)
             self.labels.append(label)

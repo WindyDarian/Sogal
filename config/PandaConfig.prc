@@ -15,5 +15,4 @@ window-title Sogal
 
 #Sogal config
 
-#文字速度
-sogal-textspeed 20
+text-encoding utf8

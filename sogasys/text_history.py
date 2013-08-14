@@ -31,7 +31,6 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 
 from sogal_form import SogalForm
 from sogasys import color_themes
-from cgitb import text
 
 
 

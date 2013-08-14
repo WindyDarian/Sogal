@@ -58,11 +58,12 @@ class SogalBase(ShowBase):
         
         color_themes.initStyles()
         
-#         props = WindowProperties( self.win.getProperties() )
-#         props.setSize(int(game_settings['screen_resolution'][0]),int(game_settings['screen_resolution'][1]))
-#         if game_settings['full_screen'] and not props.getFullscreen():
-#             props.setFullscreen(True)
-#         self.win.requestProperties(props)
+        props = WindowProperties( self.win.getProperties() )
+        props.setSize(int(game_settings['screen_resolution'][0]),int(game_settings['screen_resolution'][1]))
+        if game_settings['full_screen'] and not props.getFullscreen():
+            props.setFullscreen(True)
+        props.setTitle('SOGAL')
+        self.win.requestProperties(props)
         
         self.cam2dp.node().getDisplayRegion(0).setSort(-20)  #Set render2dp to background
         self.disableMouse() #Disable panda3d's default mouse control

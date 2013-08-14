@@ -363,7 +363,7 @@ class GameTextBox(DirectObject, NodePath):
             self._large_label.textMaker.setTabWidth(1.0)
            
         #generate an arrow after text 
-        arrow = loader.loadModel('models/text_arrow/text_arrow.egg')  # @UndefinedVariable
+        arrow = loader.loadModel('models/text_arrow/text_arrow')  # @UndefinedVariable
         arrow.reparentTo(self._frame)
         arrow.setColor(self.properties['arrow_color'])
         arrow.setScale(self.properties['arrow_scale'])

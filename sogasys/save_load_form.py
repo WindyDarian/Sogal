@@ -148,7 +148,7 @@ class SaveForm(SogalForm):
         hbox = None
         self.__dumped = None
         for i in range(1,201):
-            label = SaveLoadLabel(command = self.save, always_enable = True, fileName = 'save' + str(i), head = str(i),extraArgs = [i],)
+            label = SaveLoadLabel(command = self.save, always_enable = True, fileName = 'save' + str(i), head = str(i),extraArgs = [i],style = color_themes.ilia_button)
             self.labels.append(label)
             self.labelDict[label.getFileName()] = label
             if not hbox:
@@ -176,7 +176,7 @@ class SaveForm(SogalForm):
     
     def save(self,i):
         if self.labelDict['save' + str(i)].getExists():
-            ConfirmDialog(text= '要覆盖吗？不覆盖吗？', command = self.confirmedSave, extraArgs = [i])
+            ConfirmDialog(text= '要覆盖吗？不覆盖吗？', command = self.confirmedSave, extraArgs = [i], style = 'ilia')
         else: 
             self.confirmedSave(i)
     

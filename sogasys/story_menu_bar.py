@@ -96,6 +96,11 @@ class StoryMenuBar(SogalForm):
     def destroy(self):
         SogalForm.destroy(self)
         
+    def reloadTheme(self):
+        for btn in self._buttonbox:
+            di = base.getStyle('button')
+            for key in di:
+                btn[key] = di[key]
     
     def addButton(self,**args):
         '''Add a button and return it'''

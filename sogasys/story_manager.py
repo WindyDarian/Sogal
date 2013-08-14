@@ -45,6 +45,7 @@ from story_menu_bar import StoryMenuBar
 from sogal_form import SogalForm, ConfirmDialog, SogalDialog
 from text_history import TextHistory
 import runtime_data
+from direct.interval.FunctionInterval import Wait
 
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
@@ -115,6 +116,9 @@ class StoryManager(SogalForm):
         self.forcejump = False
         self.__forcejumpInput = False
         self.__focused = False
+        
+        
+        self.intervals = []
         
         
         self.mapScriptSpace()
@@ -221,6 +225,8 @@ class StoryManager(SogalForm):
             self.__finishing = True
             self.storyView.quickfinish()
             self.gameTextBox.quickFinish()
+            for itv in self.intervals:
+                itv.finish()
         self.__lock.release()
     
     def clicked(self,key = 1):
@@ -285,6 +291,7 @@ class StoryManager(SogalForm):
         '''Get if the scene is ready'''
         textbox_ready = False
         view_ready = False
+        intervals_ready = True
         
         if not self.gameTextBox.getIsWaiting():
             textbox_ready = True
@@ -292,8 +299,13 @@ class StoryManager(SogalForm):
         if not self.storyView.getIsWaiting():
             view_ready = True
             
+        for itv in self.intervals:
+            if itv.isPlaying():
+                intervals_ready = False
+                break
             
-        if textbox_ready and view_ready:
+            
+        if textbox_ready and view_ready and intervals_ready:
             return True
         return False
     
@@ -354,6 +366,9 @@ class StoryManager(SogalForm):
         self.__currentPtr = self.nextPtr
         self.nextPtr += 1
         
+        if not self.commandList:
+            return
+        
         if len(self.commandList) > self.__currentPtr:
             handled = False
             if self.commandList[self.__currentPtr].command:
@@ -376,36 +391,42 @@ class StoryManager(SogalForm):
                             cli = self.commandList[i]
                             if cli.command:
                                 cl = cli.command.strip()
-                                #一个嵌套循环的情况！ A inner if
-                                if cl.startswith('if '):
-                                    relative_depth += 1
-                                    continue
-                                elif relative_depth == 0 and cl.startswith('elif '):
-                                    splited = space_cutter.split(cl, 1)
-                                    if len(splited)<2:
-                                        raise Exception('没条件玩毛线')
-                                    if self.scriptEval(splited[1]):
-                                        self.nextPtr = i + 1
-                                        handled = True
-                                        break
-                                    else: continue
-                                elif relative_depth == 0 and cl == 'else':
+                            else: continue
+                            #一个嵌套循环的情况！ A inner if
+                            if cl.startswith('if '):
+                                relative_depth += 1
+                                continue
+                            elif relative_depth == 0 and cl.startswith('elif '):
+                                splited = space_cutter.split(cl, 1)
+                                if len(splited)<2:
+                                    raise Exception('没条件玩毛线')
+                                if self.scriptEval(splited[1]):
                                     self.nextPtr = i + 1
                                     handled = True
                                     break
-                                elif cl == 'end' or cl.startswith('end '):
-                                    if relative_depth == 0:
-                                        self.nextPtr = i + 1
-                                        handled = True
-                                        break
-                                    else: 
-                                        relative_depth -= 1
-                                        continue
+                                else: continue
+                            elif relative_depth == 0 and cl == 'else':
+                                self.nextPtr = i + 1
+                                handled = True
+                                break
+                            elif cl == 'end' or cl.startswith('end '):
+                                if relative_depth == 0:
+                                    self.nextPtr = i + 1
+                                    handled = True
+                                    break
+                                else: 
+                                    relative_depth -= 1
+                                    continue
                                     
                 #if we meet else or elif then jump to end
                 elif comline.startswith('elif ') or comline == 'else':
+
                     relative_depth = 0
                     for i in range(self.__currentPtr+1,len(self.commandList)):
+                        cli = self.commandList[i]
+                        if cli.command:
+                            cl = cli.command.strip()
+                        else: continue
                         if cl.startswith('if '):
                             relative_depth += 1
                             continue
@@ -474,7 +495,7 @@ class StoryManager(SogalForm):
         is_selection = False
         spaceCutter = space_cutter
         
-        cleared = False
+        hidingtext = False
 
         voiceFlag = False                   #it will be True if voice is stopped in this line of command 
                                             #used for disable cross voice of different command lines
@@ -504,6 +525,14 @@ class StoryManager(SogalForm):
                 elif comm == 'p':
                     if self.gameTextBox:
                         self.gameTextBox.paragraphSparator()
+                        
+                elif comm == 'c':
+                    continuous = True
+                    
+                elif comm.startswith('wait '):
+                    temp = spaceCutter.split(comm,1)
+                    if len(temp) > 1:
+                        self.sceneWait(seval(temp[1]))
                 
                 #文本框属性设置命令
                 elif comm.startswith('textbox '):
@@ -603,11 +632,11 @@ class StoryManager(SogalForm):
                     self.storyView.newItem(svie)
                 
                 elif comm == 'clear':
-                    cleared = True
+                    hidingtext = True
                     self.storyView.clear()
                     
                 elif comm.startswith('clear '):
-                    cleared = True
+                    hidingtext = True
                     temp = spaceCutter.split(comm,2)
                     if len(temp)>=3:
                         self.storyView.clear(seval(temp[1]),temp[2])
@@ -730,7 +759,11 @@ class StoryManager(SogalForm):
                     
                 elif comm.startswith('goto '):
                     temp = spaceCutter.split(comm , 1)
-                    self.goto(temp[1].strip())                    
+                    self.goto(temp[1].strip())       
+                    
+                elif comm.startswith('theme '):
+                    temp = spaceCutter.split(comm , 1)
+                    self.reloadTheme(temp[1].strip())
         
                 else: 
                     if comm:
@@ -761,8 +794,10 @@ class StoryManager(SogalForm):
                 self.pushText(text = command.text, speaker = name, continuous = continuous)
             
         else:
-            if cleared:
+            if hidingtext:
                 self.gameTextBox.hide()    #better to hide the textbox when 'vclear'
+                
+                
     
     def pushText(self, text, speaker = None, continuous = False, needInput = True):
         
@@ -892,7 +927,19 @@ class StoryManager(SogalForm):
             if self.forcejump:
                 self.__forcejumpInput = True
         return task.again
-        
+    
+    def sceneWait(self,time,hidetextbox = True):
+        waitinterval = Wait(time)
+        self.intervals.append(waitinterval)
+        waitinterval.start()
+        if hidetextbox:
+            self.gameTextBox.hide()
+            
+    def reloadTheme(self,theme):
+        base.setStyle(theme)
+        self.menu.reloadTheme()
+        self.textHistory.reloadTheme()
+        self.gameTextBox.reloadTheme()
         
           
 class StoryCommand(object):

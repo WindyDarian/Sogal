@@ -77,7 +77,7 @@ class GameTextBox(DirectObject, NodePath):
         self.currentSpeaker = ""
         self.newText = None
         self.textfont = None
-        self.properties = copy.deepcopy(color_themes.ilia_textbox)
+        self.properties = copy.deepcopy(base.getStyle('textbox'))
         self._normal_speakerLabel = None
         self._normal_textLabel = None
         self._large_label = None
@@ -108,6 +108,11 @@ class GameTextBox(DirectObject, NodePath):
                 self.currentSpeaker = runtime_data.RuntimeData.current_text[1]
                 if self._normal_speakerLabel:
                     self._normal_speakerLabel.setText(runtime_data.RuntimeData.current_text[1])
+                    
+    def reloadTheme(self):
+        self.properties = copy.deepcopy(base.getStyle('textbox'))
+        runtime_data.RuntimeData.gameTextBox_properties = self.properties
+        self.applyStyle()
     
     def showArrow(self):
         if self._textArrow: 
@@ -220,10 +225,11 @@ class GameTextBox(DirectObject, NodePath):
             self.currentSpeaker = speaker
         
         if self._currentStyle == GameTextBoxStyle.Normal:
-            if speaker:
-                self._normal_speakerLabel.setText(self.currentSpeaker) #TODO: use SogalText
-            else:
-                self._normal_speakerLabel.setText(' ')
+            if not continuous:
+                if speaker:
+                    self._normal_speakerLabel.setText(self.currentSpeaker) #TODO: use SogalText
+                else:
+                    self._normal_speakerLabel.setText(' ')
         elif self._currentStyle == GameTextBoxStyle.Large:
             if speaker:
                 self.currentTextLabel.appendText(self.currentSpeaker,custom = True, newLine = True, 
@@ -379,7 +385,7 @@ class GameTextBox(DirectObject, NodePath):
         self.properties['style'] = style
         
         
-            
+
 
     def paragraphSparator(self):
         #if self._currentStyle == GameTextBoxStyle.Large:

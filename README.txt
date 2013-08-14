@@ -125,6 +125,11 @@ TODO:在StoryManager中实现背景、立绘、声音的支持，注意要考虑
 绘的情况
 
 已实现
+系统：
+theme -theme 改变主题 如 theme sirius 橙色和粉色主题
+参见color_themes.py中的主题
+
+
 文本：
 name = -Name    设置名字 可以有空格
 name -Name   设置名字 可以有空格
@@ -133,6 +138,7 @@ textboxstyle normal/large 改变文本框格式，会清空文本
 p 格式中用来清空已有字符 ，large文本框用,注意和显示图片的p的区别是它不带任何参数
 textbox -propname -content 改变文本框属性，content可以有空格，会在脚本命名空间中eval计算(也就是如果是字符串要加引号)，参考game_text_box.py中GameTextBox.properties
 textbox apply 应用文本框属性的修改，会清空文本
+c  继续文本
 
 场景：
 p -key -fileName -x -z (-s) (-fadein)  在指定位置显示立绘位置 0 0表示正中  1 1表示右上 注意除了Location都不能有空格 -相同的Keyword会直接替换  fadein是淡入                       
@@ -154,6 +160,7 @@ qp -fileName -x -z   快速立绘！在进入下一个文本段时就会自动�
 clear 重置场景。移除所有立绘，将背景设置为黑色。用于初始化和场景切换
 clear -Time 重置场景。在一定时间内淡出到黑色
 clear -Time -bgFileName 重置场景。以一定速度渐入到某个背景图片
+wait -time 表示在玩家不操作的情况下需要等待time秒才会进入下一行
 
 声音：
 v -FileName (-volume)语音
@@ -206,8 +213,8 @@ end 结束当前if块 单独占一行命令
 #voice3d -FileName -Location 3d语音 
 #sound3d -FileName -Location 3d音效
 
-time -time 表示在玩家不操作的情况下需要等待time秒才会进入下一行
-wait 表示当前需要玩家输入才能继续
+
+waitinput 表示当前需要玩家输入才能继续
 
 while: condition
 

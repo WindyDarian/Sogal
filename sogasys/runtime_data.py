@@ -129,6 +129,9 @@ def getCurrentStyle(sheet = None):
     if not sheet:
         return style
     else: return style[sheet]
+    
+def setCurrentStyle(value):
+    RuntimeData.current_style = value
 
 def saveSettings(fileName):
     pass

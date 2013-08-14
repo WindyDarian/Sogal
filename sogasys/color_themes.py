@@ -105,7 +105,33 @@ ilia_button = {'frameColor':((42/255.0,195/255.0,239/255.0,0.75),
 
 ilia_bgColor = (69/255.0,118/255.0,195/255.0,1)
 
-
+sirius_textbox = {'background_color' : (214/255.0,133/255.0,75/255.0,0.3),
+                'arrow_color' : (1,1,1,1),
+                'arrow_scale' : 0.08,
+                'arrow_rightspace' : 0.18,
+                'foreground_color' : (1,1,1,1),
+                'normal_background_image':None,
+                'normal_height': 0.6,
+                'normal_width': 2.6666667,
+                'normal_pos': (0,-0.65),
+                'normal_name_pos' : (0.14,-0.12),
+                'normal_text_pos' : (0.25,-0.14),
+                'normal_text_scale' : 0.09,
+                'normal_name_scale' : 0.07,
+                'normal_text_wrap' : 24,
+                'large_background_image':None,
+                'large_height': 1.9,
+                'large_width' :2.3,
+                'large_pos': (0,0),
+                #'large_text_pos': (0.18,-0.10),
+                'large_text_pos': (0.18,-0.12),
+                'large_text_scale' : 0.08,
+                'large_name_scale' : 0.06,
+                'large_text_wrap' : 24,
+                'text_speed': None, #use global text speed setting
+                'text_fadein_duration': 0.3,
+                'text_fadein_style': 'normal',
+               }
 
 sirius_frame = {'frameColor': (225/255.0,169/255.0,210/255.0,0.75),
                 'relief': DGG.FLAT
@@ -145,7 +171,7 @@ sirius = {'text':system_text,
           'button':sirius_button,
           'frame':sirius_frame,
           'hardframe': sirius_hardframe,
-          'textbox':ilia_textbox,
+          'textbox':sirius_textbox,
           'bgColor': sirius_bgColor
          }
 

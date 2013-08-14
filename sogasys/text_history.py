@@ -64,7 +64,9 @@ class TextHistory(SogalForm):
         self.frame = DirectScrolledFrame(parent = self, canvasSize = CANVASSIZE, 
                                          frameSize = FRAMESIZE, 
                                          autoHideScrollBars = AUTO_HIDE_SCROLLBARS,
-                                         **base.getStyle('frame'))
+                                         )
+        
+        self.reloadTheme()
         
         self.height = TOP
         self.shiftedHeight = 0
@@ -157,6 +159,11 @@ class TextHistory(SogalForm):
         if self.frame.verticalScroll.getValue() < 1:
             self.roll(1.0)
         else: self.hide()
+        
+    def reloadTheme(self):
+        di = base.getStyle('frame')
+        for key in di:
+            self.frame[key] = di[key]
         
         
 class TextHistoryLabel(NodePath):

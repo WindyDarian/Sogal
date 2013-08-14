@@ -37,7 +37,7 @@ from direct.stdpy import threading
 from direct.stdpy import pickle
 
 from story_manager import StoryManager
-from runtime_data import game_settings,loadDefaultSettings,restoreRuntimeData, getCurrentStyle as rgetStyle
+from runtime_data import game_settings,loadDefaultSettings,restoreRuntimeData, getCurrentStyle as rgetStyle, setCurrentStyle as rsetStyle
 from audio_player import AudioPlayer
 from save_load_form import SaveForm,SavingInfo,LoadForm
 import color_themes
@@ -178,6 +178,9 @@ class SogalBase(ShowBase):
         
     def getStyle(self, sheet = None):
         return rgetStyle(sheet)
+    
+    def setStyle(self,value):
+        return rsetStyle(value)
     
     def toggleFullScreen(self):
         props = WindowProperties( self.win.getProperties() )

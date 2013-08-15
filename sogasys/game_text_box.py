@@ -190,11 +190,12 @@ class GameTextBox(DirectObject, NodePath):
             
         
     
-    def pushText(self, text, speaker = None, continuous = False, text_speed = None, fadein = None, rate = 1.0):
+    def pushText(self, text, speaker = None, continuous = False, text_speed = None, fadein = None, rate = 1.0,read = False):
         '''添加文字
         进行判断并改变文字
         parameters:
             speaker: A string contains the speaker's name. (None means no speaker)
+            read: see if the text is already read
         '''
         if self.currentTextLabel and self.currentTextLabel.isWaiting():
             self.currentTextLabel.quickFinish()
@@ -241,8 +242,12 @@ class GameTextBox(DirectObject, NodePath):
         #This is *very* useful
         print(self.newText)
         
-        self.currentTextLabel.appendText(self.newText, speed = text_speed , newLine = (not continuous) , fadein = fadein, 
+        if not read:
+            self.currentTextLabel.appendText(self.newText, speed = text_speed , newLine = (not continuous) , fadein = fadein, 
                                                  fadeinType = fadein_style)
+        else:
+            self.currentTextLabel.appendText(self.newText, speed = text_speed , newLine = (not continuous) , fadein = fadein, 
+                                                 fadeinType = fadein_style, custom = True, fg = self.properties['read_fg'])            
         
         self.currentText = self.currentTextLabel.getCopiedText()
         

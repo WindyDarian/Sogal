@@ -41,6 +41,7 @@ game_settings = {'text_speed': 30, #文字速度
                  'voice_volume': 1,
                  'style': 'ilia',
                  'jump_span': 0.1, #jump span for readed text and control force-jump
+                 'auto_span' : 1.0, #how many seconds to wait for auto play 
                  'save_folder': 'savedata/',
                  'save_type' : '.dat',
                  'save_infotype' : '.sinf',
@@ -59,7 +60,7 @@ game_settings = {'text_speed': 30, #文字速度
                  'soundtypes': ['.wav','.ogg',''],
                 }
 
-
+read_text = {}
 
 class _RuntimeData(object):
     '''A class that holds runtime'''
@@ -158,3 +159,9 @@ def loadRuntimeData(saved):
     global RuntimeData
     data = pickle.load(saved)
     RuntimeData.load(data)
+    
+def restoreReadText(readed):
+    '''restore the read text'''
+    for key in readed:
+        read_text[key] = readed[key]
+    

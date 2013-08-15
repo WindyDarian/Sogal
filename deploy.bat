@@ -1,0 +1,1 @@
+pdeploy -s -N "世界之镜" -A "Sekai no Kagami 世界之镜制作组， 北航七海游戏文化社" -e p123456638@msn.com -P win32 game.p3d standalone

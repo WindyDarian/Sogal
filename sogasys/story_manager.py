@@ -38,6 +38,7 @@ from direct.stdpy import pickle
 from direct.task import Task
 from direct.gui.DirectFrame import DirectFrame
 import direct.gui.DirectGuiGlobals as DGG
+from direct.interval.FunctionInterval import Wait
 
 from game_text_box import GameTextBox
 from story_view import StoryView,StoryViewItemEntry,SVIC
@@ -45,7 +46,6 @@ from story_menu_bar import StoryMenuBar
 from sogal_form import SogalForm, ConfirmDialog, SogalDialog
 from text_history import TextHistory
 import runtime_data
-from direct.interval.FunctionInterval import Wait
 
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
@@ -68,7 +68,7 @@ class StoryManager(SogalForm):
     __destroyed = False
     
     def __init__(self):
-        self.step = 0    #shows how many commands line it had run, used to sync data dumps
+        self.step = 0    #shows how many commands line it had run
         self.scrStack = []
         self.commandList = []
         
@@ -98,13 +98,15 @@ class StoryManager(SogalForm):
         self.gameTextBox = GameTextBox()
         self.textHistory = TextHistory()
         
-        
+        self.button_auto = self.menu.addButton(text = 'Auto Play',state = DGG.NORMAL,command = self.autoPlayButton)
+        self.button_lastchoice = self.menu.addButton(text = 'Last Choice',state = DGG.DISABLED,command = self.lastChoice)
+        self.button_skip = self.menu.addButton(text = 'Skip Read',state = DGG.DISABLED,command = self.startSkippingButton)
+        self.button_history = self.menu.addButton(text = 'History',state = DGG.NORMAL,command = self.showTextHistoryButton)
         self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED, command = self.save)
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.load)
-        self.button_lastchoice = self.menu.addButton(text = 'History',state = DGG.NORMAL,command = self.showTextHistoryButton)
-        self.button_lastchoice = self.menu.addButton(text = 'Last Choice',state = DGG.DISABLED,command = self.lastChoice)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
+        
         
         self._inputReady = True
         self.__arrow_shown = False
@@ -114,12 +116,13 @@ class StoryManager(SogalForm):
         self.__finishing = False
         self.__lock = Lock()
         self.forcejump = False
-        self.__forcejumpInput = False
+        self.__autoInput = False
         self.__focused = False
-        
-        
         self.intervals = []
-        
+        self.__skipping = False
+        self.__autoplaying = False
+        self.__autoInterval = None
+        self.__autoplaystep = None
         
         self.mapScriptSpace()
         SogalForm.__init__(self)
@@ -128,10 +131,15 @@ class StoryManager(SogalForm):
       
         taskMgr.doMethodLater(runtime_data.game_settings['jump_span'],self.__jumpCheck,'story_jump_check', sort = 5, priority = 1)  # @UndefinedVariable
         
+        
+        
+        
+        
     def focused(self):
         if not self.__focused:
-            self.accept('mouse1', self.clicked, [1])
-            self.accept('mouse3', self.clicked, [3])
+            self.accept('mouse1', self.input, [1])
+            self.accept('enter', self.input, [1])
+            self.accept('mouse3', self.input, [3])
             self.accept('wheel_up', self.showTextHistory)
             self.accept('escape', self.showMenu)
             self.accept('control',self.setForceJump, [True])
@@ -143,6 +151,7 @@ class StoryManager(SogalForm):
     def defocused(self):
         if self.__focused:
             self.ignore('mouse1')
+            self.ignore('enter')
             self.ignore('mouse3')
             self.ignore('wheel_up')
             self.ignore('escape')
@@ -229,21 +238,28 @@ class StoryManager(SogalForm):
                 itv.finish()
         self.__lock.release()
     
-    def clicked(self,key = 1):
+    def input(self,type = 1):
+        self.stopSkipping()
+        self.stopAutoPlaying()
+        
         if not self.hasFocus():
             return
-        
-        if key == 1 :
+        #left mouse button or enter key
+        if type == 1 :
             if not self.getSceneReady():
                 self.quickfinish()
             else:
                 self.setTextInputReady(True)
-        elif key == 3:
+        #right mouse button
+        elif type == 3:
             self.quickfinish()
             if self.getSceneReady():
                 self.menu.show()
                 
     def showMenu(self):
+        self.stopSkipping()
+        self.stopAutoPlaying()
+        
         self.quickfinish()
         if self.getSceneReady() and not self.forcejump:
             self.menu.show()   
@@ -276,6 +292,16 @@ class StoryManager(SogalForm):
         self.menu.hide()
         self.showTextHistory()
         
+    def startSkippingButton(self):
+        self.menu.hide()
+        self.startSkipping()
+        
+    def autoPlayButton(self):
+        self.menu.hide()
+        if self.__autoplaying:
+            self.stopAutoPlaying()
+        else: self.startAutoPlaying()
+        
     def lastChoice(self):
         ConfirmDialog(text= '要回到上一个选择枝吗？',command= self.__confirmedLastChoice)
         
@@ -304,18 +330,34 @@ class StoryManager(SogalForm):
                 intervals_ready = False
                 break
             
-            
-        if textbox_ready and view_ready and intervals_ready:
-            return True
-        return False
+        scene_ready = textbox_ready and view_ready and intervals_ready
+        
+        if not scene_ready:
+            return False
+        
+        #auto play span
+        if scene_ready and self.__autoplaying:
+            if self.__autoplaystep != self.step:
+                self.__autoplaystep = self.step
+                self.__autoInterval = Wait(runtime_data.game_settings['auto_span'])
+                self.__autoInterval.start()
+                scene_ready = False
+            else:
+                if self.__autoInterval.isPlaying():
+                    scene_ready = False
+                    
+            if self.audioPlayer.isVoicePlaying():
+                scene_ready = False
+        
+        return scene_ready
     
     def getInputReady(self):
         '''define is user's 'next' command given'''
-        textinput_ready = self._inputReady or self.__forcejumpInput
+        textinput_ready = self._inputReady or self.__autoInput
         choice_ready = self.getChoiceReady()
         
-        if self.__forcejumpInput:
-            self.__forcejumpInput = False
+        if self.__autoInput:
+            self.__autoInput = False
         
         if textinput_ready and choice_ready:
             return True
@@ -333,15 +375,16 @@ class StoryManager(SogalForm):
         @param is_user: define if this operation is started by the player 
         '''
         scene_ready = self.getSceneReady()
+            
+            
         if scene_ready and not self.__arrow_shown:
             self.gameTextBox.showArrow()
             self.__arrow_shown = False
-            
         
         if scene_ready and self.getInputReady():
             self.nextCommand()
             
-        if self.forcejump:
+        if self.forcejump or self.__skipping:
             self.quickfinish()
         
     def nextCommand(self):
@@ -483,9 +526,23 @@ class StoryManager(SogalForm):
         '''Process a StoryCommand
         @param command: The StoryCommand to deal with
         '''    
+
         
         def seval(strs):
             return self.scriptEval(strs)
+        
+        
+        #Mark read
+        if not runtime_data.read_text.has_key(command.fileLoc):
+            runtime_data.read_text[command.fileLoc] = {}
+        if not runtime_data.read_text[command.fileLoc].has_key(command.index):
+            already_read = False
+            self.stopSkipping()
+        else: already_read = True
+        runtime_data.read_text[command.fileLoc][command.index] = True
+        if already_read:
+            self.button_skip['state'] = DGG.NORMAL
+        else: self.button_skip['state'] = DGG.DISABLED
         
         self.storyView.clearQuickItems()  #clear out quick items
         
@@ -747,7 +804,7 @@ class StoryManager(SogalForm):
                     if len(temp) > 1:
                         striped = temp[1].strip()
                         if striped:
-                            self.pushText(text = striped, speaker = None, needInput = False)
+                            self.pushText(text = striped, speaker = None, needInput = False, read = already_read)
                             
                 elif comm.startswith('jump '):
                     temp = spaceCutter.split(comm , 1)
@@ -791,15 +848,15 @@ class StoryManager(SogalForm):
                 self.showSelection(choiceList = choiceList, enablesList = enablesList)
             
             else:
-                self.pushText(text = command.text, speaker = name, continuous = continuous)
+                self.pushText(text = command.text, speaker = name, continuous = continuous, read = already_read)
             
         else:
             if hidingtext:
                 self.gameTextBox.hide()    #better to hide the textbox when 'vclear'
-                
+
                 
     
-    def pushText(self, text, speaker = None, continuous = False, needInput = True):
+    def pushText(self, text, speaker = None, continuous = False, needInput = True, read = False):
         
         def translate(t):
             '''
@@ -836,7 +893,7 @@ class StoryManager(SogalForm):
         if final_text:
             self.textHistory.append(final_text, speaker, None)
         
-        self.gameTextBox.pushText(text = final_text, speaker = speaker, continuous = continuous)
+        self.gameTextBox.pushText(text = final_text, speaker = speaker, continuous = continuous,read= read)
         if needInput:
             self._inputReady = False
         self.gameTextBox.show()        
@@ -914,18 +971,19 @@ class StoryManager(SogalForm):
         return eval(str,script_global,runtime_data.RuntimeData.script_space)
     
     def setForceJump(self,forcejump):
-        
         if forcejump:
             if not self.forcejump:
                 self.forcejump = True
                 self.setTextInputReady(True)
+                self.__skipping = False
+                self.stopAutoPlaying()
         else:
             self.forcejump = False
             
     def __jumpCheck(self,task):
         if self.hasFocus():
-            if self.forcejump:
-                self.__forcejumpInput = True
+            if self.forcejump or self.__skipping or self.__autoplaying:
+                self.__autoInput = True
         return task.again
     
     def sceneWait(self,time,hidetextbox = True):
@@ -940,6 +998,26 @@ class StoryManager(SogalForm):
         self.menu.reloadTheme()
         self.textHistory.reloadTheme()
         self.gameTextBox.reloadTheme()
+        
+    def stopSkipping(self):
+        self.__skipping = False
+        if not self.forcejump:
+            self.__autoInput = False
+        
+    def startSkipping(self):
+        self.stopAutoPlaying()
+        self.__skipping = True
+        
+    def startAutoPlaying(self):
+        self.__skipping = False
+        self.__autoplaying = True
+        self.button_auto['text'] = 'Stop Auto'
+        
+    def stopAutoPlaying(self):
+        self.__autoplaying = False
+        if self.__autoInterval:
+            self.__autoInterval.pause()
+        self.button_auto['text'] = 'Auto Play'
         
           
 class StoryCommand(object):
@@ -982,6 +1060,8 @@ class StoryCommand(object):
     def __repr__(self):
         return 'command: ' + str(self.command) + '\ntext: ' + str(self.text) + '\n\n'
 
+_lsdLock = Lock()
+
 def loadScriptData(fileName):
     '''Load the sogal script file (.sogal) 
     returns a list of StoryCommands indicating different commands
@@ -989,6 +1069,8 @@ def loadScriptData(fileName):
     读取sogal脚本，将不同的命令区分成很多StoryCommand但是不做解析，仅仅是简单地区分开命令行和文本行
     参见 game_entities.StoryCommand
     '''
+    
+    _lsdLock.acquire()
     
     fileloc = None
     for pt in ((path,type) for path in runtime_data.game_settings['sogalscrpathes'] for type in runtime_data.game_settings['sogalscrtypes']):
@@ -998,6 +1080,7 @@ def loadScriptData(fileName):
     
     if not fileloc:
         print('file not found: ' + fileName)
+        _lsdLock.release()
         return
    
     fileHandle = open(fileloc)   #for 'from direct.stdpy.file import open', this 'open' is panda3d opereation and not the standard python operation
@@ -1077,6 +1160,7 @@ def loadScriptData(fileName):
                     _current_text += ' ' #用一个空格代替空行嗯
                 else: _current_text += adding
             
+    _lsdLock.release()
     return loaded_list
        
 

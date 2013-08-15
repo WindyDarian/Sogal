@@ -61,6 +61,7 @@ ilia_textbox = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
                 'arrow_scale' : 0.08,
                 'arrow_rightspace' : 0.18,
                 'foreground_color' : (1,1,1,1),
+                'read_fg' : (0.95,0.95,0.95,1),
                 'normal_background_image':None,
                 'normal_height': 0.6,
                 'normal_width': 2.6666667,
@@ -82,6 +83,7 @@ ilia_textbox = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
                 'text_speed': None, #use global text speed setting
                 'text_fadein_duration': 0.3,
                 'text_fadein_style': 'normal',
+
                }
 
 ilia_frame = {'frameColor': (75/255.0,153/255.0,214/255.0,0.75),
@@ -110,6 +112,7 @@ sirius_textbox = {'background_color' : (214/255.0,133/255.0,75/255.0,0.3),
                 'arrow_scale' : 0.08,
                 'arrow_rightspace' : 0.18,
                 'foreground_color' : (1,1,1,1),
+                'read_fg' : (0.95,0.95,0.95,1),
                 'normal_background_image':None,
                 'normal_height': 0.6,
                 'normal_width': 2.6666667,

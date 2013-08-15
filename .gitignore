@@ -216,3 +216,7 @@ pip-log.txt
 
 #custom
 audio/music/God-only-knows-Secrets-of-the-Goddess-.wav
+bin/
+encodings/
+*.p3d
+scenes/prologue/

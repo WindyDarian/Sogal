@@ -35,8 +35,11 @@ from runtime_data import game_settings,RuntimeData
 _fadeinIntervalTable = {}
 _intervals = []
 
-def play_audio(audio,fadein = 0, volume = 1, loop = False):
+def play_audio(audio,fadein = 0, volume = 1, loop = False, manager = None):
     '''plays an AudioSound'''
+    if manager is _voiceMgr:
+        _currentVoices.append(audio)
+    
     if loop:
         audio.setLoop(True)
     if not fadein:
@@ -75,7 +78,7 @@ def play(filepath, manager, loop = False, fadein = 0, volume = 1):
     '''load a sound in background, and play it when loading finishes'''
     loader.loadSound(manager,
                      filepath,
-                     callback = play_audio,extraArgs = [fadein, volume, loop])    
+                     callback = play_audio,extraArgs = [fadein, volume, loop, manager])    
     
 
 def _lerpAdjust(volume,audio):
@@ -86,6 +89,7 @@ _bgmMgr = None
 _envMgr = None
 _voiceMgr = None
 _sfxMgr = None
+_currentVoices = []
 
 class AudioPlayer(DirectObject):
     
@@ -152,8 +156,7 @@ class AudioPlayer(DirectObject):
         self.envMgr.setVolume(game_settings['env_volume'])
         self.voiceMgr.setVolume(game_settings['voice_volume'])
         self.sfxMgr.setVolume(game_settings['sfx_volume'])
-        
-        
+    
     def playVoice(self, path, volume = 1):    
         pathes = game_settings['voicepathes']
         types = game_settings['soundtypes']
@@ -212,6 +215,8 @@ class AudioPlayer(DirectObject):
         RuntimeData.current_env = None
     
     def stopVoice(self):
+        global _currentVoices
+        _currentVoices = []
         self.voiceMgr.stopAllSounds()
     
     def stopSound(self):
@@ -244,6 +249,13 @@ class AudioPlayer(DirectObject):
         env = RuntimeData.current_env
         if env:
             self.playENV(env[0],1,env[2],env[3])
+            
+    def isVoicePlaying(self):
+        for audio in _currentVoices:
+            if audio.status() == AudioSound.PLAYING:
+                return True
+        return False
+        
         
         
     

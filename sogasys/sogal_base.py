@@ -37,7 +37,7 @@ from direct.stdpy import threading
 from direct.stdpy import pickle
 
 from story_manager import StoryManager
-from runtime_data import game_settings,loadDefaultSettings,restoreRuntimeData, getCurrentStyle as rgetStyle, setCurrentStyle as rsetStyle
+from runtime_data import game_settings,read_text,loadDefaultSettings,restoreRuntimeData, getCurrentStyle as rgetStyle, setCurrentStyle as rsetStyle,restoreReadText
 from audio_player import AudioPlayer
 from save_load_form import SaveForm,SavingInfo,LoadForm
 import color_themes
@@ -70,6 +70,8 @@ class SogalBase(ShowBase):
         self.cam.node().getDisplayRegion(0).setActive(0) #disable default camera
         self.audioPlayer = AudioPlayer()
         self.focusStack = [] #a stack that shows windowstop window gets focus
+        
+        self.loadReadText()
         
         dir = os.path.dirname(game_settings['save_folder'])
 
@@ -148,6 +150,8 @@ class SogalBase(ShowBase):
         self.saveForm.reloadMember(fileName)
         self.loadForm.reloadMember(fileName)
         
+        self.saveReadText()
+        
     def load(self,fileName):
         try:
             f = open(game_settings['save_folder']+fileName + game_settings['save_type'],'rb')
@@ -163,6 +167,9 @@ class SogalBase(ShowBase):
         self.audioPlayer.reload()
         self.storyManager = StoryManager()
         
+
+            
+        
     def loadMemory(self,dumped):
         try:
             loaded = pickle.loads(dumped)
@@ -174,8 +181,31 @@ class SogalBase(ShowBase):
         self.audioPlayer.stopAll(0.5)
         restoreRuntimeData(loaded)
         self.audioPlayer.reload()
-        self.storyManager = StoryManager()        
+        self.storyManager = StoryManager()   
+             
+    def loadReadText(self):
+        if not exists(game_settings['save_folder']+ 'read.dat'):
+            return
         
+        try:
+            f = open(game_settings['save_folder']+ 'read.dat','rb')
+            read = pickle.load(f)
+            f.close()
+        except Exception as exp: 
+            print(exp)
+            return
+        
+        restoreReadText(read)
+        
+    def saveReadText(self):
+        try:
+            f = open(game_settings['save_folder']+ 'read.dat','wb')
+            pickle.dump(read_text, f, 2)
+            f.close()
+        except Exception as exp: 
+            print(exp)
+            return
+                
         
     def getStyle(self, sheet = None):
         return rgetStyle(sheet)
@@ -191,4 +221,8 @@ class SogalBase(ShowBase):
         else:
             props.setFullscreen(False)
         self.win.requestProperties(props)
+        
+    def exitfunc(self, *args, **kwargs):
+        self.saveReadText()
+        return ShowBase.exitfunc(self, *args, **kwargs)
     

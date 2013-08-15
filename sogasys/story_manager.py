@@ -98,10 +98,10 @@ class StoryManager(SogalForm):
         self.gameTextBox = GameTextBox()
         self.textHistory = TextHistory()
         
-        self.button_auto = self.menu.addButton(text = 'Auto Play',state = DGG.NORMAL,command = self.autoPlayButton)
-        self.button_lastchoice = self.menu.addButton(text = 'Last Choice',state = DGG.DISABLED,command = self.lastChoice)
-        self.button_skip = self.menu.addButton(text = 'Skip Read',state = DGG.DISABLED,command = self.startSkippingButton)
+        self.button_auto = self.menu.addButton(text = 'Auto',state = DGG.NORMAL,command = self.autoPlayButton)
         self.button_history = self.menu.addButton(text = 'History',state = DGG.NORMAL,command = self.showTextHistoryButton)
+        self.button_skip = self.menu.addButton(text = 'Skip',state = DGG.DISABLED,command = self.startSkippingButton)
+        self.button_lastchoice = self.menu.addButton(text = 'Last Choice',state = DGG.DISABLED,command = self.lastChoice)
         self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED, command = self.save)
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.load)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
@@ -1017,7 +1017,7 @@ class StoryManager(SogalForm):
         self.__autoplaying = False
         if self.__autoInterval:
             self.__autoInterval.pause()
-        self.button_auto['text'] = 'Auto Play'
+        self.button_auto['text'] = 'Auto'
         
           
 class StoryCommand(object):

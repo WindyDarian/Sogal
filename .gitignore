@@ -220,3 +220,4 @@ bin/
 encodings/
 *.p3d
 scenes/prologue/
+savedata/

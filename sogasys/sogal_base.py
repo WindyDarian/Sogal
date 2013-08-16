@@ -23,7 +23,7 @@ Created on Jul 27, 2013
 
 @author: Windy Darian (大地无敌)
 '''
-import os
+import os,sys
 from StringIO import StringIO
 from datetime import datetime
 
@@ -41,6 +41,7 @@ from runtime_data import game_settings,read_text,loadDefaultSettings,restoreRunt
 from audio_player import AudioPlayer
 from save_load_form import SaveForm,SavingInfo,LoadForm
 import color_themes
+from main_menu import MainMenu
  
 class SogalBase(ShowBase): 
     "The ShowBase of the sogal"
@@ -85,6 +86,10 @@ class SogalBase(ShowBase):
         self.accept('load_memory', self.loadMemory)
         self.accept('request_focus', self.grantFocus)
         self.accept('remove_focus', self.cancelFocus)
+        self.accept('return_to_title', self.returnToTitle)
+        self.accept('start_game', self.startGame)
+        self.accept('load_game', self.loadGame)
+        self.accept('exit_game', self.exit)
         
         #Font setting
         self.textFont = color_themes.default_font
@@ -96,8 +101,18 @@ class SogalBase(ShowBase):
         self.saveForm = SaveForm()
         self.loadForm = LoadForm()
         
-        self.storyManager = StoryManager()
-    
+        self.mainMenu = None
+        self.storyManager = None
+        
+        
+    def initMainMenu(self,customMainMenu = None):
+        '''Call this to initialize and show main menu'''
+        
+        if not self.mainMenu:
+            if not customMainMenu:
+                self.mainMenu = MainMenu()
+            else: self.mainMenu = customMainMenu
+        self.mainMenu.open()
     
     def isStarted(self):
         return bool(self.storyManager)
@@ -160,8 +175,11 @@ class SogalBase(ShowBase):
         except Exception as exp: 
             print(exp)
             return
-            
-        self.storyManager.destroy()
+        
+        if self.mainMenu:
+            self.mainMenu.close()
+        if self.storyManager:
+            self.storyManager.destroy()
         self.audioPlayer.stopAll(0.5)
         restoreRuntimeData(savedData)
         self.audioPlayer.reload()
@@ -225,4 +243,28 @@ class SogalBase(ShowBase):
     def exitfunc(self, *args, **kwargs):
         self.saveReadText()
         return ShowBase.exitfunc(self, *args, **kwargs)
+    
+    def startGame(self,scene):
+        if self.mainMenu:
+            self.mainMenu.close()
+        if self.storyManager:
+            self.storyManager.destroy()
+        self.audioPlayer.stopAll(0.5)
+        self.storyManager = StoryManager()
+        self.storyManager.beginScene(scene)
+        
+    def loadGame(self):
+        self.loadForm.show()
+        
+    def exit(self):
+        sys.exit()
+        
+    def returnToTitle(self):
+        if self.storyManager:
+            self.storyManager.destroy()
+        self.audioPlayer.stopAll(0.5)
+        if self.mainMenu:
+            self.mainMenu.open()
+            
+        
     

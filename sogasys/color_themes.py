@@ -105,6 +105,17 @@ ilia_button = {'frameColor':((42/255.0,195/255.0,239/255.0,0.75),
                 
               }
 
+ilia_mainMenuButton = {'frameColor':((42/255.0,195/255.0,239/255.0,0.75),
+                             (1.0,1.0,1.0,1),
+                             (72/255.0,235/255.0,255/255.0,0.95),
+                             (0.5,0.5,0.5,0.75),),
+                'text_scale':0.07,
+                'text_fg':(1,1,1,1),
+                'text_shadow':(0.5,0.5,0.5,1),
+                'relief': DGG.FLAT
+                
+              }
+
 ilia_bgColor = (69/255.0,118/255.0,195/255.0,1)
 
 sirius_textbox = {'background_color' : (214/255.0,133/255.0,75/255.0,0.3),
@@ -156,6 +167,17 @@ sirius_button = {'frameColor':((239/255.0,195/255.0,46/255.0,0.75),
                 
                 }
 
+sirius_mainMenuButton = {'frameColor':((239/255.0,195/255.0,46/255.0,0.75),
+                               (1,1,1,1),
+                               (255/255.0,146/255.0,236/255.0,1),
+                               (0.5,0.5,0.5,0.75),),
+                 'text_scale':0.07,
+                 'text_fg':(1,1,1,1),
+                 'text_shadow':(0.5,0.5,0.5,1),
+                 'relief': DGG.FLAT
+                
+                }
+
 sirius_bgColor = (188/255.0,105/255.0,63/255.0,1)
 
 
@@ -167,6 +189,7 @@ ilia = {'text':system_text,
         'hardframe':ilia_hardframe,
         'textbox':ilia_textbox,
         'bgColor':ilia_bgColor,
+        'mainMenuButton' :ilia_mainMenuButton,
         }
 
 sirius = {'text':system_text,
@@ -175,7 +198,8 @@ sirius = {'text':system_text,
           'frame':sirius_frame,
           'hardframe': sirius_hardframe,
           'textbox':sirius_textbox,
-          'bgColor': sirius_bgColor
+          'bgColor': sirius_bgColor,
+          'mainMenuButton':sirius_mainMenuButton,
          }
 
 styles = {'ilia':ilia,

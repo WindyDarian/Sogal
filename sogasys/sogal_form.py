@@ -31,7 +31,7 @@ import direct.gui.DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectButton import DirectButton
 from direct.gui.OnscreenText import OnscreenText
-
+from direct.stdpy.threading import Lock
 from direct.interval.LerpInterval import LerpFunc,LerpPosInterval
 from direct.interval.FunctionInterval import Func
 from direct.interval.IntervalGlobal import Sequence,Parallel,Wait
@@ -61,9 +61,9 @@ class SogalForm(NodePath, DirectObject):
                  backgroundColor = None,
                  enableMask = False,
                  noFocus = False,
-                 onShowing = None,
-                 onHiding = None,
-                 onEventExtraArgs = [],
+                 shownFunc = None,
+                 hiddenFunc = None,
+                 funcExtraArgs = [],
                  ):
         '''if fading enabled, it will apply a fading effect on show()&hide()
         Important Attributes:
@@ -81,9 +81,10 @@ class SogalForm(NodePath, DirectObject):
         self.__maskEnabled = enableMask
         self.__noFocus = noFocus
         
-        self.__onShowing = onShowing
-        self.__onHiding = onHiding
-        self.__onEventExtraArgs = onEventExtraArgs
+        self.__shownFunc = shownFunc
+        self.__hiddenFunc = hiddenFunc
+        self.__eventExtraArgs = funcExtraArgs
+        
         
         self.__mask = None
         if self.__maskEnabled:
@@ -95,7 +96,7 @@ class SogalForm(NodePath, DirectObject):
         self.__backgroundColor = backgroundColor
         self.__bgPath = None
         self.__imagePath = None
-        
+        self.__hidden = True
 
         
         NodePath.__init__(self,self.__class__.__name__)
@@ -147,11 +148,15 @@ class SogalForm(NodePath, DirectObject):
         self.ignoreAll()
         self.removeFocus()
         self.removeNode()
+        
+
 
         
     def show(self):
-        if self.__onShowing:
-            self.__onShowing(*self.__onEventExtraArgs)
+        if not self.__hidden:
+            return
+        self.__hidden = False
+        
         
         if self.__mask or self.__bgPath:
             if self.__mask:
@@ -164,6 +169,8 @@ class SogalForm(NodePath, DirectObject):
         if not (self.__fading and self.__fadingDuration):
             NodePath.show(self)
             self.requestFocus()
+            if self.__shownFunc:
+                self.__shownFunc(*self.__eventExtraArgs)
         else:
             NodePath.show(self)
             self.requestFocus()
@@ -181,12 +188,16 @@ class SogalForm(NodePath, DirectObject):
                 parallel.append(LerpFunc(_modifyAlphaScale,self.__fadingDuration,0,1,blendType = 'easeOut',extraArgs = [self.__bgPath]))
             
             self.__currentInterval = Sequence(parallel)
+            if self.__shownFunc:
+                self.__currentInterval.append(Func(self.__shownFunc, *self.__eventExtraArgs))
             self.__currentInterval.start()
             
     
     def hide(self):
-        if self.__onHiding:
-            self.__onHiding(*self.__onEventExtraArgs)
+        if self.__hidden:
+            return
+        self.__hidden = True
+
         
         if not (self.__fading and self.__fadingDuration):
             NodePath.hide(self)
@@ -195,6 +206,8 @@ class SogalForm(NodePath, DirectObject):
                 self.__mask.hide()
             if self.__bgPath:
                 self.__bgPath.hide()
+            if self.__hiddenFunc:
+                self.__hiddenFunc(*self.__eventExtraArgs)
         else:
             #self.removeFocus()
             if self.__currentInterval:
@@ -217,6 +230,9 @@ class SogalForm(NodePath, DirectObject):
                 self.__currentInterval.append(Func(self.__mask.hide))
             if self.__bgPath:
                 self.__currentInterval.append(Func(self.__bgPath.hide))
+            if self.__hiddenFunc:
+                self.__currentInterval.append(Func(self.__hiddenFunc,*self.__eventExtraArgs))
+
             self.__currentInterval.start()
             
     def setPos(self, *args, **kwargs):

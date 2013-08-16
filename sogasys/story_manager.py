@@ -67,6 +67,10 @@ class StoryManager(SogalForm):
     _currentDump = None
     __destroyed = False
     
+
+
+    
+    
     def __init__(self):
         self.step = 0    #shows how many commands line it had run
         self.scrStack = []
@@ -106,7 +110,7 @@ class StoryManager(SogalForm):
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.load)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
-        
+        self.button_quickload = self.menu.addButton(text = 'Title',state = DGG.NORMAL,command = self.returnToTitle)
         
         self._inputReady = True
         self.__arrow_shown = False
@@ -287,6 +291,12 @@ class StoryManager(SogalForm):
             
     def quickLoad(self):
         ConfirmDialog(text= '要读取吗？',command= self.__confirmedQuickLoad)
+        
+    def returnToTitle(self):
+        ConfirmDialog(text= '回到标题界面？',command= self.__confirmedReturnToTitle)
+    
+    def __confirmedReturnToTitle(self):
+        messenger.send('return_to_title')
         
     def showTextHistoryButton(self):
         self.menu.hide()

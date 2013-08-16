@@ -24,13 +24,14 @@ SOGAL(七海美少女游戏引擎, Seven Ocean Galgame Engine)的主入口点，
 @author: 大地无敌
 '''
 import sys 
+
 reload(sys) 
 sys.setdefaultencoding('utf-8')
 
 
 from sogasys.sogal_base import SogalBase
 from sogasys.runtime_data import game_settings,loadDefaultSettings
-
+from sogasys.main_menu import MainMenu
  
 class SogalEntry(SogalBase): 
     "游戏框架，继承自ShowBase"
@@ -41,8 +42,7 @@ class SogalEntry(SogalBase):
         except Exception as exp: print(exp)
         SogalBase.__init__(self)
 
-        #self.storyManager.beginScene('prologue/init')
-        self.storyManager.beginScene('ifselectionjumptest')
+        self.initMainMenu()
 
-if __name__ == '__main__':
-    SogalEntry().run()
+
+SogalEntry().run()

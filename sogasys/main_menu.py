@@ -88,7 +88,7 @@ class MainMenu(SogalForm):
     def exit(self):
         if self.closed:
             return
-        messenger.send('exit')
+        messenger.send('exit_game')
             
     def close(self):
         '''Called by SogalBase. Do something and hide, you will need it if you want a more complex main menu'''

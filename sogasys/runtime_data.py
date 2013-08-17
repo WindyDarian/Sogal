@@ -31,6 +31,9 @@ from direct.stdpy import pickle
 
 import color_themes
 
+MAX_QUICKSAVE = 10
+MAX_AUTOSAVE = 10
+
 #game settings, this saves in a sconf file
 game_settings = {'text_speed': 30, #文字速度
                  'full_screen': True, 
@@ -59,6 +62,10 @@ game_settings = {'text_speed': 30, #文字速度
                  'sfxpathes':  ['audio/sound/','audio/',''],
                  'soundtypes': ['.wav','.ogg',''],
                 }
+
+global_data = {'currentAutosave':0,
+              'currentQuicksave':0,
+             }
 
 read_text = {}
 
@@ -164,4 +171,9 @@ def restoreReadText(readed):
     '''restore the read text'''
     for key in readed:
         read_text[key] = readed[key]
+        
+def restoreGlobalData(readed):
+    '''restore the global data'''
+    for key in readed:
+        global_data[key] = readed[key]
     

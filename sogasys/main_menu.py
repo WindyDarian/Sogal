@@ -94,7 +94,7 @@ class MainMenu(SogalForm):
         '''Called by SogalBase. Do something and hide, you will need it if you want a more complex main menu'''
         self.fadinglock.acquire()
         
-        if self.closed and not self.onfading:
+        if self.closed:
             return
         SogalForm.hide(self)
         self.closed = True

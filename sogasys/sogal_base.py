@@ -33,15 +33,43 @@ from direct.showbase.ShowBase import ShowBase
 
 from direct.filter.FilterManager import FilterManager
 from direct.stdpy.file import open,exists
-from direct.stdpy import threading
+from direct.stdpy.threading import Lock
 from direct.stdpy import pickle
 
 from story_manager import StoryManager
 from runtime_data import game_settings,read_text,loadDefaultSettings,restoreRuntimeData, getCurrentStyle as rgetStyle, setCurrentStyle as rsetStyle,restoreReadText
+from runtime_data import global_data,restoreGlobalData, MAX_AUTOSAVE, MAX_QUICKSAVE
 from audio_player import AudioPlayer
 from save_load_form import SaveForm,SavingInfo,LoadForm
 import color_themes
 from main_menu import MainMenu
+
+
+
+_savingloadinglock = Lock()
+def save_data(file_name, data, mode = 2):
+    _savingloadinglock.acquire()
+    try:
+        f = open(file_name,'wb')
+        pickle.dump(data, f, mode)
+        f.close()
+    except Exception as exp: 
+        raise exp
+    finally:
+        _savingloadinglock.release()
+        
+def load_data(file_name):
+    _savingloadinglock.acquire()
+    try:
+        f = open(file_name,'rb')
+        loaded = pickle.load(f)
+        f.close()
+    except Exception as exp: 
+        raise exp
+    finally:
+        _savingloadinglock.release()
+    
+    return loaded
  
 class SogalBase(ShowBase): 
     "The ShowBase of the sogal"
@@ -73,6 +101,7 @@ class SogalBase(ShowBase):
         self.focusStack = [] #a stack that shows windowstop window gets focus
         
         self.loadReadText()
+        self.loadGlobalData()
         
         dir = os.path.dirname(game_settings['save_folder'])
 
@@ -90,6 +119,9 @@ class SogalBase(ShowBase):
         self.accept('start_game', self.startGame)
         self.accept('load_game', self.loadGame)
         self.accept('exit_game', self.exit)
+        self.accept('quick_save', self.quickSave)
+        self.accept('quick_load', self.quickLoad)
+        self.accept('auto_save', self.autoSave)
         
         #Font setting
         self.textFont = color_themes.default_font
@@ -103,6 +135,7 @@ class SogalBase(ShowBase):
         
         self.mainMenu = None
         self.storyManager = None
+     
         
         
     def initMainMenu(self,customMainMenu = None):
@@ -154,26 +187,41 @@ class SogalBase(ShowBase):
         self.backgroundImage = OnscreenImage(parent=aspect2dp, image=path)  # @UndefinedVariable
         
     def save(self,saving,fileName,message):
+        
         info = SavingInfo(message,datetime.now())
-        f = open(game_settings['save_folder']+fileName + game_settings['save_type'],'wb')
-        pickle.dump(saving, f, 2)
-        f.close()
-                
-        f1 = open(game_settings['save_folder']+fileName + game_settings['save_infotype'],'wb')
-        pickle.dump(info, f1, 2)
-        f1.close()
+        try:
+            save_data(game_settings['save_folder'] + fileName + game_settings['save_type'], saving)
+            save_data(game_settings['save_folder'] + fileName + game_settings['save_infotype'], info)
+        except Exception as error:
+            print(error)
+            return
+        
         self.saveForm.reloadMember(fileName)
         self.loadForm.reloadMember(fileName)
         
         self.saveReadText()
+        self.saveGlobalData()
+        
+    def quickSave(self, saving, message):
+        global_data['currentQuicksave'] += 1
+        if global_data['currentQuicksave'] > MAX_QUICKSAVE:
+            global_data['currentQuicksave'] = 1
+        currentqs = global_data['currentQuicksave']
+        self.save(saving, 'quick_save' + str(currentqs), message)
+        
+    def autoSave(self, saving, message):
+        global_data['currentAutosave'] += 1
+        if global_data['currentAutosave'] > MAX_AUTOSAVE:
+            global_data['currentAutosave'] = 1
+        currentas = global_data['currentAutosave']
+        self.save(saving, 'auto_save' + str(currentas), message)
         
     def load(self,fileName):
+        
         try:
-            f = open(game_settings['save_folder']+fileName + game_settings['save_type'],'rb')
-            savedData = pickle.load(f)
-            f.close()
-        except Exception as exp: 
-            print(exp)
+            savedData = load_data(game_settings['save_folder'] + fileName + game_settings['save_type'])
+        except Exception as error:
+            print(error)
             return
         
         if self.mainMenu:
@@ -185,8 +233,12 @@ class SogalBase(ShowBase):
         self.audioPlayer.reload()
         self.storyManager = StoryManager()
         
-
-            
+    def quickLoad(self):
+        if self.hasQuickData():
+            self.load('quick_save' + str(global_data['currentQuicksave']))
+        
+    def hasQuickData(self):
+        return exists(game_settings['save_folder'] + 'quick_save' + str(global_data['currentQuicksave']) + game_settings['save_type'])
         
     def loadMemory(self,dumped):
         try:
@@ -204,26 +256,34 @@ class SogalBase(ShowBase):
     def loadReadText(self):
         if not exists(game_settings['save_folder']+ 'read.dat'):
             return
-        
         try:
-            f = open(game_settings['save_folder']+ 'read.dat','rb')
-            read = pickle.load(f)
-            f.close()
-        except Exception as exp: 
+            read = load_data(game_settings['save_folder']+ 'read.dat')
+        except Exception as exp:
             print(exp)
             return
-        
         restoreReadText(read)
+        
+    def loadGlobalData(self):
+        if not exists(game_settings['save_folder']+ 'global.dat'):
+            return
+        try:
+            gdata = load_data(game_settings['save_folder']+ 'global.dat')
+        except Exception as exp:
+            print(exp)
+            return
+        restoreGlobalData(gdata)
         
     def saveReadText(self):
         try:
-            f = open(game_settings['save_folder']+ 'read.dat','wb')
-            pickle.dump(read_text, f, 2)
-            f.close()
+            save_data(game_settings['save_folder']+ 'read.dat', read_text)
         except Exception as exp: 
             print(exp)
-            return
-                
+            
+    def saveGlobalData(self):
+        try:
+            save_data(game_settings['save_folder']+ 'global.dat', global_data)
+        except Exception as exp: 
+            print(exp)
         
     def getStyle(self, sheet = None):
         return rgetStyle(sheet)
@@ -242,6 +302,7 @@ class SogalBase(ShowBase):
         
     def exitfunc(self, *args, **kwargs):
         self.saveReadText()
+        self.saveGlobalData()
         return ShowBase.exitfunc(self, *args, **kwargs)
     
     def startGame(self,scene):
@@ -265,6 +326,7 @@ class SogalBase(ShowBase):
         self.audioPlayer.stopAll(0.5)
         if self.mainMenu:
             self.mainMenu.open()
+            
             
         
     

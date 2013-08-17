@@ -206,6 +206,10 @@ elif condition     你懂得，单独占一行命令
 else          你懂得，单独占一行命令
 end 结束当前if块 单独占一行命令
 
+存储：
+autosave (-info)
+在该处保存一个autosave 可以自定义信息！
+
 
 未实现（加#表示暂不忙实现）：
 

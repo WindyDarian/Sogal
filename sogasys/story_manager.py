@@ -106,11 +106,11 @@ class StoryManager(SogalForm):
         self.button_history = self.menu.addButton(text = 'History',state = DGG.NORMAL,command = self.showTextHistoryButton)
         self.button_skip = self.menu.addButton(text = 'Skip',state = DGG.DISABLED,command = self.startSkippingButton)
         self.button_lastchoice = self.menu.addButton(text = 'Last Choice',state = DGG.DISABLED,command = self.lastChoice)
-        self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED, command = self.save)
-        self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.load)
-        self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSave)
-        self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoad)
-        self.button_quickload = self.menu.addButton(text = 'Title',state = DGG.NORMAL,command = self.returnToTitle)
+        self.button_save = self.menu.addButton(text = 'Save',state = DGG.DISABLED, command = self.saveButton)
+        self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.loadButton)
+        self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSaveButton)
+        self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoadButton)
+        self.button_title = self.menu.addButton(text = 'Title',state = DGG.NORMAL,command = self.returnToTitle)
         
         self._inputReady = True
         self.__arrow_shown = False
@@ -272,24 +272,24 @@ class StoryManager(SogalForm):
         if self.getSceneReady() and not self.forcejump:
             self.textHistory.show()
                 
-    def save(self):
+    def saveButton(self):
         self.menu.hide()
         base.saveForm.setData(self._currentDump, self._currentMessage)
         base.saveForm.show()
         
-    def load(self):
+    def loadButton(self):
         self.menu.hide()
         base.loadForm.show()
             
-    def quickSave(self):
+    def quickSaveButton(self):
         '''quicksave the data'''
         self.menu.hide()
         self.button_quicksave['state'] = DGG.DISABLED
         self.button_quickload['state'] = DGG.DISABLED
         if self._currentDump:
-            messenger.send('save_data',[self._currentDump,'quick_save',self._currentMessage])  # @UndefinedVariable
+            messenger.send('quick_save', [self._currentDump,self._currentMessage])
             
-    def quickLoad(self):
+    def quickLoadButton(self):
         ConfirmDialog(text= '要读取吗？',command= self.__confirmedQuickLoad)
         
     def returnToTitle(self):
@@ -316,12 +316,16 @@ class StoryManager(SogalForm):
         ConfirmDialog(text= '要回到上一个选择枝吗？',command= self.__confirmedLastChoice)
         
     def __confirmedQuickLoad(self):
-        if exists(runtime_data.game_settings['save_folder'] + 'quick_save' + runtime_data.game_settings['save_type'] ):
-            messenger.send('load_data',['quick_save'])  # @UndefinedVariable        
+            messenger.send('quick_load')  # @UndefinedVariable        
     
     def __confirmedLastChoice(self):
         if runtime_data.RuntimeData.last_choice:
             messenger.send('load_memory',[runtime_data.RuntimeData.last_choice])            # @UndefinedVariable
+            
+    def autoSave(self,info = ''):
+        if not info:
+            info = self._currentMessage
+        messenger.send('auto_save',[self._currentDump,info])
     
     def getSceneReady(self):
         '''Get if the scene is ready'''
@@ -505,7 +509,7 @@ class StoryManager(SogalForm):
             #runtime_data.RuntimeData.command_ptr = self.scrPtr
         
         
-        if exists(runtime_data.game_settings['save_folder'] + 'quick_save.dat'):
+        if base.hasQuickData():
             self.button_quickload['state'] = DGG.NORMAL 
             
         if runtime_data.RuntimeData.last_choice:
@@ -831,6 +835,13 @@ class StoryManager(SogalForm):
                 elif comm.startswith('theme '):
                     temp = spaceCutter.split(comm , 1)
                     self.reloadTheme(temp[1].strip())
+               
+                elif comm == 'autosave' or comm.startswith('autosave '):
+                    temp = spaceCutter.split(comm , 1)
+                    if len(temp) > 1:
+                        self.autoSave(temp[1])
+                    else:
+                        self.autoSave()
         
                 else: 
                     if comm:

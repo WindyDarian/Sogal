@@ -1,7 +1,7 @@
 #这个应该和selectionjumptest效果一样 不过引入了if!
 #不再像汇编语言一样讨厌了！
 @mark:start
-@bg testbg2,qp luc_naked_trueheart -0.33 0
+@bg testbg2,qp luc_naked_trueheart -0.33 0,autosave
 D4的路西菲尔：
 「现在是做出抉择的时间呢……」
 
@@ -17,7 +17,7 @@ D4的路西菲尔：
 D4的路西菲尔：
 「从这里跳转到各种测试试试？」
 
-    @choice
+    @choice,autosave
 图像测试(jump)
 脚本测试(jump)
 音效测试(jump)

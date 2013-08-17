@@ -415,7 +415,7 @@ class StoryManager(SogalForm):
         if self.__destroyed:
             return
         
-        self.step += 1 
+         
         self.presave()
         self._currentDump = copy.deepcopy(runtime_data.RuntimeData)
         
@@ -515,14 +515,13 @@ class StoryManager(SogalForm):
         if runtime_data.RuntimeData.last_choice:
             self.button_lastchoice['state'] = DGG.NORMAL 
             
-        if self.gameTextBox.newText:
-            runtime_data.RuntimeData.latest_text = self.gameTextBox.newText
-        if runtime_data.RuntimeData.latest_text:
-            self._currentMessage = runtime_data.RuntimeData.latest_text
+
             
             
         if self._currentDump: 
             self._enableSavingButton()
+            
+        self.step += 1  #mark step
     
     def goto(self, target):
         '''Jump to a mark'''
@@ -540,7 +539,7 @@ class StoryManager(SogalForm):
         '''Process a StoryCommand
         @param command: The StoryCommand to deal with
         '''    
-
+        
         
         def seval(strs):
             return self.scriptEval(strs)
@@ -572,6 +571,8 @@ class StoryManager(SogalForm):
                                             #used for disable cross voice of different command lines
                                             #but enable one command line with multiple voices
                                             
+        autoSaving = False                  #Mark if autosaving is needed at the end of this step
+        autoSavingInfo = ''
         
         #read command line
         if command.command:
@@ -837,11 +838,11 @@ class StoryManager(SogalForm):
                     self.reloadTheme(temp[1].strip())
                
                 elif comm == 'autosave' or comm.startswith('autosave '):
-                    temp = spaceCutter.split(comm , 1)
-                    if len(temp) > 1:
-                        self.autoSave(temp[1])
-                    else:
-                        self.autoSave()
+                    if self.step > 0:
+                        autoSaving = True
+                        temp = spaceCutter.split(comm , 1)
+                        if len(temp) > 1:
+                            autoSavingInfo = temp[1]
         
                 else: 
                     if comm:
@@ -874,6 +875,17 @@ class StoryManager(SogalForm):
         else:
             if hidingtext:
                 self.gameTextBox.hide()    #better to hide the textbox when 'vclear'
+                
+        if self.gameTextBox.newText:
+            runtime_data.RuntimeData.latest_text = self.gameTextBox.newText
+        if runtime_data.RuntimeData.latest_text:
+            self._currentMessage = runtime_data.RuntimeData.latest_text
+        
+        #Autosave
+        if autoSaving:
+            if autoSavingInfo:
+                self.autoSave(autoSavingInfo)
+            else: self.autoSave()
 
                 
     

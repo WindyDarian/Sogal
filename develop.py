@@ -24,7 +24,6 @@ SOGAL(七海美少女游戏引擎, Seven Ocean Galgame Engine)的主入口点，
 @author: 大地无敌
 '''
 import sys 
-
 reload(sys) 
 sys.setdefaultencoding('utf-8')
 

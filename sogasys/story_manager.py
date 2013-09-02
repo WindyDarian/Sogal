@@ -46,6 +46,7 @@ from story_menu_bar import StoryMenuBar
 from sogal_form import SogalForm, ConfirmDialog, SogalDialog
 from text_history import TextHistory
 import runtime_data
+from sogasys.safeprint import safeprint
 
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
@@ -497,7 +498,7 @@ class StoryManager(SogalForm):
                                 continue                        
                 
                 #ignore end
-                elif comline == 'end' and comline.startswith('end '):
+                elif comline == 'end' or comline.startswith('end '):
                     handled = True
                 
                                      
@@ -533,7 +534,7 @@ class StoryManager(SogalForm):
                     if markText == target:
                         self.nextPtr = i    #Solved: #this is not a good solution but this method runs at 'nextCommand', and ths scrPtr would plus 1 afterwards
                         return
-        print 'unable to find mark'
+        safeprint('unable to find mark')
 
     def processCommand(self,command):
         '''Process a StoryCommand
@@ -614,7 +615,7 @@ class StoryManager(SogalForm):
                     elif len(temp)>=3:
                         self.gameTextBox.setTextBoxProperty(temp[1],seval(temp[2]))
                     else:
-                        print('Not enough: ' + comm)
+                        safeprint('Not enough: ' + comm)
                         
                 #背景设置命令
                 elif comm.startswith('bg '):
@@ -846,7 +847,7 @@ class StoryManager(SogalForm):
         
                 else: 
                     if comm:
-                        print('extra command: ' + comm)
+                        safeprint('extra command: ' + comm)
                         
         if command.text:
             if is_script:
@@ -947,7 +948,7 @@ class StoryManager(SogalForm):
         if script:
             self.runScript(script)
         else:
-            print "file not find: "+ fileName
+            safeprint("file not find: "+ fileName) 
         
     def beginScene(self,fileName):
         '''Load target .sogal script file and go to that file.
@@ -1112,7 +1113,7 @@ def loadScriptData(fileName):
             break
     
     if not fileloc:
-        print('file not found: ' + fileName)
+        safeprint('file not found: ' + fileName)
         _lsdLock.release()
         return
    
@@ -1146,7 +1147,6 @@ def loadScriptData(fileName):
             return
         else:
             loaded_list.append(StoryCommand(command = _current_command, text = _current_text,index= _current_index, fileLoc= fileloc))
-            #print (_current_index,fileloc,_current_text,_current_command)
             _current_index += 1 
             _current_command = None
             _current_text = None

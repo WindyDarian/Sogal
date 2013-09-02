@@ -36,6 +36,7 @@ from direct.gui.OnscreenText import OnscreenText
 import runtime_data 
 import color_themes
 from sogal_text import SogalText
+from safeprint import safeprint
     
 class GameTextBoxStyle(object):
     '''表示对话框种类的枚举集合
@@ -240,7 +241,7 @@ class GameTextBox(DirectObject, NodePath):
         self.newText = text
         
         #This is *very* useful
-        print(self.newText)
+        safeprint(self.newText)
         
         if not read:
             self.currentTextLabel.appendText(self.newText, speed = text_speed , newLine = (not continuous) , fadein = fadein, 
@@ -386,7 +387,7 @@ class GameTextBox(DirectObject, NodePath):
             self._currentStyle = GameTextBoxStyle.Normal
         elif style.strip() == 'large':
             self._currentStyle = GameTextBoxStyle.Large
-        else: print('Unknown style: ' + str(style))
+        else: safeprint('Unknown style: ' + str(style))
         self.properties['style'] = style
         
         

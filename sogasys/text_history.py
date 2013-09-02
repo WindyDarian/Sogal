@@ -93,7 +93,6 @@ class TextHistory(SogalForm):
         
         self.labels.append(label)
         self.resetCanvasSize()
-        #print len(self.labels)
             
     def removeHead(self):
         removing = self.labels.pop(0)

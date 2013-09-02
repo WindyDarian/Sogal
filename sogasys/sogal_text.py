@@ -262,9 +262,7 @@ class SogalText(NodePath):
             textMaker.setText(word)
             
         width = textMaker.getWidth()
-        #print 'w=' + str(width)
         height = textMaker.getHeight()
-        #print 'h=' + str(height)
         node = textMaker.generate()
         textpath = NodePath('text_path')
         textpath.attachNewNode(node)
@@ -275,7 +273,6 @@ class SogalText(NodePath):
         
         active_line.append(textpath, width, height,self.spacing, fadein = fadein, fadeinType = fadeinType)
         active_line.setPos(0,0,-(self.currentHeight + active_line.getLineHeight()) )
-        #active_line.setPos(0,0,-self.currentHeight )
           
     def startLine(self):
         if self.lines:

@@ -57,7 +57,6 @@ class LayoutBase(NodePath):
         self.resort()
         
     def __getslice__(self, i, j):
-        print i,j
         return self._itemlist[i:j]
 
     def __setslice__(self, i, j, value):

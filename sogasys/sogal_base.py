@@ -42,6 +42,7 @@ from runtime_data import global_data,restoreGlobalData, MAX_AUTOSAVE, MAX_QUICKS
 from audio_player import AudioPlayer
 from save_load_form import SaveForm,SavingInfo,LoadForm
 import color_themes
+from safeprint import safeprint
 from main_menu import MainMenu
 
 
@@ -193,7 +194,7 @@ class SogalBase(ShowBase):
             save_data(game_settings['save_folder'] + fileName + game_settings['save_type'], saving)
             save_data(game_settings['save_folder'] + fileName + game_settings['save_infotype'], info)
         except Exception as error:
-            print(error)
+            safeprint(error)
             return
         
         self.saveForm.reloadMember(fileName)
@@ -221,7 +222,7 @@ class SogalBase(ShowBase):
         try:
             savedData = load_data(game_settings['save_folder'] + fileName + game_settings['save_type'])
         except Exception as error:
-            print(error)
+            safeprint(error)
             return
         
         if self.mainMenu:
@@ -244,7 +245,7 @@ class SogalBase(ShowBase):
         try:
             loaded = pickle.loads(dumped)
         except Exception as exp: 
-            print(exp)
+            safeprint(exp)
             return
         
         self.storyManager.destroy()
@@ -259,7 +260,7 @@ class SogalBase(ShowBase):
         try:
             read = load_data(game_settings['save_folder']+ 'read.dat')
         except Exception as exp:
-            print(exp)
+            safeprint(exp)
             return
         restoreReadText(read)
         
@@ -269,7 +270,7 @@ class SogalBase(ShowBase):
         try:
             gdata = load_data(game_settings['save_folder']+ 'global.dat')
         except Exception as exp:
-            print(exp)
+            safeprint(exp)
             return
         restoreGlobalData(gdata)
         
@@ -277,13 +278,13 @@ class SogalBase(ShowBase):
         try:
             save_data(game_settings['save_folder']+ 'read.dat', read_text)
         except Exception as exp: 
-            print(exp)
+            safeprint(exp)
             
     def saveGlobalData(self):
         try:
             save_data(game_settings['save_folder']+ 'global.dat', global_data)
         except Exception as exp: 
-            print(exp)
+            safeprint(exp)
         
     def getStyle(self, sheet = None):
         return rgetStyle(sheet)

@@ -1,3 +1,4 @@
+window_title 'Seven Ocean GALgame Engine'
 text_speed 20
 full_screen False
 screen_resolution (1280,720)

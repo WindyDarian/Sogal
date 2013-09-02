@@ -9,7 +9,7 @@ audio-library-name p3openal_audio
 #want-directtools #t
 #want-tk #t
 
-window-title Sogal
+window-title ~Windynya~
 
 #win-size 1280 720
 

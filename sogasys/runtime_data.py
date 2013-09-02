@@ -35,7 +35,8 @@ MAX_QUICKSAVE = 10
 MAX_AUTOSAVE = 10
 
 #game settings, this saves in a sconf file
-game_settings = {'text_speed': 30, #文字速度
+game_settings = {'window_title': 'Sogal',
+                 'text_speed': 30, #文字速度
                  'full_screen': True, 
                  'screen_resolution': (1280,720),  
                  'music_volume': 0.75,

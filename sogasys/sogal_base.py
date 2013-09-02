@@ -91,7 +91,7 @@ class SogalBase(ShowBase):
         props.setSize(int(game_settings['screen_resolution'][0]),int(game_settings['screen_resolution'][1]))
         if game_settings['full_screen'] and not props.getFullscreen():
             props.setFullscreen(True)
-        props.setTitle('SOGAL')
+        props.setTitle(game_settings['window_title'])
         self.win.requestProperties(props)
         
         self.cam2dp.node().getDisplayRegion(0).setSort(-20)  #Set render2dp to background

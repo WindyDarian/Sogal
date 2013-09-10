@@ -44,7 +44,7 @@ from save_load_form import SaveForm,SavingInfo,LoadForm
 import color_themes
 from safeprint import safeprint
 from main_menu import MainMenu
-
+from config_form import ConfigForm
 
 
 _savingloadinglock = Lock()
@@ -131,12 +131,20 @@ class SogalBase(ShowBase):
         self.setBackgroundColor(0,0,0,1); 
         self.backgroundImage = None
             
-        self.saveForm = SaveForm()
-        self.loadForm = LoadForm()
+
         
         self.mainMenu = None
         self.storyManager = None
-     
+        
+    def initGameWindows(self):
+        '''
+        Initializing the common save, load and config forms
+        if you want better customization with them,
+        override this!
+        '''
+        self.saveForm = SaveForm()
+        self.loadForm = LoadForm() 
+        self.configForm = ConfigForm()
         
         
     def initMainMenu(self,customMainMenu = None):

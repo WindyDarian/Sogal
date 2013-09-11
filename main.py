@@ -37,9 +37,7 @@ class SogalEntry(SogalBase):
     "游戏框架，继承自ShowBase"
 
     def __init__(self):
-        try:
-            loadDefaultSettings('config/default.sconf')
-        except Exception as exp: print(exp)
+
         SogalBase.__init__(self)
 
         mainMenu = MainMenu('prologue/init')

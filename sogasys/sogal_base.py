@@ -37,15 +37,15 @@ from direct.stdpy.threading import Lock
 from direct.stdpy import pickle
 
 from story_manager import StoryManager
-from runtime_data import game_settings,read_text,loadDefaultSettings,restoreRuntimeData, getCurrentStyle as rgetStyle, setCurrentStyle as rsetStyle,restoreReadText
+from runtime_data import game_settings,read_text,restoreRuntimeData, getCurrentStyle as rgetStyle, setCurrentStyle as rsetStyle,restoreReadText
 from runtime_data import global_data,restoreGlobalData, MAX_AUTOSAVE, MAX_QUICKSAVE
+from runtime_data import loadDefaultSettings, restoreSettings
 from audio_player import AudioPlayer
 from save_load_form import SaveForm,SavingInfo,LoadForm
 import color_themes
 from safeprint import safeprint
 from main_menu import MainMenu
 from config_form import ConfigForm
-
 
 _savingloadinglock = Lock()
 def save_data(file_name, data, mode = 2):
@@ -78,6 +78,13 @@ class SogalBase(ShowBase):
 
     def __init__(self):
         "初始化"
+                
+        dir = os.path.dirname(game_settings['save_folder'])
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        
+        self.initGameSettings()
+        
         #读取设置文件
         loadPrcFile("config/PandaConfig.prc")
         
@@ -101,13 +108,9 @@ class SogalBase(ShowBase):
         self.audioPlayer = AudioPlayer()
         self.focusStack = [] #a stack that shows windowstop window gets focus
         
-        self.loadReadText()
-        self.loadGlobalData()
-        
-        dir = os.path.dirname(game_settings['save_folder'])
+        self._loadReadText()
+        self._loadGlobalData()
 
-        if not os.path.exists(dir):
-            os.makedirs(dir)
             
         #add event handlers
         self.accept('alt-enter', self.toggleFullScreen)
@@ -131,7 +134,7 @@ class SogalBase(ShowBase):
         self.setBackgroundColor(0,0,0,1); 
         self.backgroundImage = None
             
-
+        self.initGameWindows()
         
         self.mainMenu = None
         self.storyManager = None
@@ -145,6 +148,18 @@ class SogalBase(ShowBase):
         self.saveForm = SaveForm()
         self.loadForm = LoadForm() 
         self.configForm = ConfigForm()
+        
+    def initGameSettings(self):
+        '''
+        Initializing game settings
+        some complex game settings can be written here
+        This will run before panda3d ShowBase constructed
+        '''
+        loadDefaultSettings('config/default.sconf')
+        self._loadSettings()
+
+        
+
         
         
     def initMainMenu(self,customMainMenu = None):
@@ -208,8 +223,8 @@ class SogalBase(ShowBase):
         self.saveForm.reloadMember(fileName)
         self.loadForm.reloadMember(fileName)
         
-        self.saveReadText()
-        self.saveGlobalData()
+        self._saveReadText()
+        self._saveGlobalData()
         
     def quickSave(self, saving, message):
         global_data['currentQuicksave'] += 1
@@ -262,37 +277,8 @@ class SogalBase(ShowBase):
         self.audioPlayer.reload()
         self.storyManager = StoryManager()   
              
-    def loadReadText(self):
-        if not exists(game_settings['save_folder']+ 'read.dat'):
-            return
-        try:
-            read = load_data(game_settings['save_folder']+ 'read.dat')
-        except Exception as exp:
-            safeprint(exp)
-            return
-        restoreReadText(read)
+
         
-    def loadGlobalData(self):
-        if not exists(game_settings['save_folder']+ 'global.dat'):
-            return
-        try:
-            gdata = load_data(game_settings['save_folder']+ 'global.dat')
-        except Exception as exp:
-            safeprint(exp)
-            return
-        restoreGlobalData(gdata)
-        
-    def saveReadText(self):
-        try:
-            save_data(game_settings['save_folder']+ 'read.dat', read_text)
-        except Exception as exp: 
-            safeprint(exp)
-            
-    def saveGlobalData(self):
-        try:
-            save_data(game_settings['save_folder']+ 'global.dat', global_data)
-        except Exception as exp: 
-            safeprint(exp)
         
     def getStyle(self, sheet = None):
         return rgetStyle(sheet)
@@ -310,8 +296,9 @@ class SogalBase(ShowBase):
         self.win.requestProperties(props)
         
     def exitfunc(self, *args, **kwargs):
-        self.saveReadText()
-        self.saveGlobalData()
+        self._saveReadText()
+        self._saveGlobalData()
+        self._saveSettings()
         return ShowBase.exitfunc(self, *args, **kwargs)
     
     def startGame(self,scene):
@@ -336,6 +323,52 @@ class SogalBase(ShowBase):
         if self.mainMenu:
             self.mainMenu.open()
             
+    def _loadReadText(self):
+        if not exists(game_settings['save_folder']+ 'read.dat'):
+            return
+        try:
+            read = load_data(game_settings['save_folder']+ 'read.dat')
+        except Exception as exp:
+            safeprint(exp)
+            return
+        restoreReadText(read)
+        
+    def _loadGlobalData(self):
+        if not exists(game_settings['save_folder']+ 'global.dat'):
+            return
+        try:
+            gdata = load_data(game_settings['save_folder']+ 'global.dat')
+        except Exception as exp:
+            safeprint(exp)
+            return
+        restoreGlobalData(gdata)
+        
+    def _loadSettings(self):
+        if not exists(game_settings['save_folder']+ 'config.dat'):
+            return
+        try:
+            settings = load_data(game_settings['save_folder'] + 'config.dat')
+        except Exception as error:
+            safeprint(error)
+            return    
+        restoreSettings(settings)
+    
+    def _saveReadText(self):
+        try:
+            save_data(game_settings['save_folder']+ 'read.dat', read_text)
+        except Exception as exp: 
+            safeprint(exp)
             
+    def _saveGlobalData(self):
+        try:
+            save_data(game_settings['save_folder']+ 'global.dat', global_data)
+        except Exception as exp: 
+            safeprint(exp)
+            
+    def _saveSettings(self):
+        try:
+            save_data(game_settings['save_folder']+ 'config.dat', game_settings)
+        except Exception as exp: 
+            safeprint(exp)
         
     

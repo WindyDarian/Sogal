@@ -142,20 +142,26 @@ def getCurrentStyle(sheet = None):
 def setCurrentStyle(value):
     RuntimeData.current_style = value
 
-def saveSettings(fileName):
-    pass
-    
-
-def loadDefaultSettings(fileName):
-    if exists(fileName):
-        '''Load default unserialized settings'''
-        global game_settings
+def loadDefaultSettings(fileName = 'config/default.sconf'):
+    '''Load default unserialized settings'''
+    global game_settings
+    try:
         fileHandle = open(fileName)
         for line in fileHandle:
             spaceCutter = re.compile(ur'\s+',re.UNICODE) 
             splited = spaceCutter.split(line,1)
             game_settings[splited[0]] = eval(splited[1].strip())
-    else: raise Exception('No such file: ' + fileName)
+    except:
+        #raise LoadSettingsException('No such file: ' + fileName)
+        pass
+    finally:
+        fileHandle.close()
+    
+def restoreSettings(settings):
+    '''restore the settings from dumped config data'''
+    global game_settings
+    for key in settings:
+        game_settings[key] = settings[key]
     
 def restoreRuntimeData(dumped):
     '''restore the data from dumped runtime data'''
@@ -177,4 +183,10 @@ def restoreGlobalData(readed):
     '''restore the global data'''
     for key in readed:
         global_data[key] = readed[key]
+        
+class LoadSettingsException(Exception):
+    def __init__(self, message):
+        Exception.__init__(message)
+    def __str__(self, *args, **kwargs):
+        return Exception.__str__(self, *args, **kwargs)
     

@@ -74,8 +74,9 @@ def load_data(file_name):
  
 class SogalBase(ShowBase): 
     "The ShowBase of the sogal"
-    
 
+    
+    
     def __init__(self):
         "初始化"
                 
@@ -126,6 +127,8 @@ class SogalBase(ShowBase):
         self.accept('quick_save', self.quickSave)
         self.accept('quick_load', self.quickLoad)
         self.accept('auto_save', self.autoSave)
+        self.accept('print_screen', self.takeScrnShot)
+        self.accept('f10', self.takeScrnShot)
         
         #Font setting
         self.textFont = color_themes.default_font
@@ -371,4 +374,12 @@ class SogalBase(ShowBase):
         except Exception as exp: 
             safeprint(exp)
         
+    
+
+    def takeScrnShot(self):
+        dir = os.path.dirname('screenshots/')
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        
+        self.screenshot(namePrefix = 'screenshots/screenshot', defaultFilename = 1)
     

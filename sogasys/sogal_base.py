@@ -73,7 +73,11 @@ def load_data(file_name):
     return loaded
  
 class SogalBase(ShowBase): 
-    "The ShowBase of the sogal"
+    """The ShowBase of the sogal
+    Attributes:
+    supportedResolutions: player's system supported resolutions, Note that it is constructed after the initialization of ShowBase.
+    """
+
 
     
     
@@ -93,6 +97,16 @@ class SogalBase(ShowBase):
         
         #构造Panda3D的ShowBase
         ShowBase.__init__(self)
+        
+        #Retrieving available resolutions
+        #self.makeDefaultPipe()
+        di = self.pipe.getDisplayInformation()
+        self.supportedResolutions = []
+        for index in range(di.getTotalDisplayModes()):
+            self.supportedResolutions.append((di.getDisplayModeWidth(index), di.getDisplayModeHeight(index)))
+        #TEST
+        print str(self.supportedResolutions)
+        
         
         color_themes.initStyles()
         

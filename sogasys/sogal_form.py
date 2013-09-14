@@ -64,6 +64,7 @@ class SogalForm(NodePath, DirectObject):
                  shownFunc = None,
                  hiddenFunc = None,
                  funcExtraArgs = [],
+                 sort = None
                  ):
         '''if fading enabled, it will apply a fading effect on show()&hide()
         Important Attributes:
@@ -100,9 +101,14 @@ class SogalForm(NodePath, DirectObject):
 
         
         NodePath.__init__(self,self.__class__.__name__)
-        if not parent:
-            self.reparentTo(aspect2d)
-        else: self.reparentTo(parent)
+        
+        parent = parent or aspect2d
+        if sort:
+            self.reparentTo(parent, sort = sort)
+        else:
+            self.reparentTo(parent)
+            
+        self.setPos(pos)
         
         if self.__backgroundColor:
             self.__bgPath = NodePath('bgPath')
@@ -123,8 +129,6 @@ class SogalForm(NodePath, DirectObject):
         self.windowResize(None)
 
         NodePath.hide(self)
-        self.setPos(pos)
-        self.reparentTo(aspect2d)  # @UndefinedVariable
         
     def windowResize(self,arg):
         if self.__bgPath:

@@ -61,34 +61,21 @@ class MainMenu(SogalForm):
         self.bar = DirectVLayout(margin= 0.1)
         self.bar.reparentTo(self)        
         
+
+
+    
+    
     def addButtons(self):
         '''
         override this if you want custom buttons
         '''
         #TODO:Continue Button 注意继续的位置可能是从硬盘上读入的也可能是从游戏中返回标题画面的 也有可能是在游戏正常结束之后所以没有Continue数据
-        self.addButton(text = 'New Game', state = DGG.NORMAL, command = self.startGame)
-        self.addButton(text = 'Load', state = DGG.NORMAL, command = self.load)
-        #TODO:Config Button
+        self.addButton(text = 'New Game', state = DGG.NORMAL, command = self._startGame)
+        self.addButton(text = 'Load', state = DGG.NORMAL, command = self._load)
+        self.addButton(text = 'Config', state = DGG.NORMAL, command = self._config)
         #TODO:Gallery Button
-        self.addButton(text = 'Exit', state = DGG.NORMAL, command = self.exit)       
-        
-    def startGame(self, scene = None):
-        if self.closed:
-            return
-        if not scene:
-            messenger.send('start_game', [self.entry])
-        else:
-            messenger.send('start_game', [scene])
-            
-    def load(self):
-        if self.closed:
-            return
-        messenger.send('load_game')
-        
-    def exit(self):
-        if self.closed:
-            return
-        messenger.send('exit_game')
+        self.addButton(text = 'Exit', state = DGG.NORMAL, command = self._exit)       
+
             
     def close(self):
         '''Called by SogalBase. Do something and hide, you will need it if you want a more complex main menu'''
@@ -141,3 +128,23 @@ class MainMenu(SogalForm):
         #self.vbox.pack(btn)
         return btn
         
+    def _startGame(self, scene = None):
+        if self.closed:
+            return
+        if not scene:
+            messenger.send('start_game', [self.entry])
+        else:
+            messenger.send('start_game', [scene])
+            
+    def _load(self):
+        if self.closed:
+            return
+        messenger.send('load_game')
+        
+    def _exit(self):
+        if self.closed:
+            return
+        messenger.send('exit_game')
+        
+    def _config(self):
+        messenger.send('config_form')

@@ -77,9 +77,6 @@ class SogalBase(ShowBase):
     Attributes:
     supportedResolutions: player's system supported resolutions, Note that it is constructed after the initialization of ShowBase.
     """
-
-
-    
     
     def __init__(self):
         "初始化"
@@ -137,6 +134,7 @@ class SogalBase(ShowBase):
         self.accept('return_to_title', self.returnToTitle)
         self.accept('start_game', self.startGame)
         self.accept('load_game', self.loadGame)
+        self.accept('config_form', self.showConfig)
         self.accept('exit_game', self.exit)
         self.accept('quick_save', self.quickSave)
         self.accept('quick_load', self.quickLoad)
@@ -293,9 +291,6 @@ class SogalBase(ShowBase):
         restoreRuntimeData(loaded)
         self.audioPlayer.reload()
         self.storyManager = StoryManager()   
-             
-
-        
         
     def getStyle(self, sheet = None):
         return rgetStyle(sheet)
@@ -330,6 +325,9 @@ class SogalBase(ShowBase):
     def loadGame(self):
         self.loadForm.show()
         
+    def showConfig(self):
+        self.configForm.show()
+        
     def exit(self):
         sys.exit()
         
@@ -339,6 +337,15 @@ class SogalBase(ShowBase):
         self.audioPlayer.stopAll(0.5)
         if self.mainMenu:
             self.mainMenu.open()
+            
+    def takeScrnShot(self):
+        '''Take a screenshot'''
+        dir = os.path.dirname('screenshots/')
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        
+        self.screenshot(namePrefix = 'screenshots/screenshot', defaultFilename = 1)
+        
             
     def _loadReadText(self):
         if not exists(game_settings['save_folder']+ 'read.dat'):
@@ -387,13 +394,6 @@ class SogalBase(ShowBase):
             save_data(game_settings['save_folder']+ 'config.dat', game_settings)
         except Exception as exp: 
             safeprint(exp)
-        
-    
+            
 
-    def takeScrnShot(self):
-        dir = os.path.dirname('screenshots/')
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        
-        self.screenshot(namePrefix = 'screenshots/screenshot', defaultFilename = 1)
-    
+

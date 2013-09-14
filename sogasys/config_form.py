@@ -37,5 +37,14 @@ class ConfigForm(SogalForm):
         '''
         Constructor
         '''
-        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True, backgroundColor = color_themes.ilia_bgColor)
+        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True, backgroundColor = color_themes.ilia_bgColor, sort = 103)
+        
+        
+    def focused(self):
+        self.accept('mouse3', self.hide)
+        self.accept('escape', self.hide)
+        
+    def defocused(self):
+        self.ignore('mouse3')
+        self.ignore('escape')
         

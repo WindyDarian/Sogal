@@ -47,6 +47,7 @@ from sogal_form import SogalForm, ConfirmDialog, SogalDialog
 from text_history import TextHistory
 import runtime_data
 from sogasys.safeprint import safeprint
+from direct.showbase.MessengerGlobal import messenger
 
 
 space_cutter = re.compile(ur'\s+',re.UNICODE)
@@ -111,6 +112,7 @@ class StoryManager(SogalForm):
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.loadButton)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSaveButton)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoadButton)
+        self.button_config = self.menu.addButton(text = 'Config', state = DGG.NORMAL, command = self._configButton)
         self.button_title = self.menu.addButton(text = 'Title',state = DGG.NORMAL,command = self.returnToTitle)
         
         self._inputReady = True
@@ -292,6 +294,9 @@ class StoryManager(SogalForm):
             
     def quickLoadButton(self):
         ConfirmDialog(text= '要读取吗？',command= self.__confirmedQuickLoad)
+        
+    def _configButton(self):
+        messenger.send('config_form')
         
     def returnToTitle(self):
         ConfirmDialog(text= '回到标题界面？',command= self.__confirmedReturnToTitle)

@@ -23,22 +23,43 @@ Created on Sep 10, 2013
 Configuration form.
 @author: Windy Darian (大地无敌)
 '''
+from panda3d.core import NodePath
+from direct.gui.DirectFrame import DirectFrame
+from direct.gui.DirectOptionMenu import DirectOptionMenu
 
 from sogal_form import SogalForm
+from layout import DirectVLayout
 import color_themes
 
 class ConfigForm(SogalForm):
     '''
     The configuration scene 
     '''
-
-
+    
+    class ConfigCard(NodePath):
+        def __init__(self, parent = None, layoutMargin = .05):
+            self.parent = parent or aspect2d
+            NodePath.__init__(self, 'config_card')
+            self.layout = DirectVLayout(parent = self, margin = layoutMargin)
+            self.layout.setPos(-1.25, 0, 0.67)
+            self.reparentTo(self.parent)
+            
+            
     def __init__(self):
         '''
         Constructor
         '''
-        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True, backgroundColor = color_themes.ilia_bgColor, sort = 103)
+        style = base.getStyle()
         
+        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True, backgroundColor = style['bgColor'], sort = 103)
+        
+        self._style = style
+        
+        self._cards = {}
+        self._graphics = self.ConfigCard(parent = self)
+        self._cards['graphics'] = (self._graphics)   #0, graphics
+        
+        self.appendConfigLabel('graphics', ConfigLabel(self))   #sresolution
         
     def focused(self):
         self.accept('mouse3', self.hide)
@@ -48,3 +69,31 @@ class ConfigForm(SogalForm):
         self.ignore('mouse3')
         self.ignore('escape')
         
+    def getStyle(self):
+        return self._style
+    
+    def appendConfigLabel(self, card_key, label):
+        '''
+        Attach a ConfigLabel to a card.
+        @param card_key: defines which card to add this label in.
+        @param label: the new label to be added
+        Card Keys:
+        graphics
+        '''
+        self._cards[card_key].layout.append(label.frame)
+        
+
+        
+class ConfigLabel(object):
+    '''one config label'''
+    
+    def __init__(self, configForm, frameSize = (0, 2.0, -0.5, 0)):
+        if isinstance(configForm, ConfigForm):
+            self.style = configForm.getStyle()
+        else:
+            self.style = base.getStyle()
+        self.frame = DirectFrame(frameSize = frameSize, **self.style['frame'])
+        if isinstance(configForm, ConfigForm):
+            self.style = configForm.getStyle()
+        else:
+            self.style = base.getStyle()

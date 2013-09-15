@@ -24,6 +24,7 @@ Layout classes
 @author: Windy Darian (大地无敌)
 '''
 from panda3d.core import NodePath
+from direct.gui.DirectFrame import DirectFrame
 
 class LayoutBase(NodePath):
     def __init__(self, parent = None):
@@ -216,5 +217,7 @@ class DirectVLayout(LayoutBase):
     def setMargin(self, value):
         self.__margin = value
         self.resort()
+        
+
     
         

@@ -26,6 +26,7 @@ Configuration form.
 from panda3d.core import NodePath
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectOptionMenu import DirectOptionMenu
+from direct.gui.OnscreenText import OnscreenText
 
 from sogal_form import SogalForm
 from layout import DirectVLayout
@@ -59,13 +60,14 @@ class ConfigForm(SogalForm):
         self._graphics = self.ConfigCard(parent = self)
         self._cards['graphics'] = (self._graphics)   #0, graphics
         
-        #TODO 重写ConfigLabel（一个OnscreenText 和一个控件 一行 ） 实现键盘支持
-        self._resolution = ConfigLabel(self)
+        #TODO: 重写ConfigLabel（一个OnscreenText 和一个控件 一行 ） 实现键盘支持
+
+        #resolution = DirectOptionMenu(text="options", scale=0.1,items=["item1","item2","item3"],initialitem=2,
+        resolution_options = DirectOptionMenu(scale=0.1,items=["1280x720","1920x1080",'1024x768'],initialitem=2,
+                                      highlightColor=(0.65,0.65,0.65,1))
+        self._resolution = ConfigLabel(self, text = 'Resolution', controlNP = resolution_options)
         self.appendConfigLabel('graphics', self._resolution)   #sresolution
         
-        resolution = DirectOptionMenu(text="options", scale=0.1,items=["item1","item2","item3"],initialitem=2,
-                                      highlightColor=(0.65,0.65,0.65,1))
-        self._resolution.appendNodePath(resolution)
         
     def focused(self):
         self.accept('mouse3', self.hide)
@@ -93,16 +95,36 @@ class ConfigForm(SogalForm):
 class ConfigLabel(object):
     '''one config label'''
     
-    def __init__(self, configForm, frameSize = (0, 2.0, -0.5, 0)):
+    def __init__(self, configForm, text , controlNP = None, controlOffset = 0.35 , size = (0, 2.0, -0.5, 0)):
+        self.text = text
+        self.controlNP = controlNP
+        self._controlOffset = controlOffset
+        self.size = size
+        
+        self.textNP = OnscreenText(font = color_themes.default_font, text = text, scale = 0.07, fg = (1,1,1,1) )
+        
+        #TODO: going to deplete 
         if isinstance(configForm, ConfigForm):
             self.style = configForm.getStyle()
         else:
             self.style = base.getStyle()
-        self.frame = DirectFrame(frameSize = frameSize, **self.style['frame'])
+        
+        self.frame = DirectFrame(frameSize = self.size, **self.style['frame'])
+        
+        self.textParentNP = NodePath('tpnp')
+        self.textParentNP.reparentTo(self.frame)
+        self.textNP.reparentTo(self.textParentNP)
+        self.controlParentNP = NodePath('cpnp')
+        self.controlParentNP.setPos(self._controlOffset,0,0)
+        self.controlParentNP.reparentTo(self.frame)
+        self.controlNP.reparentTo(self.controlParentNP)
+        
         if isinstance(configForm, ConfigForm):
             self.style = configForm.getStyle()
         else:
             self.style = base.getStyle()
+            
+            
     
     def appendNodePath(self, np):
         np.reparentTo(self.frame)

@@ -59,7 +59,13 @@ class ConfigForm(SogalForm):
         self._graphics = self.ConfigCard(parent = self)
         self._cards['graphics'] = (self._graphics)   #0, graphics
         
-        self.appendConfigLabel('graphics', ConfigLabel(self))   #sresolution
+        #TODO 重写ConfigLabel（一个OnscreenText 和一个控件 一行 ） 实现键盘支持
+        self._resolution = ConfigLabel(self)
+        self.appendConfigLabel('graphics', self._resolution)   #sresolution
+        
+        resolution = DirectOptionMenu(text="options", scale=0.1,items=["item1","item2","item3"],initialitem=2,
+                                      highlightColor=(0.65,0.65,0.65,1))
+        self._resolution.appendNodePath(resolution)
         
     def focused(self):
         self.accept('mouse3', self.hide)
@@ -97,3 +103,7 @@ class ConfigLabel(object):
             self.style = configForm.getStyle()
         else:
             self.style = base.getStyle()
+    
+    def appendNodePath(self, np):
+        np.reparentTo(self.frame)
+            

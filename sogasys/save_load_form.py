@@ -38,7 +38,7 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 
 from runtime_data import game_settings
 from sogal_form import SogalForm,SogalDialog
-from layout import HLayOut,VLayout
+from gui.layout import HLayout,VLayout
 import color_themes
 from sogal_form import ConfirmDialog
 import runtime_data
@@ -159,7 +159,7 @@ class SaveForm(SogalForm):
             self.labels.append(label)
             self.labelDict[label.getFileName()] = label
             if not hbox:
-                hbox = HLayOut(margin = hspacing)
+                hbox = HLayout(margin = hspacing)
                 self.vbox.append(hbox)
                 hbox.append(label)
             else:
@@ -267,7 +267,7 @@ class LoadForm(SogalForm):
             self.labels.append(label)
             self.labelDict[label.getFileName()] = label
             if not hbox:
-                hbox = HLayOut(margin = hspacing)
+                hbox = HLayout(margin = hspacing)
                 self.vbox.append(hbox)
                 hbox.append(label)
             else:

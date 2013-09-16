@@ -34,7 +34,7 @@ from direct.interval.FunctionInterval import Func
 from direct.interval.IntervalGlobal import Sequence,Parallel
 
 from sogal_form import SogalForm
-from layout import DirectVLayout
+from gui.layout import VLayout
 import color_themesfrom sogasys.save_load_form import FRAMESIZE
 
 BUTTON_SIZE = (-0.2,0.2,-0.03,0.07)
@@ -57,7 +57,7 @@ class StoryMenuBar(SogalForm):
                            enableMask = True,
                            backgroundColor = (0,0,0,0.25))
         self.reparentTo(aspect2d,sort = 99)
-        self._buttonbox = DirectVLayout(parent = self,margin = 0.05)
+        self._buttonbox = VLayout(parent = self,margin = 0.05)
         self._currentInterval = None
         
         self.resetPos() 

@@ -24,12 +24,13 @@ Configuration form.
 @author: Windy Darian (大地无敌)
 '''
 from panda3d.core import NodePath
+import direct.gui.DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectOptionMenu import DirectOptionMenu
 from direct.gui.OnscreenText import OnscreenText
 
 from sogal_form import SogalForm
-from layout import DirectVLayout
+from gui.layout import VLayout
 import color_themes
 
 class ConfigForm(SogalForm):
@@ -41,7 +42,7 @@ class ConfigForm(SogalForm):
         def __init__(self, parent = None, layoutMargin = .05):
             self.parent = parent or aspect2d
             NodePath.__init__(self, 'config_card')
-            self.layout = DirectVLayout(parent = self, margin = layoutMargin)
+            self.layout = VLayout(parent = self, margin = layoutMargin)
             self.layout.setPos(-1.25, 0, 0.67)
             self.reparentTo(self.parent)
             
@@ -104,12 +105,12 @@ class ConfigLabel(object):
         self.textNP = OnscreenText(font = color_themes.default_font, text = text, scale = 0.07, fg = (1,1,1,1) )
         
         #TODO: going to deplete 
-        if isinstance(configForm, ConfigForm):
+        """if isinstance(configForm, ConfigForm):
             self.style = configForm.getStyle()
         else:
-            self.style = base.getStyle()
+            self.style = base.getStyle()"""
         
-        self.frame = DirectFrame(frameSize = self.size, **self.style['frame'])
+        self.frame = DirectFrame(frameSize = self.size, frameColor = (0,0,0,0), relief = DGG.FLAT)
         
         self.textParentNP = NodePath('tpnp')
         self.textParentNP.reparentTo(self.frame)
@@ -119,11 +120,11 @@ class ConfigLabel(object):
         self.controlParentNP.reparentTo(self.frame)
         self.controlNP.reparentTo(self.controlParentNP)
         
-        if isinstance(configForm, ConfigForm):
+        """if isinstance(configForm, ConfigForm):
             self.style = configForm.getStyle()
         else:
             self.style = base.getStyle()
-            
+        """    
             
     
     def appendNodePath(self, np):

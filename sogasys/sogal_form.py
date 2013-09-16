@@ -36,8 +36,7 @@ from direct.interval.LerpInterval import LerpFunc,LerpPosInterval
 from direct.interval.FunctionInterval import Func
 from direct.interval.IntervalGlobal import Sequence,Parallel,Wait
 
-from layout import DirectHLayout, DirectVLayout
-from sogasys.layout import DirectHLayout
+from gui.layout import VLayout, HLayout
 from sogasys.color_themes import styles
 from direct.interval.MetaInterval import Parallel
 
@@ -386,8 +385,8 @@ class SogalDialog(SogalForm):
         self._extraArgs = extraArgs
         
         if sortType == 0:
-            self.__box = DirectHLayout(margin = margin)
-        else: self.__box = DirectVLayout(margin = margin)
+            self.__box = HLayout(margin = margin)
+        else: self.__box = VLayout(margin = margin)
         self.__box.reparentTo(self)
         self.__box.setPos(startPos)
         

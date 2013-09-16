@@ -112,7 +112,7 @@ class StoryManager(SogalForm):
         self.button_load = self.menu.addButton(text = 'Load',state = DGG.NORMAL,command = self.loadButton)
         self.button_quicksave = self.menu.addButton(text = 'Quick Save',state = DGG.DISABLED,command = self.quickSaveButton)
         self.button_quickload = self.menu.addButton(text = 'Quick Load',state = DGG.DISABLED,command = self.quickLoadButton)
-        self.button_config = self.menu.addButton(text = 'Config', state = DGG.NORMAL, command = self._configButton)
+        self.button_config = self.menu.addButton(text = 'Options', state = DGG.NORMAL, command = self._configButton)
         self.button_title = self.menu.addButton(text = 'Title',state = DGG.NORMAL,command = self.returnToTitle)
         
         self._inputReady = True

@@ -37,7 +37,7 @@ from direct.interval.FunctionInterval import Func
 from direct.interval.IntervalGlobal import Sequence,Parallel,Wait
 
 from gui.layout import VLayout, HLayout
-from sogasys.color_themes import styles
+import gui.color_themes as color_themes
 from direct.interval.MetaInterval import Parallel
 
 
@@ -375,7 +375,7 @@ class SogalDialog(SogalForm):
         if not style:
             self.__style = base.getStyle()
         else:
-            self.__style = styles[style]
+            self.__style = color_themes.styles[style]
         
         self.__frame = DirectFrame(parent = self,frameSize = frameSize,**self.__style['hardframe'])
         self.__buttonList = []#DirectButton(parent = self, s)

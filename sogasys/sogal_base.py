@@ -42,7 +42,7 @@ from runtime_data import global_data,restoreGlobalData, MAX_AUTOSAVE, MAX_QUICKS
 from runtime_data import loadDefaultSettings, restoreSettings
 from audio_player import AudioPlayer
 from save_load_form import SaveForm,SavingInfo,LoadForm
-import color_themes
+import gui.color_themes as color_themes
 from safeprint import safeprint
 from main_menu import MainMenu
 from config_form import ConfigForm

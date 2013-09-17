@@ -29,7 +29,7 @@ import re,copy
 from direct.stdpy.file import open,exists
 from direct.stdpy import pickle
 
-import color_themes
+import gui.color_themes as color_themes
 
 MAX_QUICKSAVE = 10
 MAX_AUTOSAVE = 10

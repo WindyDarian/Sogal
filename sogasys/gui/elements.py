@@ -26,6 +26,10 @@ Created on Sep 16, 2013
 
 from panda3d.core import NodePath, Vec4
 from direct.showbase.DirectObject import DirectObject
+from direct.gui.OnscreenText import OnscreenText
+
+import color_themes
+
 
 class ALIGN():
     CENTER = 0
@@ -88,3 +92,30 @@ class MenuElement(GuiElement):
     """
     def __init__(self, *args, **kwargs):
         GuiElement.__init__(self, *args, **kwargs)
+        
+class OptionLabel(GuiElement):
+    '''
+    one option label in options menu
+    size is the size of the text and the controlNP is normally outside the box
+    (for a better align)
+    '''
+    #TODO: inherit this from a 'MenuElement' liked class?
+    def __init__(self, configForm, text , controlNP = None, controlOffset = 0.35 , size = (0.4,0.15)):
+        
+        GuiElement.__init__(self, size = size)
+        
+        self.text = text
+        self.controlNP = controlNP
+        self._controlOffset = controlOffset
+        
+        #TODO: textNP as a button-like, commonly use in menus
+        self.textNP = OnscreenText(font = color_themes.default_font, text = text, scale = 0.07, fg = (1,1,1,1) )
+        
+        self.textParentNP = NodePath('tpnp')
+        self.textParentNP.reparentTo(self)
+        self.textNP.reparentTo(self.textParentNP)
+        self.controlParentNP = NodePath('cpnp')
+        self.controlParentNP.setPos(self._controlOffset,0,0)
+        self.controlParentNP.reparentTo(self)
+        self.controlNP.reparentTo(self.controlParentNP)
+        

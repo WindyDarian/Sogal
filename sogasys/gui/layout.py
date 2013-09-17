@@ -25,6 +25,7 @@ Layout classes
 '''
 from panda3d.core import NodePath
 from direct.gui.DirectFrame import DirectFrame
+from elements import GuiElement
 
 
 
@@ -42,7 +43,8 @@ def getSize(obj):
         sz = obj.getSz()
         size = (size[0]*sx, size[1]*sx, size[2]*sz, size[3]*sz)
         return size
-    #TODO: Support for GuiElement
+    elif isinstance(obj, GuiElement):
+        return obj.getFrameSize()
     elif isinstance(obj, NodePath):
         return (0, 0, 0, 0)
     else:

@@ -30,7 +30,7 @@ from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 
 from sogal_form import SogalForm
-from sogasys import color_themes
+import gui.color_themes as color_themes
 
 
 

@@ -35,7 +35,7 @@ from direct.interval.IntervalGlobal import Sequence,Parallel
 
 from sogal_form import SogalForm
 from gui.layout import VLayout
-import color_themesfrom sogasys.save_load_form import FRAMESIZE
+import gui.color_themes as color_themesfrom sogasys.save_load_form import FRAMESIZE
 
 BUTTON_SIZE = (-0.2,0.2,-0.03,0.07)
 

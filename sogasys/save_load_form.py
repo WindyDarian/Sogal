@@ -39,7 +39,7 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from runtime_data import game_settings
 from sogal_form import SogalForm,SogalDialog
 from gui.layout import HLayout,VLayout
-import color_themes
+import gui.color_themes as color_themes
 from sogal_form import ConfirmDialog
 import runtime_data
 

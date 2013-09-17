@@ -34,7 +34,7 @@ from direct.gui.OnscreenText import OnscreenText
 
 
 import runtime_data 
-import color_themes
+import gui.color_themes as color_themes
 from sogal_text import SogalText
 from safeprint import safeprint
     

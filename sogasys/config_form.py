@@ -27,11 +27,12 @@ from panda3d.core import NodePath
 import direct.gui.DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectOptionMenu import DirectOptionMenu
+from direct.gui.DirectCheckBox import DirectCheckBox
 from direct.gui.OnscreenText import OnscreenText
 
 from sogal_form import SogalForm
 from gui.layout import VLayout
-import color_themes
+from gui.elements import OptionLabel
 
 class ConfigForm(SogalForm):
     '''
@@ -66,9 +67,13 @@ class ConfigForm(SogalForm):
         #resolution = DirectOptionMenu(text="options", scale=0.1,items=["item1","item2","item3"],initialitem=2,
         resolution_options = DirectOptionMenu(scale=0.1,items=["1280x720","1920x1080",'1024x768'],initialitem=2,
                                       highlightColor=(0.65,0.65,0.65,1))
-        self._resolution = ConfigLabel(self, text = 'Resolution', controlNP = resolution_options)
+        self._resolution = OptionLabel(self, text = 'Resolution', controlNP = resolution_options)
         self.appendConfigLabel('graphics', self._resolution)   #sresolution
         
+        
+        fullscreen = DirectCheckBox(uncheckedImage = 'ui/default/checkbox_unchecked.png', checkedImage = 'ui/default/checkbox_checked.png', relief = None, frameColor = (0,0,0,0.5), frameSize = (-1,1,-1,1), scale = 0.05)
+        self._fullscreen = OptionLabel(self, text = 'Full Screen', controlNP = fullscreen)
+        self.appendConfigLabel('graphics', self._fullscreen)
         
     def focused(self):
         self.accept('mouse3', self.hide)
@@ -89,44 +94,7 @@ class ConfigForm(SogalForm):
         Card Keys:
         graphics
         '''
-        self._cards[card_key].layout.append(label.frame)
+        self._cards[card_key].layout.append(label)
         
 
         
-class ConfigLabel(object):
-    '''one config label'''
-    
-    def __init__(self, configForm, text , controlNP = None, controlOffset = 0.35 , size = (0, 2.0, -0.5, 0)):
-        self.text = text
-        self.controlNP = controlNP
-        self._controlOffset = controlOffset
-        self.size = size
-        
-        self.textNP = OnscreenText(font = color_themes.default_font, text = text, scale = 0.07, fg = (1,1,1,1) )
-        
-        #TODO: going to deplete 
-        """if isinstance(configForm, ConfigForm):
-            self.style = configForm.getStyle()
-        else:
-            self.style = base.getStyle()"""
-        
-        self.frame = DirectFrame(frameSize = self.size, frameColor = (0,0,0,0), relief = DGG.FLAT)
-        
-        self.textParentNP = NodePath('tpnp')
-        self.textParentNP.reparentTo(self.frame)
-        self.textNP.reparentTo(self.textParentNP)
-        self.controlParentNP = NodePath('cpnp')
-        self.controlParentNP.setPos(self._controlOffset,0,0)
-        self.controlParentNP.reparentTo(self.frame)
-        self.controlNP.reparentTo(self.controlParentNP)
-        
-        """if isinstance(configForm, ConfigForm):
-            self.style = configForm.getStyle()
-        else:
-            self.style = base.getStyle()
-        """    
-            
-    
-    def appendNodePath(self, np):
-        np.reparentTo(self.frame)
-            

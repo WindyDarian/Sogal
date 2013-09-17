@@ -37,4 +37,4 @@ class ListPanel(DirectObject, NodePath):
         '''
         Constructor
         '''
-        
+        pass

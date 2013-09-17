@@ -32,7 +32,7 @@ def getSize(obj):
     '''
     Returns the size of an object.
     For a direct frame the result is the frameSize (left, right, bottom, top),
-    for Sogal GuiElement result is (0, width, 0, height)
+    for Sogal GuiElement result is GuiElement.getFrameSize()
     and for normal NodePath and other object types it returns (0,0,0,0)
     
     '''

@@ -24,20 +24,61 @@ Created on Sep 16, 2013
 @author: Windy Darian (大地无敌)
 '''
 
-from panda3d.core import NodePath
+from panda3d.core import NodePath, Vec4
 from direct.showbase.DirectObject import DirectObject
 
+class ALIGN():
+    CENTER = 0
+    LEFTCENTER = 1
+    RIGHTCENTER = 2
+
+
 class GuiElement(DirectObject, NodePath):
-    """
+    '''
     The basement of Sogal gui elements
-    """
-    #TODO: align and center offset and getCenter()
-    def __init__(self, size = (0,0), name = None):
+    '''
+    #TODO: getCenter()
+    def __init__(self, size = (0.0,0.0), align = ALIGN.CENTER, centerOffset = (0,0) , name = None):
+        
+        self._width = size[0]
+        self._height = size[1]
+        self._align = align
+        self._centerOffset = centerOffset
+        
         name = name or self.__class__.__name__
         NodePath.__init__(self, name)
         DirectObject.__init__(self)
-        self._width = size[0]
-        self._height = size[1]
+
+        
+    def getSize(self):
+        return (self._width * self.getSx(), self._height * self.getSz())
+    
+    def getCenter(self):
+        return (self._centerOffset[0] * self.getSx(), self._centerOffset[1] * self.getSz())
+        
+    
+    def getFrameSize(self):
+        "Returns the (Left, Right, Bottom, Top) value of the frame judged by size, align, and centerOffset"
+        size = self.getSize()
+        width = size[0]
+        height = size[1]
+        center = self.getCenter()
+        ox = center[0]
+        oz = center[1]
+        offset = Vec4(-ox, -ox, -oz, -oz)
+        if self._align == ALIGN.LEFTCENTER:
+            halfh = height * 0.5
+            frame = Vec4(0, width, -halfh, halfh)
+        elif self._align == ALIGN.RIGHTCENTER:
+            halfh = height * 0.5
+            frame = Vec4(-width, 0, -halfh, halfh)
+        else:
+            #CENTER
+            halfw = width * 0.5
+            halfh = height * 0.5
+            frame = Vec4(-halfw, halfw, -halfh, halfh)
+        
+        return frame + offset
         
         
 class MenuElement(GuiElement):

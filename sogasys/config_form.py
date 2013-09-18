@@ -27,12 +27,12 @@ from panda3d.core import NodePath
 import direct.gui.DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectOptionMenu import DirectOptionMenu
-from direct.gui.DirectCheckBox import DirectCheckBox
 from direct.gui.OnscreenText import OnscreenText
 
 from sogal_form import SogalForm
 from gui.layout import VLayout
 from gui.elements import OptionLabel
+from gui.controls import SDirectCheckBox
 
 class ConfigForm(SogalForm):
     '''
@@ -71,7 +71,7 @@ class ConfigForm(SogalForm):
         self.appendConfigLabel('graphics', self._resolution)   #sresolution
         
         
-        fullscreen = DirectCheckBox(uncheckedImage = 'ui/default/checkbox_unchecked.png', checkedImage = 'ui/default/checkbox_checked.png', relief = None, frameColor = (0,0,0,0.5), frameSize = (-1,1,-1,1), scale = 0.05)
+        fullscreen = SDirectCheckBox()
         self._fullscreen = OptionLabel(self, text = 'Full Screen', controlNP = fullscreen)
         self.appendConfigLabel('graphics', self._fullscreen)
         

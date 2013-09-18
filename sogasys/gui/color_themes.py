@@ -163,8 +163,7 @@ sirius_button = {'frameColor':((239/255.0,195/255.0,46/255.0,0.75),
                  'text_scale':0.07,
                  'text_fg':(1,1,1,1),
                  'text_shadow':(0.5,0.5,0.5,1),
-                 'relief': DGG.FLAT
-                
+                 'relief': DGG.FLAT,
                 }
 
 sirius_mainMenuButton = {'frameColor':((239/255.0,195/255.0,46/255.0,0.75),

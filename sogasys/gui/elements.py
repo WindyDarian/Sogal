@@ -48,10 +48,16 @@ class GuiElement(DirectObject, NodePath):
         self._height = size[1]
         self._align = align
         self._centerOffset = centerOffset
+        self.__cleanup = False
         
         name = name or self.__class__.__name__
         NodePath.__init__(self, name)
         DirectObject.__init__(self)
+        
+    def destroy(self):
+        if not self.__cleanup:
+            self.__cleanup = True
+            self.removeNode()
 
         
     def getSize(self):
@@ -118,4 +124,16 @@ class OptionLabel(GuiElement):
         self.controlParentNP.setPos(self._controlOffset,0,0)
         self.controlParentNP.reparentTo(self)
         self.controlNP.reparentTo(self.controlParentNP)
+        
+    def destroy(self):
+        if self.textNP:
+            self.textNP.destroy()
+        if self.controlNP:
+            self.controlNP.destroy()
+        self.textNP = None
+        self.controlNP = None
+        self.textParentNP = None
+        self.controlParentNP = None
+        GuiElement.destroy(self) 
+
         

@@ -24,15 +24,12 @@ Configuration form.
 @author: Windy Darian (大地无敌)
 '''
 from panda3d.core import NodePath
-import direct.gui.DirectGuiGlobals as DGG
-from direct.gui.DirectFrame import DirectFrame
-from direct.gui.DirectOptionMenu import DirectOptionMenu
-from direct.gui.OnscreenText import OnscreenText
 
 from sogal_form import SogalForm
 from gui.layout import VLayout
 from gui.elements import OptionLabel
-from gui.controls import SDirectCheckBox
+from gui.controls import CheckBox
+from gui.direct_controls import SDirectOptionMenu
 
 class ConfigForm(SogalForm):
     '''
@@ -65,13 +62,13 @@ class ConfigForm(SogalForm):
         #TODO: 重写ConfigLabel（一个OnscreenText 和一个控件 一行 ） 实现键盘支持
 
         #resolution = DirectOptionMenu(text="options", scale=0.1,items=["item1","item2","item3"],initialitem=2,
-        resolution_options = DirectOptionMenu(scale=0.1,items=["1280x720","1920x1080",'1024x768'],initialitem=2,
+        resolution_options = SDirectOptionMenu(scale=0.1,items=["Unchanged", "1280x720","1920x1080",'1024x768'],initialitem=0,
                                       highlightColor=(0.65,0.65,0.65,1))
         self._resolution = OptionLabel(self, text = 'Resolution', controlNP = resolution_options)
         self.appendConfigLabel('graphics', self._resolution)   #sresolution
         
         
-        fullscreen = SDirectCheckBox()
+        fullscreen = CheckBox()
         self._fullscreen = OptionLabel(self, text = 'Full Screen', controlNP = fullscreen)
         self.appendConfigLabel('graphics', self._fullscreen)
         

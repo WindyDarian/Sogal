@@ -40,6 +40,11 @@ class ALIGN():
 class GuiElement(DirectObject, NodePath):
     '''
     The basement of Sogal gui elements
+    Attributes:
+    size/align/centerOffset: They are for layout management (see layout.py); 
+                             If you don't work with this attributes, you can just override
+                             getSize, getCenter and get getFrameSize
+        
     '''
     #TODO: getCenter()
     def __init__(self, size = (0.0,0.0), align = ALIGN.CENTER, centerOffset = (0,0) , name = None):
@@ -68,7 +73,10 @@ class GuiElement(DirectObject, NodePath):
         
     
     def getFrameSize(self):
-        "Returns the (Left, Right, Bottom, Top) value of the frame judged by size, align, and centerOffset"
+        """
+        Returns the (Left, Right, Bottom, Top) value of the frame judged by size, align, and centerOffset.
+        Scaled.
+        """
         size = self.getSize()
         width = size[0]
         height = size[1]
@@ -88,7 +96,10 @@ class GuiElement(DirectObject, NodePath):
             halfh = height * 0.5
             frame = Vec4(-halfw, halfw, -halfh, halfh)
         
-        return frame + offset
+        rsize = frame + offset
+        sx = self.getSx()
+        sz = self.getSz()
+        return Vec4(rsize[0] * sx, rsize[1] * sx, rsize[2] * sz, rsize[3] * sz)
         
         
 class MenuElement(GuiElement):

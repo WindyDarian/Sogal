@@ -24,86 +24,34 @@ SOGAL's Controls.
 @author: Windy Darian (大地无敌)
 '''
 
-from panda3d.core import NodePath,PGButton
-
-import direct.gui.DirectGuiGlobals as DGG
-from direct.gui.DirectButton import DirectButton
+from panda3d.core import NodePath
 from direct.gui.OnscreenImage import OnscreenImage
 
+from elements import GuiElement
+from direct_controls import SDirectCheckBox, SDirectOptionMenu
 
-class SDirectCheckBox(DirectButton):
-    """
-    Little improved checkbox
-    Modified on direct.gui.DirectCheckBox
-    """
-    def __init__(self, parent = None, **kw):
+class CheckBox(GuiElement):
+    '''simpify, specified interface'''
+    
+    def __init__(self, uncheckedImage = 'ui/default/checkbox_unchecked.png', checkedImage = 'ui/default/checkbox_checked.png', 
+                 uncheckedGeom = None, checkedGeom = None, scale = 0.05):
+        
+        GuiElement.__init__(self, size=(2,2))
+        self.__cleanup = False
+        self.child = SDirectCheckBox(uncheckedImage = uncheckedImage, checkedImage = checkedImage, 
+                 uncheckedGeom = uncheckedGeom, checkedGeom = checkedGeom, scale = 1)
+        self.setScale(scale)
+        self.child.reparentTo(self)
+        
+    def destroy(self):
+        if not self.__cleanup:
+            self.__cleanup = True
+            self.child.destroy()
+            self.child = None
+            self.removeNode()
+            
 
-        optiondefs = (
-            # Define type of DirectGuiWidget
-            ('pgFunc',         PGButton,   None),
-            ('numStates',      4,          None),
-            ('state',          DGG.NORMAL, None),
-            ('relief',         None,       None),
-            ('invertedFrames', (1,),       None),
-            ('frameSize',      (-1,1,-1,1),None),
-            ('scale',          0.05,       None),
-            # Command to be called on button click
-            ('command',        None,       None),
-            ('extraArgs',      [],         None),
-            # Which mouse buttons can be used to click the button
-            ('commandButtons', (DGG.LMB,),     self.setCommandButtons),
-            # Sounds to be used for button events
-            ('rolloverSound', DGG.getDefaultRolloverSound(), self.setRolloverSound),
-            ('clickSound',    DGG.getDefaultClickSound(),    self.setClickSound),
-            # Can only be specified at time of widget contruction
-            # Do the text/graphics appear to move when the button is clicked
-            ('pressEffect',     1,         DGG.INITOPT),
-            ('uncheckedImage',  'ui/default/checkbox_unchecked.png',      self.setUncheckedImage),
-            ('checkedImage',    'ui/default/checkbox_checked.png',      self.setCheckedImage),
-            ('uncheckedGeom',  None,      None),
-            ('checkedGeom',    None,      None),
-            ('isChecked',       False,     None),
-            )
-        
-        # Merge keyword options with default options
-        self.defineoptions(kw, optiondefs)
-
-        DirectButton.__init__(self,parent)
-        
-        self.initialiseoptions(SDirectCheckBox)
-        
-        self.renewgeom()
-        
-    def setUncheckedImage(self):
-        self['uncheckedGeom'] = OnscreenImage(self['uncheckedImage'])
-        
-    def setCheckedImage(self):
-        self['checkedGeom'] = OnscreenImage(self['checkedImage'])
-        
-    def renewgeom(self):
-        if self['isChecked']:
-            self['geom'] = self['checkedGeom']
-        else:
-            self['geom'] = self['uncheckedGeom']
-                
-    def commandFunc(self, event):
-        self['isChecked'] = not self['isChecked']
-        
-        self.renewgeom()
-        
-        if self['command']:
-            # Pass any extra args to command
-            apply(self['command'], [self['isChecked']] + self['extraArgs'])
-
-class CheckBox(NodePath):
-    '''
-    Simpified interface of a 
-    '''
-
-    def __init__(self, 
-                onimage = 'ui/default/checkbox_unchecked.png',
-                offimage = 'ui/default/checkbox_checked.png',
-                scale = 0.05
-                ):
-        pass
-        
+"""class TextButton(GuiElement):
+    '''text button'''
+    def __init__(self, color):
+"""

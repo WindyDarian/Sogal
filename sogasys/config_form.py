@@ -26,9 +26,10 @@ Configuration form.
 from panda3d.core import NodePath
 
 from sogal_form import SogalForm
+from runtime_data import game_settings
 from gui.layout import VLayout
 from gui.elements import OptionLabel
-from gui.controls import CheckBox
+from gui.controls import CheckBox, OptionMenu
 from gui.direct_controls import SDirectOptionMenu
 
 class ConfigForm(SogalForm):
@@ -51,7 +52,7 @@ class ConfigForm(SogalForm):
         '''
         style = base.getStyle()
         
-        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True, backgroundColor = style['bgColor'], sort = 103)
+        SogalForm.__init__(self, fading = True, fading_duration = 0.5, enableMask = True, backgroundColor = style['color']['bg'], sort = 103)
         
         self._style = style
         
@@ -62,8 +63,8 @@ class ConfigForm(SogalForm):
         #TODO: 重写ConfigLabel（一个OnscreenText 和一个控件 一行 ） 实现键盘支持
 
         #resolution = DirectOptionMenu(text="options", scale=0.1,items=["item1","item2","item3"],initialitem=2,
-        resolution_options = SDirectOptionMenu(scale=0.1,items=["Unchanged", "1280x720","1920x1080",'1024x768'],initialitem=0,
-                                      highlightColor=(0.65,0.65,0.65,1))
+        
+        resolution_options = OptionMenu(items = ["Unchanged", "1280x720","1920x1080",'1024x768'],itemcontent = [None,(1280,720),(1920,1080),(1024,768)])
         self._resolution = OptionLabel(self, text = 'Resolution', controlNP = resolution_options)
         self.appendConfigLabel('graphics', self._resolution)   #sresolution
         
@@ -72,6 +73,8 @@ class ConfigForm(SogalForm):
         self._fullscreen = OptionLabel(self, text = 'Full Screen', controlNP = fullscreen)
         self.appendConfigLabel('graphics', self._fullscreen)
         
+        self.refreshSettings()
+        
     def focused(self):
         self.accept('mouse3', self.hide)
         self.accept('escape', self.hide)
@@ -79,6 +82,15 @@ class ConfigForm(SogalForm):
     def defocused(self):
         self.ignore('mouse3')
         self.ignore('escape')
+        
+    def hide(self):
+        self._applyResolution()
+        SogalForm.hide(self)
+        
+    def refreshSettings(self):
+        self._resolution.controlNP.set(0,0)
+        self._fullscreen.controlNP.set(game_settings['full_screen'])
+        print(game_settings['full_screen'])
         
     def getStyle(self):
         return self._style
@@ -92,6 +104,9 @@ class ConfigForm(SogalForm):
         graphics
         '''
         self._cards[card_key].layout.append(label)
+        
+    def _applyResolution(self):
+        base.setScreenResolution(resolution = self._resolution.controlNP.get(), fullscreen = self._fullscreen.controlNP.get())
         
 
         

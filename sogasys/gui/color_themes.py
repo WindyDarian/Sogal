@@ -54,7 +54,16 @@ def _initSystemText():
     system_text['font'] = default_font
     history_text['font'] = default_font
 
-
+ilia_color = {'fg': (1,1,1,1),
+              'fg_button': (1,1,1,1),
+              'shadow': (0.6,0.6,0.5,1),
+              'shadow2': (0.4,0.4,0.4,1),
+              'frame': (75/255.0,153/255.0,214/255.0,0.75),
+              'frame2': (69/255.0,118/255.0,195/255.0,0.75),
+              'bg': (25/255.0,72/255.0,118/255.0,1),
+              'frame_highlight': (72/255.0,235/255.0,255/255.0,0.95),
+               
+              }
 
 ilia_textbox = {'background_color' : (36/255.0,195/255.0,229/255.0,0.3),
                 'arrow_color' : (1,1,1,1),
@@ -118,6 +127,17 @@ ilia_mainMenuButton = {'frameColor':((42/255.0,195/255.0,239/255.0,0.75),
 
 ilia_bgColor = (69/255.0,118/255.0,195/255.0,1)
 
+sirius_color = {'fg': (1,1,1,1),
+               'fg_button': (1,1,1,1),
+               'shadow': (0.6,0.6,0.5,1),
+               'shadow2': (0.4,0.4,0.4,1),
+               'frame': (225/255.0,169/255.0,210/255.0,0.75),
+               'frame2': (214/255.0,133/255.0,75/255.0,0.75),
+               'bg': (188/255.0,105/255.0,63/255.0,1),
+               'frame_highlight': (255/255.0,146/255.0,236/255.0,1),
+               
+              }
+
 sirius_textbox = {'background_color' : (214/255.0,133/255.0,75/255.0,0.3),
                 'arrow_color' : (1,1,1,1),
                 'arrow_scale' : 0.08,
@@ -180,7 +200,6 @@ sirius_mainMenuButton = {'frameColor':((239/255.0,195/255.0,46/255.0,0.75),
 sirius_bgColor = (188/255.0,105/255.0,63/255.0,1)
 
 
-
 ilia = {'text':system_text,
         'historytext': history_text,
         'button':ilia_button,
@@ -189,6 +208,8 @@ ilia = {'text':system_text,
         'textbox':ilia_textbox,
         'bgColor':ilia_bgColor,
         'mainMenuButton' :ilia_mainMenuButton,
+        'color' : ilia_color,
+        'font' : None, #default_font
         }
 
 sirius = {'text':system_text,
@@ -199,6 +220,8 @@ sirius = {'text':system_text,
           'textbox':sirius_textbox,
           'bgColor': sirius_bgColor,
           'mainMenuButton':sirius_mainMenuButton,
+          'color' : sirius_color,
+          'font' : None, #default_font
          }
 
 styles = {'ilia':ilia,
@@ -210,3 +233,5 @@ def initStyles():
     _initSystemText()
     ilia_button['text_font'] = default_font
     sirius_button['text_font'] = default_font
+    ilia['font'] = default_font
+    sirius['font'] = default_font

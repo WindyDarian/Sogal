@@ -176,7 +176,6 @@ class SogalBase(ShowBase):
         
 
         
-        
     def initMainMenu(self,customMainMenu = None):
         '''Call this to initialize and show main menu'''
         
@@ -307,6 +306,13 @@ class SogalBase(ShowBase):
             props.setFullscreen(False)
         self.win.requestProperties(props)
         
+        game_settings['full_screen'] = not game_settings['full_screen']
+        
+        if self.configForm:
+            self.configForm.refreshSettings()
+            
+        messenger.send('window-event', [self])
+        
     def exitfunc(self, *args, **kwargs):
         self._saveReadText()
         self._saveGlobalData()
@@ -346,6 +352,11 @@ class SogalBase(ShowBase):
         
         self.screenshot(namePrefix = 'screenshots/screenshot', defaultFilename = 1)
         
+    def setScreenResolution(self, resolution = None, fullscreen = None):
+        game_settings['screen_resolution'] = resolution or game_settings['screen_resolution']
+        if fullscreen is not None:
+            game_settings['full_screen'] = fullscreen
+        self._applyScreenResolution()
             
     def _loadReadText(self):
         if not exists(game_settings['save_folder']+ 'read.dat'):
@@ -395,5 +406,19 @@ class SogalBase(ShowBase):
         except Exception as exp: 
             safeprint(exp)
             
-
-
+    def _applyScreenResolution(self):
+        
+        props = WindowProperties( self.win.getProperties() )
+        if not props.getFullscreen:
+            props.setSize(int(game_settings['screen_resolution'][0]),int(game_settings['screen_resolution'][1]))
+            props.setFullscreen(game_settings['full_screen'])
+        else:
+            props.setFullscreen(game_settings['full_screen'])
+            props.setSize(int(game_settings['screen_resolution'][0]),int(game_settings['screen_resolution'][1]))
+            
+        self.win.requestProperties(props)
+        
+        if self.configForm:
+            self.configForm.refreshSettings()
+            
+        messenger.send('window-event', [self])

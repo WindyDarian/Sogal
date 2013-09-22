@@ -25,6 +25,8 @@ SOGAL's Controls.
 '''
 
 from panda3d.core import NodePath
+
+import direct.gui.DirectGuiGlobals as DGG
 from direct.gui.OnscreenImage import OnscreenImage
 
 from elements import GuiElement
@@ -50,6 +52,37 @@ class CheckBox(GuiElement):
             self.child = None
             self.removeNode()
             
+    def get(self):
+        return self.child['isChecked']
+    
+    def set(self, ischecked):
+        self.child['isChecked'] = ischecked
+            
+class OptionMenu(GuiElement):
+    def __init__(self, items = [], itemcontent = None, initialitem = 0, command = None):
+        GuiElement.__init__(self)
+        self.child = SDirectOptionMenu(
+                                       scale=0.1,items = items, initialitem=initialitem,
+                                       itemcontent = itemcontent,
+                                       command = command,
+                                       highlightColor = base.getStyle('color')['frame_highlight'],
+                                       item_relief = DGG.FLAT,
+                                       frameColor = base.getStyle('color')['frame'],
+                                       item_frameColor = base.getStyle('color')['frame2'],
+                                       text_font = base.getStyle('font'),
+                                       item_text_font = base.getStyle('font'),
+                                       item_text_fg = base.getStyle('color')['fg_button'],
+                                       text_fg = base.getStyle('color')['fg_button'],
+                                       item_scale = 0.95
+                                       )
+        self.child.reparentTo(self)
+        
+    def set(self, index, fcommand = 1):
+        self.child.set(index, fcommand)
+        
+    def get(self):
+        return self.child.get()
+        
 
 """class TextButton(GuiElement):
     '''text button'''

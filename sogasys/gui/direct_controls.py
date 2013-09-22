@@ -62,7 +62,7 @@ class SDirectCheckBox(DirectButton):
             ('checkedImage',    'ui/default/checkbox_checked.png',      self.setCheckedImage),
             ('uncheckedGeom',  None,      None),
             ('checkedGeom',    None,      None),
-            ('isChecked',       False,     None),
+            ('isChecked',       False,     self.renewgeom),
             )
         
         # Merge keyword options with default options
@@ -76,7 +76,6 @@ class SDirectCheckBox(DirectButton):
         
         self.initialiseoptions(SDirectCheckBox)
         
-        self.renewgeom()
         
     def setUncheckedImage(self):
         self['uncheckedGeom'] = OnscreenImage(self['uncheckedImage'], parent = self.__checkstatedumpnp)
@@ -114,7 +113,8 @@ class SDirectOptionMenu(DirectOptionMenu):
                       ('popupMarker_relief', None,        None),
                       ('frameColor',         (0,0,0,0.5), None),
                       ('text_fg',            (1,1,1,1),   None),
-                      ('item_relief',       DGG.FLAT,    None),
+                      ('item_relief',        DGG.FLAT,    None),
+                      ('popupMenu_relief',   None,        None),
                      )
         self.defineoptions(kw, optiondefs)
         DirectOptionMenu.__init__(self)

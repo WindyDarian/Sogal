@@ -101,8 +101,6 @@ class SogalBase(ShowBase):
         self.supportedResolutions = []
         for index in range(di.getTotalDisplayModes()):
             self.supportedResolutions.append((di.getDisplayModeWidth(index), di.getDisplayModeHeight(index)))
-        #TEST
-        print str(self.supportedResolutions)
         
         
         color_themes.initStyles()

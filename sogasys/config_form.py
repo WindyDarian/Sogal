@@ -90,7 +90,6 @@ class ConfigForm(SogalForm):
     def refreshSettings(self):
         self._resolution.controlNP.set(0,0)
         self._fullscreen.controlNP.set(game_settings['full_screen'])
-        print(game_settings['full_screen'])
         
     def getStyle(self):
         return self._style

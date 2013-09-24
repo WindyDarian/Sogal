@@ -151,11 +151,11 @@ def loadDefaultSettings(fileName = 'config/default.sconf'):
             spaceCutter = re.compile(ur'\s+',re.UNICODE) 
             splited = spaceCutter.split(line,1)
             game_settings[splited[0]] = eval(splited[1].strip())
+        fileHandle.close()
     except:
         #raise LoadSettingsException('No such file: ' + fileName)
         pass
-    finally:
-        fileHandle.close()
+        
     
 def restoreSettings(settings):
     '''restore the settings from dumped config data'''

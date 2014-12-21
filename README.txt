@@ -1,3 +1,14 @@
+
+I am still updating, but on a private repo (along with our new 
+game – no it is not a girl game), so this is a outdated version 
+and has many flaws.
+
+窝仍然在更新，但是是在一个私有Repo里和窝们的新作(绝对不是GAL)一起，
+所以这是一个有很多缺陷的老版本。
+
+Demo video: http://youtu.be/5c8TowKs4Oc
+
+
 =================================================================
 介绍
 Introduction
